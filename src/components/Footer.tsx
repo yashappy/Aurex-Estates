@@ -1,5 +1,5 @@
-import React from 'react';
-import { Phone, Mail, MapPin, ArrowUpRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Phone, Mail, MapPin, ArrowUpRight, Briefcase, X } from 'lucide-react';
 
 interface FooterProps {
   onNavigate: (page: 'home' | 'about' | 'contact' | 'privacy') => void;
@@ -10,10 +10,12 @@ export const Footer: React.FC<FooterProps> = ({
   onNavigate,
   onOpenTerms,
 }) => {
+  const [isCareerModalOpen, setIsCareerModalOpen] = useState(false);
+
   return (
-    <footer className="bg-[#F8F8FA] text-brand-dark pt-24 md:pt-32 pb-16 border-t border-gray-200/90 relative overflow-hidden">
+    <footer className="bg-[#F8F8FA] text-brand-dark pt-12 md:pt-16 pb-12 border-t border-gray-200/90 relative overflow-hidden">
       <div className="max-w-site mx-auto px-6 md:px-12 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 pb-16 border-b border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-16 pb-12 border-b border-gray-200">
           {/* Brand Column with balanced top spacing */}
           <div className="md:col-span-5 space-y-6">
             <div className="mb-6">
@@ -134,21 +136,13 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={() => {
-                    onNavigate('privacy');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="text-sm text-gray-700 hover:text-brand-purple transition-colors font-medium"
+                  onClick={() => setIsCareerModalOpen(true)}
+                  className="group inline-flex items-center gap-2 text-sm text-gray-700 hover:text-brand-purple transition-colors font-medium text-left"
                 >
-                  Privacy Policy
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={onOpenTerms}
-                  className="text-sm text-gray-700 hover:text-brand-purple transition-colors font-medium"
-                >
-                  Terms & Conditions
+                  <span>Career</span>
+                  <span className="text-[10px] text-gray-500 font-normal bg-gray-200/80 group-hover:bg-brand-purple/10 group-hover:text-brand-purple px-2 py-0.5 rounded-full border border-gray-300/60 transition-colors">
+                    There is no current opening
+                  </span>
                 </button>
               </li>
             </ul>
@@ -219,6 +213,53 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Career Details Modal */}
+      {isCareerModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
+          onClick={() => setIsCareerModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-gray-100 relative text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsCareerModalOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-12 h-12 rounded-full bg-brand-purple/10 text-brand-purple flex items-center justify-center mb-4">
+              <Briefcase className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-950 mb-2">Careers at Aurex Estates</h3>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-medium mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              There is no current opening
+            </div>
+            <p className="text-sm text-gray-600 font-light leading-relaxed mb-6">
+              Thank you for your interest in joining Aurex Estates. While we do not have any active openings at this moment, we are always eager to connect with ambitious real estate advisors and investment professionals.
+            </p>
+            <div className="bg-gray-50 border border-gray-200/80 rounded-xl p-3.5 mb-6 text-xs text-gray-600">
+              You may send your profile or resume for future considerations to:{' '}
+              <a
+                href="mailto:info@aurexestates.co.in"
+                className="font-semibold text-brand-purple hover:underline"
+              >
+                info@aurexestates.co.in
+              </a>
+            </div>
+            <button
+              onClick={() => setIsCareerModalOpen(false)}
+              className="w-full py-2.5 px-4 bg-gray-950 hover:bg-black text-white text-sm font-semibold rounded-full transition-colors shadow-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </footer>
   );
 };

@@ -712,7 +712,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
       {/* =========================================================================
           SECTION 11 — FINAL CTA (Light Luxury Frosted Panel with Framer Motion)
       ========================================================================= */}
-      <section className="relative py-32 md:py-40 w-full overflow-hidden flex items-center justify-center bg-gray-950">
+      <section className="relative py-16 md:py-24 w-full overflow-hidden flex items-center justify-center bg-gray-950">
         {/* Full-width Luxury Property Backdrop */}
         <div
           className="absolute inset-0 bg-cover bg-center"
