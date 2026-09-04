@@ -6,9 +6,12 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-and-deploy:
-    name: 🚀 Build & Deploy to Hostinger
+    name: 🚀 Build & Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -27,8 +30,17 @@ jobs:
       - name: 🔨 Build Production App
         run: npm run build
 
-      - name: 🌐 Deploy to Hostinger (public_html)
+      - name: 📦 Push Compiled App to 'production' Branch (For Hostinger Git Auto-Deploy)
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: production
+          folder: dist
+
+      - name: 🌐 Deploy via FTP to Hostinger (Optional / Backup)
+        if: env.FTP_SERVER != ''
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
