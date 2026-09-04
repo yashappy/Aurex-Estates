@@ -201,7 +201,7 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Bar */}
         <div className="pt-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500 font-light">
-          <p>© 2026 Aurex Estates. All rights reserved.</p>
+          <p>© 2026 Aurex Estates • Strategic Real Estate Advisory. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <button
               onClick={() => {
