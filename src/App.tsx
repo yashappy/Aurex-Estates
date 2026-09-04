@@ -5,11 +5,14 @@ import { Home } from './pages/Home';
 import { About } from './pages/About';
 import { Contact } from './pages/Contact';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { Career } from './pages/Career';
 import { ConsultationModal } from './components/ConsultationModal';
 import { TermsModal } from './components/TermsModal';
 
+type Page = 'home' | 'about' | 'contact' | 'privacy' | 'career';
+
 export const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<'home' | 'about' | 'contact' | 'privacy'>('home');
+  const [currentPage, setCurrentPage] = useState<Page>('home');
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
   const [consultationCategory, setConsultationCategory] = useState<string | undefined>(undefined);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
@@ -24,6 +27,8 @@ export const App: React.FC = () => {
         setCurrentPage('contact');
       } else if (hash === 'privacy') {
         setCurrentPage('privacy');
+      } else if (hash === 'career' || hash === 'careers') {
+        setCurrentPage('career');
       } else if (hash === 'consultation') {
         setIsConsultationOpen(true);
       } else {
@@ -36,7 +41,7 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleNavigate = (page: 'home' | 'about' | 'contact' | 'privacy') => {
+  const handleNavigate = (page: Page) => {
     setCurrentPage(page);
     window.location.hash = page === 'home' ? '' : page;
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -75,6 +80,12 @@ export const App: React.FC = () => {
         )}
         {currentPage === 'privacy' && (
           <PrivacyPolicy
+            onNavigate={handleNavigate}
+            onOpenConsultation={() => handleOpenConsultation()}
+          />
+        )}
+        {currentPage === 'career' && (
+          <Career
             onNavigate={handleNavigate}
             onOpenConsultation={() => handleOpenConsultation()}
           />

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 
 interface HeaderProps {
-  currentPage: 'home' | 'about' | 'contact' | 'privacy';
-  onNavigate: (page: 'home' | 'about' | 'contact' | 'privacy') => void;
+  currentPage: 'home' | 'about' | 'contact' | 'privacy' | 'career';
+  onNavigate: (page: 'home' | 'about' | 'contact' | 'privacy' | 'career') => void;
   onOpenConsultation: () => void;
 }
 
