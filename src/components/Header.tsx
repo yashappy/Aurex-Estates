@@ -4,13 +4,12 @@ import { Menu, X, ArrowUpRight } from 'lucide-react';
 interface HeaderProps {
   currentPage: 'home' | 'about' | 'contact' | 'privacy' | 'career';
   onNavigate: (page: 'home' | 'about' | 'contact' | 'privacy' | 'career') => void;
-  onOpenConsultation: () => void;
+  onOpenConsultation?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   currentPage,
   onNavigate,
-  onOpenConsultation,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -84,13 +83,15 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Primary CTA Button */}
         <div className="hidden md:flex items-center">
-          <button
-            onClick={onOpenConsultation}
+          <a
+            href="https://wa.me/918796791087"
+            target="_blank"
+            rel="noopener noreferrer"
             className="group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-brand-purple text-white text-xs uppercase tracking-[0.16em] font-semibold overflow-hidden shadow-md shadow-brand-purple/25 hover:bg-brand-purpleDark hover:shadow-lg hover:shadow-brand-purple/35 transition-all duration-300"
           >
-            <span>Book a Consultation</span>
+            <span>Instant WhatsApp Chat</span>
             <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </button>
+          </a>
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -120,16 +121,16 @@ export const Header: React.FC<HeaderProps> = ({
             ))}
 
             <div className="pt-3 border-t border-gray-100">
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onOpenConsultation();
-                }}
+              <a
+                href="https://wa.me/918796791087"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-brand-purple text-white text-xs uppercase tracking-wider font-semibold shadow-md shadow-brand-purple/25"
               >
-                <span>Book a Consultation</span>
+                <span>Instant WhatsApp Chat</span>
                 <ArrowUpRight className="w-4 h-4" />
-              </button>
+              </a>
             </div>
           </nav>
         </div>
