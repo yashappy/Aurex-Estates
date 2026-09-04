@@ -51,27 +51,27 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
   ];
 
   return (
-    <div className="w-full pt-28 bg-white text-brand-dark">
+    <div className="w-full bg-brand-warmWhite text-brand-dark">
       {/* =========================================================================
           ABOUT HERO SECTION
       ========================================================================= */}
-      <section className="py-16 md:py-24 bg-brand-warmWhite text-brand-dark relative">
+      <section className="pt-20 sm:pt-24 md:pt-28 pb-6 sm:pb-8 md:pb-12 bg-brand-warmWhite text-brand-dark relative">
         <div className="max-w-site mx-auto px-6 md:px-12">
           <div className="max-w-3xl">
-            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-4">
+            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               ABOUT AUREX ESTATES
             </span>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-gray-950 leading-[1.1] mb-6">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-gray-950 leading-[1.1] mb-4 sm:mb-6">
               Built Around Trust.<br />
               <span className="text-brand-purple">Driven by Perspective.</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-gray-800 font-light leading-relaxed mb-6">
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-800 font-light leading-relaxed mb-4 sm:mb-6">
               “Aurex Estates was built around a simple belief: better real estate decisions come from better advice.”
             </p>
 
-            <p className="text-base md:text-lg text-gray-600 font-light leading-relaxed">
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 font-light leading-relaxed">
               Over 6+ years, our work has been shaped by integrity, transparency, authenticity and long-term relationships.
             </p>
           </div>
@@ -81,7 +81,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
       {/* =========================================================================
           EDITORIAL ARCHITECTURAL SPLIT
       ========================================================================= */}
-      <section className="py-16 md:py-24 bg-white text-brand-dark border-t border-gray-150">
+      <section className="pt-6 sm:pt-10 md:pt-16 pb-14 md:pb-20 bg-white text-brand-dark border-t border-gray-150">
         <div className="max-w-site mx-auto px-6 md:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             <div className="lg:col-span-6 rounded-2xl overflow-hidden shadow-xl relative h-[380px] sm:h-[460px] img-zoom-container group">

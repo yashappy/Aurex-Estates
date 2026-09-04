@@ -5,9 +5,9 @@ import { ContactForm } from '../components/ContactForm';
 
 export const Contact: React.FC = () => {
   return (
-    <div className="w-full pt-28 pb-20 bg-brand-warmWhite min-h-screen">
+    <div className="w-full bg-brand-warmWhite min-h-screen">
       {/* Hero Header */}
-      <section className="py-16 md:py-24 text-center">
+      <section className="pt-20 sm:pt-24 md:pt-28 pb-10 sm:pb-14 md:pb-18 text-center">
         <div className="max-w-site mx-auto px-6 md:px-12">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-gray-950 mb-4">
             Let’s Start With a Conversation.
