@@ -45,6 +45,15 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+/* Hide scrollbar for Chrome, Safari, Edge and Firefox */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Pause animation on hover */
 .pause-on-hover:hover {
   animation-play-state: paused;

@@ -47,7 +47,7 @@ export const TestimonialCarousel: React.FC = () => {
 
   return (
     <section
-      className="py-16 md:py-24 bg-white text-brand-dark relative overflow-hidden border-t border-gray-150"
+      className="py-10 md:py-16 bg-white text-brand-dark relative overflow-hidden border-t border-gray-150"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -58,7 +58,7 @@ export const TestimonialCarousel: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-40px' }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-10 md:mb-12"
+          className="text-center mb-6 md:mb-8"
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-gray-950">
             What Our Clients Say.

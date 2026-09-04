@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowUpRight,
   TrendingUp,
@@ -9,6 +9,8 @@ import {
   Sparkles,
   Users,
   MapPin,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IMAGES } from '../data/images';
@@ -55,6 +57,119 @@ const heroBackgroundVariants = {
 export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onNavigate }) => {
   // Hero Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Advisory Process Mobile Carousel State
+  const [activeProcessStep, setActiveProcessStep] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  // Different By Design Mobile Swipe Scroll State
+  const differentScrollRef = useRef<HTMLDivElement>(null);
+  const [activeDifferentIndex, setActiveDifferentIndex] = useState(0);
+
+  const differentBlocks = [
+    {
+      title: 'INVESTORS',
+      category: 'Investment Advisory',
+      eyebrow: 'PORTFOLIO ALLOCATION',
+      quote: '“Evaluate opportunities with a longer-term perspective.”',
+      icon: TrendingUp,
+      image: '/images/cyber-city.jpg',
+      alt: 'Prime commercial investment assets Cyber City Gurugram',
+    },
+    {
+      title: 'END USERS',
+      category: 'End-User Advisory',
+      eyebrow: 'LUXURY RESIDENCES',
+      quote: '“Find a home that fits your life and future.”',
+      icon: HomeIcon,
+      image: '/images/penthouse-interior.jpg',
+      alt: 'Luxury penthouse interior architecture Delhi NCR',
+    },
+    {
+      title: 'ADVISORY',
+      category: 'Strategic Advisory',
+      eyebrow: 'DECISION SUPPORT',
+      quote: '“Make important property decisions with greater clarity.”',
+      icon: Compass,
+      image: '/images/dlf-corporate-greens.jpg',
+      alt: 'Strategic real estate corporate advisory Gurugram',
+    },
+  ];
+
+  const handleDifferentScroll = () => {
+    if (!differentScrollRef.current) return;
+    const { scrollLeft, clientWidth } = differentScrollRef.current;
+    const cardWidth = clientWidth * 0.84 + 16;
+    const newIndex = Math.round(scrollLeft / cardWidth);
+    setActiveDifferentIndex(Math.min(Math.max(newIndex, 0), differentBlocks.length - 1));
+  };
+
+  const scrollToDifferentCard = (idx: number) => {
+    if (!differentScrollRef.current) return;
+    const cardWidth = differentScrollRef.current.clientWidth * 0.84 + 16;
+    differentScrollRef.current.scrollTo({
+      left: idx * cardWidth,
+      behavior: 'smooth',
+    });
+    setActiveDifferentIndex(idx);
+  };
+
+  const scrollDifferentPrev = () => {
+    scrollToDifferentCard(Math.max(activeDifferentIndex - 1, 0));
+  };
+
+  const scrollDifferentNext = () => {
+    scrollToDifferentCard(Math.min(activeDifferentIndex + 1, differentBlocks.length - 1));
+  };
+
+  const advisorySteps = [
+    {
+      step: '01',
+      title: 'UNDERSTAND',
+      desc: 'Consultation to define your capital and living objectives.',
+      image: '/images/process/advisory-understand.jpg',
+      alt: 'Senior Indian luxury real estate advisor consulting with client in Gurugram boardroom',
+    },
+    {
+      step: '02',
+      title: 'EVALUATE',
+      desc: 'Rigorous evaluation of market opportunities and developer track records.',
+      image: '/images/process/advisory-evaluate.jpg',
+      alt: 'Indian real estate investment director evaluating luxury high-rise architectural scale model',
+    },
+    {
+      step: '03',
+      title: 'COMPARE',
+      desc: 'Detailed comparative analysis of floor plans, pricing metrics, and yields.',
+      image: '/images/process/advisory-compare.jpg',
+      alt: 'Indian real estate portfolio strategist comparing market yields with clients',
+    },
+    {
+      step: '04',
+      title: 'EXECUTE',
+      desc: 'Transparent negotiation, deed verification, and closing management.',
+      image: '/images/process/advisory-execute.jpg',
+      alt: 'Indian advisor and client executing luxury penthouse closing agreement in Gurugram',
+    },
+  ];
+
+  const handleProcessTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleProcessTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    if (diff > 40) {
+      // Swiped Left -> Next step
+      setActiveProcessStep((prev) => (prev + 1) % advisorySteps.length);
+    } else if (diff < -40) {
+      // Swiped Right -> Previous step
+      setActiveProcessStep((prev) => (prev - 1 + advisorySteps.length) % advisorySteps.length);
+    }
+    setTouchStartX(null);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -188,10 +303,191 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
       <StatBlock />
 
       {/* =========================================================================
+          THE ADVISORY PROCESS (Positioned below the word counter container)
+          Animated process: 01 UNDERSTAND, 02 EVALUATE, 03 COMPARE, 04 EXECUTE
+      ========================================================================= */}
+      <section id="advisory-process" className="py-12 md:py-18 bg-brand-warmWhite text-brand-dark relative border-t border-gray-150">
+        <div className="max-w-site mx-auto px-6 md:px-12">
+          {/* Header */}
+          <motion.div {...fadeInUp} className="text-center max-w-2xl mx-auto mb-8 md:mb-12">
+            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
+              THE ADVISORY PROCESS
+            </span>
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-4">
+              Clarity Before Commitment.
+            </h2>
+            <p className="text-gray-600 text-sm md:text-base font-light">
+              A structured, analytical protocol designed to remove bias and protect your interests.
+            </p>
+          </motion.div>
+
+          {/* ==================== DESKTOP VIEW (>= md) ==================== */}
+          <div className="hidden md:grid md:grid-cols-4 gap-6 lg:gap-8 relative">
+            {advisorySteps.map((item, idx) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.5, delay: idx * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: -6, transition: { duration: 0.25 } }}
+                className="luxury-card relative z-10 bg-white rounded-2xl overflow-hidden border border-gray-200/80 shadow-sm group flex flex-col"
+              >
+                {/* Dedicated Realistic Image Header */}
+                <div className="relative h-40 w-full overflow-hidden">
+                  <img
+                    src={item.image}
+                    alt={item.alt}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                  {/* Floating Step Badge */}
+                  <div className="absolute top-3.5 left-3.5 w-9 h-9 rounded-full bg-brand-purple text-white font-semibold text-xs flex items-center justify-center shadow-md shadow-brand-purple/30 group-hover:scale-105 transition-transform duration-300">
+                    {item.step}
+                  </div>
+                </div>
+
+                <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold tracking-wider text-gray-950 mb-1.5 uppercase group-hover:text-brand-purple transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 font-light">
+                      {item.desc}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* ==================== MOBILE VIEW (< md) ==================== */}
+          {/* Elegant full-width swipeable card with dedicated realistic image and subtle angle brackets */}
+          <div className="md:hidden">
+            {/* Step Selection Pills with Smooth Travel Pill Animation */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              {advisorySteps.map((item, idx) => (
+                <button
+                  key={item.step}
+                  onClick={() => setActiveProcessStep(idx)}
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-semibold select-none transition-colors duration-200 ${
+                    activeProcessStep === idx
+                      ? 'text-white shadow-md shadow-brand-purple/25'
+                      : 'bg-white border border-gray-200 text-gray-600 hover:text-brand-purple'
+                  }`}
+                >
+                  {activeProcessStep === idx && (
+                    <motion.div
+                      layoutId="activeProcessStepPill"
+                      className="absolute inset-0 bg-brand-purple rounded-full z-0"
+                      transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">Step {item.step}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Active Swipeable Card Container */}
+            <div
+              onTouchStart={handleProcessTouchStart}
+              onTouchEnd={handleProcessTouchEnd}
+              className="relative touch-pan-y"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeProcessStep}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.28, ease: 'easeOut' }}
+                  className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-lg text-center relative flex flex-col"
+                >
+                  {/* Dedicated Realistic Image Header */}
+                  <div className="relative h-44 w-full overflow-hidden">
+                    <img
+                      src={advisorySteps[activeProcessStep].image}
+                      alt={advisorySteps[activeProcessStep].alt}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                    {/* Floating Step Badge */}
+                    <div className="absolute top-3.5 left-3.5 w-10 h-10 rounded-full bg-brand-purple text-white font-semibold text-xs flex items-center justify-center shadow-md shadow-brand-purple/30">
+                      {advisorySteps[activeProcessStep].step}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6">
+                    <h3 className="text-xl sm:text-2xl font-semibold tracking-wider text-gray-950 mb-2 uppercase">
+                      {advisorySteps[activeProcessStep].title}
+                    </h3>
+
+                    <p className="text-base text-gray-600 font-light max-w-xs mx-auto mb-5">
+                      {advisorySteps[activeProcessStep].desc}
+                    </p>
+
+                    {/* Subtle Direction Angle Brackets on Left & Right (Not Very Loud) */}
+                    <div className="flex items-center justify-between pt-3.5 border-t border-gray-100 px-1">
+                      <button
+                        onClick={() =>
+                          setActiveProcessStep((prev) => (prev - 1 + advisorySteps.length) % advisorySteps.length)
+                        }
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-purple hover:bg-brand-purple/5 transition-all active:scale-90"
+                        aria-label="Previous step"
+                      >
+                        <ChevronLeft className="w-5 h-5 stroke-[1.8]" />
+                      </button>
+
+                      {/* Subtle Micro Dots Indicator (Muted, Not Loud) */}
+                      <div className="flex items-center gap-1.5">
+                        {advisorySteps.map((_, i) => (
+                          <span
+                            key={i}
+                            className={`h-1 rounded-full transition-all duration-300 ${
+                              activeProcessStep === i ? 'w-4 bg-brand-purple/70' : 'w-1 bg-gray-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          setActiveProcessStep((prev) => (prev + 1) % advisorySteps.length)
+                        }
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-purple hover:bg-brand-purple/5 transition-all active:scale-90"
+                        aria-label="Next step"
+                      >
+                        <ChevronRight className="w-5 h-5 stroke-[1.8]" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* End statement */}
+          <motion.div
+            {...fadeInUp}
+            className="mt-8 md:mt-10 text-center max-w-xl mx-auto"
+          >
+            <p className="text-lg md:text-xl font-light text-gray-700 italic">
+              “Better advice isn’t about selling more.<br />
+              <span className="text-gray-950 font-medium not-italic">It’s about helping you decide better.</span>”
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* =========================================================================
           SECTION 4 — BRAND PHILOSOPHY
           Premium split layout with Framer Motion reveal
       ========================================================================= */}
-      <section id="philosophy" className="py-20 md:py-28 bg-brand-warmWhite text-brand-dark relative">
+      <section id="philosophy" className="py-12 md:py-18 bg-brand-warmWhite text-brand-dark relative">
         <div className="max-w-site mx-auto px-6 md:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             {/* Left Content Side */}
@@ -212,23 +508,23 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
               </h2>
 
               <p className="text-base md:text-lg text-gray-600 font-light leading-relaxed pt-2">
-                Real estate decisions deserve more than a sales pitch. Aurex brings perspective, transparency and genuine advisory together to help clients move forward with clarity.
+                Real estate decisions deserve more than a sales pitch. Aurex Estates brings perspective, transparency and genuine advisory together to help clients move forward with clarity.
               </p>
 
-              {/* Visual Accents */}
-              <div className="pt-4 flex flex-wrap items-center gap-6 text-xs uppercase tracking-[0.22em] font-semibold text-gray-800">
-                <span className="flex items-center gap-2 hover:text-brand-purple transition-colors">
-                  <span className="w-2 h-2 rounded-full bg-brand-purple" />
+              {/* Visual Accents (Single Line on all screens) */}
+              <div className="pt-4 flex items-center gap-2 sm:gap-4 md:gap-6 text-[10.5px] sm:text-xs uppercase tracking-[0.12em] sm:tracking-[0.22em] font-semibold text-gray-800 whitespace-nowrap">
+                <span className="flex items-center gap-1.5 sm:gap-2 hover:text-brand-purple transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-purple shrink-0" />
                   INTEGRITY
                 </span>
-                <span className="text-gray-300">•</span>
-                <span className="flex items-center gap-2 hover:text-brand-purple transition-colors">
-                  <span className="w-2 h-2 rounded-full bg-brand-purple" />
+                <span className="text-gray-300 select-none">•</span>
+                <span className="flex items-center gap-1.5 sm:gap-2 hover:text-brand-purple transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-purple shrink-0" />
                   PERSPECTIVE
                 </span>
-                <span className="text-gray-300">•</span>
-                <span className="flex items-center gap-2 hover:text-brand-purple transition-colors">
-                  <span className="w-2 h-2 rounded-full bg-brand-purple" />
+                <span className="text-gray-300 select-none">•</span>
+                <span className="flex items-center gap-1.5 sm:gap-2 hover:text-brand-purple transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-purple shrink-0" />
                   TRUST
                 </span>
               </div>
@@ -267,10 +563,10 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
           SECTION 3 — DIFFERENT BY DESIGN
           3 premium icon-led blocks with smooth Framer Motion stagger
       ========================================================================= */}
-      <section className="py-20 md:py-28 bg-white text-brand-dark border-t border-gray-150">
+      <section className="py-12 md:py-18 bg-white text-brand-dark border-t border-gray-150">
         <div className="max-w-site mx-auto px-6 md:px-12">
           {/* Header */}
-          <motion.div {...fadeInUp} className="max-w-2xl mb-14 md:mb-18">
+          <motion.div {...fadeInUp} className="max-w-2xl mb-8 md:mb-12">
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               DIFFERENT BY DESIGN
             </span>
@@ -282,31 +578,9 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             </p>
           </motion.div>
 
-          {/* 3 Icon-Led Blocks */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
-            {[
-              {
-                title: 'INVESTORS',
-                category: 'Investment Advisory',
-                eyebrow: 'PORTFOLIO ALLOCATION',
-                quote: '“Evaluate opportunities with a longer-term perspective.”',
-                icon: TrendingUp,
-              },
-              {
-                title: 'END USERS',
-                category: 'End-User Advisory',
-                eyebrow: 'LUXURY RESIDENCES',
-                quote: '“Find a home that fits your life and future.”',
-                icon: HomeIcon,
-              },
-              {
-                title: 'ADVISORY',
-                category: 'Strategic Advisory',
-                eyebrow: 'DECISION SUPPORT',
-                quote: '“Make important property decisions with greater clarity.”',
-                icon: Compass,
-              },
-            ].map((block, idx) => {
+          {/* ==================== DESKTOP VIEW (>= md) ==================== */}
+          <div className="hidden md:grid md:grid-cols-3 gap-8 md:gap-10">
+            {differentBlocks.map((block, idx) => {
               const IconComp = block.icon;
               return (
                 <motion.div
@@ -317,23 +591,151 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                   transition={{ duration: 0.6, delay: idx * 0.15, ease: [0.16, 1, 0.3, 1] }}
                   whileHover={{ y: -6, transition: { duration: 0.25 } }}
                   onClick={() => onOpenConsultation(block.category)}
-                  className="luxury-card p-8 md:p-10 rounded-2xl bg-brand-warmWhite border border-gray-200/90 group cursor-pointer"
+                  className="luxury-card rounded-2xl bg-brand-warmWhite border border-gray-200/90 overflow-hidden group cursor-pointer flex flex-col shadow-sm hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-brand-purple/10 text-brand-purple flex items-center justify-center mb-8 group-hover:bg-brand-purple group-hover:text-white transition-all duration-300 group-hover:scale-105 shadow-sm">
-                    <IconComp className="w-7 h-7 stroke-[1.5]" />
+                  {/* Relevant Luxury Image Banner */}
+                  <div className="relative h-48 w-full overflow-hidden">
+                    <img
+                      src={block.image}
+                      alt={block.alt}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                    
+                    {/* Floating Frosted Icon Badge */}
+                    <div className="absolute top-4 left-4 w-11 h-11 rounded-xl bg-white/95 backdrop-blur-md text-brand-purple flex items-center justify-center shadow-md group-hover:bg-brand-purple group-hover:text-white transition-all duration-300">
+                      <IconComp className="w-5 h-5 stroke-[1.8]" />
+                    </div>
+
+                    <div className="absolute bottom-3 left-4 right-4 text-white text-[10px] uppercase tracking-[0.2em] font-semibold">
+                      <span>{block.eyebrow}</span>
+                    </div>
                   </div>
-                  <span className="text-xs uppercase tracking-[0.22em] text-gray-400 font-semibold block mb-2">
-                    {block.eyebrow}
-                  </span>
-                  <h3 className="text-2xl font-semibold text-gray-950 mb-3 tracking-tight">
-                    {block.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm md:text-base font-light leading-relaxed">
-                    {block.quote}
-                  </p>
+
+                  {/* Card Body */}
+                  <div className="p-7 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-2xl font-semibold text-gray-950 mb-2 tracking-tight group-hover:text-brand-purple transition-colors">
+                        {block.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm font-light leading-relaxed mb-4">
+                        {block.quote}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-150 flex items-center justify-between text-xs font-semibold text-brand-purple">
+                      <span className="uppercase tracking-wider">Explore Advisory</span>
+                      <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </div>
+                  </div>
                 </motion.div>
               );
             })}
+          </div>
+
+          {/* ==================== MOBILE VIEW (< md) ==================== */}
+          {/* Smooth Swipeable Scroll to Right & Left with relevant images */}
+          <div className="md:hidden">
+            <div
+              ref={differentScrollRef}
+              onScroll={handleDifferentScroll}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 -mx-6 px-6 pb-4 scrollbar-none scroll-smooth touch-pan-x"
+            >
+              {differentBlocks.map((block) => {
+                const IconComp = block.icon;
+                return (
+                  <div
+                    key={block.title}
+                    onClick={() => onOpenConsultation(block.category)}
+                    className="w-[84vw] sm:w-[330px] shrink-0 snap-center rounded-2xl bg-brand-warmWhite border border-gray-200/90 overflow-hidden group active:scale-[0.99] transition-transform shadow-md flex flex-col"
+                  >
+                    {/* Relevant Image Banner */}
+                    <div className="relative h-44 w-full overflow-hidden">
+                      <img
+                        src={block.image}
+                        alt={block.alt}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                      
+                      {/* Floating Frosted Icon Badge */}
+                      <div className="absolute top-3.5 left-3.5 w-10 h-10 rounded-xl bg-white/95 backdrop-blur-md text-brand-purple flex items-center justify-center shadow-md">
+                        <IconComp className="w-5 h-5 stroke-[1.8]" />
+                      </div>
+
+                      <div className="absolute bottom-3 left-4 right-4 text-white text-[10px] uppercase tracking-[0.18em] font-semibold">
+                        <span>{block.eyebrow}</span>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-950 mb-1.5 tracking-tight">
+                          {block.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm font-light leading-relaxed mb-4">
+                          {block.quote}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-gray-150 flex items-center justify-between text-xs font-semibold text-brand-purple">
+                        <span className="uppercase tracking-wider">Explore Advisory</span>
+                        <ArrowUpRight className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Mobile Swipe Navigation Controls & Pagination Indicators */}
+            <div className="flex items-center justify-between mt-3 px-1">
+              {/* Pagination Dots with Smooth Indicator */}
+              <div className="flex items-center gap-2">
+                {differentBlocks.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => scrollToDifferentCard(idx)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      activeDifferentIndex === idx
+                        ? 'w-7 bg-brand-purple shadow-sm shadow-brand-purple/30'
+                        : 'w-2 bg-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="text-[11px] font-medium text-gray-400 ml-1">
+                  {activeDifferentIndex + 1} / {differentBlocks.length}
+                </span>
+              </div>
+
+              {/* Right & Left Smooth Scroll Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={scrollDifferentPrev}
+                  disabled={activeDifferentIndex === 0}
+                  aria-label="Scroll to previous card"
+                  className={`w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-700 shadow-sm active:scale-95 transition-all ${
+                    activeDifferentIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:border-brand-purple hover:text-brand-purple'
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={scrollDifferentNext}
+                  disabled={activeDifferentIndex === differentBlocks.length - 1}
+                  aria-label="Scroll to next card"
+                  className={`w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-700 shadow-sm active:scale-95 transition-all ${
+                    activeDifferentIndex === differentBlocks.length - 1 ? 'opacity-40 cursor-not-allowed' : 'hover:border-brand-purple hover:text-brand-purple'
+                  }`}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -355,7 +757,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             </h2>
           </motion.div>
 
-          {/* 4 Big Value Pillar Boxes (Spacious layout, simple concise text) */}
+          {/* 4 Big Value Pillar Boxes (Full-width clean grid with zero text clipping) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {VALUES.map((val, idx) => {
               const IconComponent =
@@ -412,10 +814,10 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
           Commercial Investment, Affordable Investment.
           With Framer Motion staggered entrance and instant inquiry form modal.
       ========================================================================= */}
-      <section className="py-20 md:py-28 bg-brand-warmWhite text-brand-dark relative">
+      <section className="py-12 md:py-18 bg-brand-warmWhite text-brand-dark relative">
         <div className="max-w-site mx-auto px-6 md:px-12">
           {/* Editorial Header */}
-          <motion.div {...fadeInUp} className="max-w-3xl mb-14 md:mb-18">
+          <motion.div {...fadeInUp} className="max-w-3xl mb-10 md:mb-14">
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               PROPERTY ASSET CATEGORIES
             </span>
@@ -428,7 +830,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
           </motion.div>
 
           {/* Real Property Asset Classes Grid with Framer Motion Stagger */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
             {/* 1. High Rise Apartments (Primary 8-col) */}
             <motion.div
               initial={{ opacity: 0, y: 35 }}
@@ -639,70 +1041,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
       </section>
 
 
-      {/* =========================================================================
-          SECTION 9 — HOW WE WORK (Light Luxury Theme with Animated Flow Line)
-          Animated process: 01 UNDERSTAND, 02 EVALUATE, 03 COMPARE, 04 EXECUTE
-      ========================================================================= */}
-      <section className="py-20 md:py-28 bg-brand-warmWhite text-brand-dark relative border-t border-gray-150">
-        <div className="max-w-site mx-auto px-6 md:px-12">
-          {/* Header */}
-          <motion.div {...fadeInUp} className="text-center max-w-2xl mx-auto mb-16 md:mb-20">
-            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
-              THE ADVISORY PROCESS
-            </span>
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-4">
-              Clarity Before Commitment.
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base font-light">
-              A structured, analytical protocol designed to remove bias and protect your interests.
-            </p>
-          </motion.div>
 
-          {/* Process Steps with Animated Flow Line */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
-            {/* Animated Flow Connecting Line (Desktop) */}
-            <div className="hidden md:block absolute top-12 left-16 right-16 h-[2.5px] bg-gradient-to-r from-brand-purple/20 via-brand-purple to-brand-purple/20 animate-flow-line z-0" />
-
-            {[
-              { step: '01', title: 'UNDERSTAND', desc: 'Your objective.' },
-              { step: '02', title: 'EVALUATE', desc: 'The opportunity.' },
-              { step: '03', title: 'COMPARE', desc: 'The alternatives.' },
-              { step: '04', title: 'EXECUTE', desc: 'The decision.' },
-            ].map((item, idx) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 25 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.5, delay: idx * 0.12, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ y: -6, transition: { duration: 0.25 } }}
-                className="luxury-card relative z-10 bg-white rounded-2xl p-8 border border-gray-200/80 shadow-sm group"
-              >
-                <div className="w-12 h-12 rounded-full bg-brand-purple text-white font-semibold text-sm flex items-center justify-center mb-6 shadow-md shadow-brand-purple/30 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-brand-purple/40 transition-all duration-300">
-                  {item.step}
-                </div>
-                <h3 className="text-lg font-semibold tracking-wider text-gray-950 mb-2 uppercase">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-gray-600 font-light">
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* End statement */}
-          <motion.div
-            {...fadeInUp}
-            className="mt-16 text-center max-w-xl mx-auto"
-          >
-            <p className="text-lg md:text-xl font-light text-gray-700 italic">
-              “Better advice isn’t about selling more.<br />
-              <span className="text-gray-950 font-medium not-italic">It’s about helping you decide better.</span>”
-            </p>
-          </motion.div>
-        </div>
-      </section>
 
       {/* =========================================================================
           SECTION 10 — CLIENT TESTIMONIALS (Real Testimonials with Flow Carousel)

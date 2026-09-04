@@ -8,6 +8,7 @@ import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { Career } from './pages/Career';
 import { ConsultationModal } from './components/ConsultationModal';
 import { TermsModal } from './components/TermsModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 type Page = 'home' | 'about' | 'contact' | 'privacy' | 'career';
 
@@ -53,7 +54,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-warmWhite text-brand-dark antialiased font-sans selection:bg-brand-purple selection:text-white">
+    <div className="min-h-screen flex flex-col bg-brand-warmWhite text-brand-dark antialiased font-sans selection:bg-brand-purple selection:text-white pb-16 md:pb-0">
       {/* Sticky Glassmorphism Header */}
       <Header
         currentPage={currentPage}
@@ -96,6 +97,12 @@ export const App: React.FC = () => {
       <Footer
         onNavigate={handleNavigate}
         onOpenTerms={() => setIsTermsOpen(true)}
+      />
+
+      {/* Mobile App-Style Bottom Navigation Bar */}
+      <MobileBottomNav
+        currentPage={currentPage}
+        onNavigate={handleNavigate}
       />
 
       {/* Consultation Modal with Category Support */}

@@ -27,7 +27,7 @@ export const StatBlock: React.FC = () => {
   return (
     <section
       ref={containerRef}
-      className="py-20 md:py-28 bg-white border-y border-gray-150 relative overflow-hidden"
+      className="py-12 md:py-18 bg-white border-y border-gray-150 relative overflow-hidden"
     >
       <div className="max-w-site mx-auto px-6 md:px-12">
         {/* Section Header */}
@@ -36,7 +36,7 @@ export const StatBlock: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-40px' }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-12 md:mb-16"
+          className="text-center mb-8 md:mb-12"
         >
           <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
             PROVEN PERFORMANCE

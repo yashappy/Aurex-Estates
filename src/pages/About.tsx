@@ -105,7 +105,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
               </h2>
 
               <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed">
-                Conventional brokerage focuses on the velocity of deals. Aurex was established to redefine how investors and end users interact with the Delhi NCR luxury market. We analyze asset quality, corridor infrastructure timelines, legal clearances, and market valuations before ever recommending an acquisition.
+                Conventional brokerage focuses on the velocity of deals. Aurex Estates was established to redefine how investors and end users interact with the Delhi NCR luxury market. We analyze asset quality, corridor infrastructure timelines, legal clearances, and market valuations before ever recommending an acquisition.
               </p>
 
               <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed">

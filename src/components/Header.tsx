@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface HeaderProps {
   currentPage: 'home' | 'about' | 'contact' | 'privacy' | 'career';
@@ -12,7 +13,6 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,7 +35,6 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleNavClick = (pageId: 'home' | 'about' | 'contact') => {
     onNavigate(pageId);
-    setIsMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -48,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
       }`}
     >
       <div className="max-w-site mx-auto px-6 md:px-12 flex items-center justify-between">
-        {/* Logo (Dark text with signature purple bar) */}
+        {/* Logo */}
         <button
           onClick={() => handleNavClick('home')}
           className="flex items-center gap-3 text-left group focus:outline-none"
@@ -75,13 +74,17 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {item.label}
               {currentPage === item.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-purple rounded-full" />
+                <motion.span
+                  layoutId="desktopActiveMenuIndicator"
+                  className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-brand-purple rounded-full shadow-sm shadow-brand-purple/40"
+                  transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                />
               )}
             </button>
           ))}
         </nav>
 
-        {/* Primary CTA Button */}
+        {/* Desktop Primary CTA Button */}
         <div className="hidden md:flex items-center">
           <a
             href="https://wa.me/918796791087"
@@ -94,47 +97,20 @@ export const Header: React.FC<HeaderProps> = ({
           </a>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-2 text-gray-900 hover:text-brand-purple transition-colors focus:outline-none"
-          aria-label="Toggle Navigation Menu"
-        >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
-
-      {/* Mobile Drawer */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-white/98 backdrop-blur-xl border-t border-gray-100 px-6 py-6 shadow-xl animate-fadeIn">
-          <nav className="flex flex-col gap-5">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={`text-left text-base font-medium tracking-wide transition-colors ${
-                  currentPage === item.id ? 'text-brand-purple font-semibold' : 'text-gray-800'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-
-            <div className="pt-3 border-t border-gray-100">
-              <a
-                href="https://wa.me/918796791087"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-brand-purple text-white text-xs uppercase tracking-wider font-semibold shadow-md shadow-brand-purple/25"
-              >
-                <span>Instant WhatsApp Chat</span>
-                <ArrowUpRight className="w-4 h-4" />
-              </a>
-            </div>
-          </nav>
+        {/* Mobile Header Direct Action (Replaces Hamburger Menu) */}
+        <div className="md:hidden flex items-center">
+          <a
+            href="https://wa.me/918796791087"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat on WhatsApp"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-brand-purple text-white text-[11px] font-semibold uppercase tracking-wider shadow-sm shadow-brand-purple/20 active:scale-95 transition-transform"
+          >
+            <span>WhatsApp</span>
+            <ArrowUpRight className="w-3 h-3" />
+          </a>
         </div>
-      )}
+      </div>
     </header>
   );
 };
