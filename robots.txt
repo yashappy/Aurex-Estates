@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
+Sitemap: https://aurexestates.co.in/sitemap.xml
 Sitemap: https://www.aurexestates.co.in/sitemap.xml
