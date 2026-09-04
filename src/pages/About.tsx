@@ -53,11 +53,12 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
   return (
     <div className="w-full bg-brand-warmWhite text-brand-dark">
       {/* =========================================================================
-          ABOUT HERO SECTION
+          ABOUT HERO & PHILOSOPHY SECTION (Seamless Warm White Container)
       ========================================================================= */}
-      <section className="pt-20 sm:pt-24 md:pt-28 pb-6 sm:pb-8 md:pb-12 bg-brand-warmWhite text-brand-dark relative">
+      <section className="pt-20 sm:pt-24 md:pt-28 pb-14 md:pb-20 bg-brand-warmWhite text-brand-dark relative">
         <div className="max-w-site mx-auto px-6 md:px-12">
-          <div className="max-w-3xl">
+          {/* Header Text Block */}
+          <div className="max-w-3xl mb-6 sm:mb-8 md:mb-12">
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               ABOUT AUREX ESTATES
             </span>
@@ -75,15 +76,9 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
               Over 6+ years, our work has been shaped by integrity, transparency, authenticity and long-term relationships.
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* =========================================================================
-          EDITORIAL ARCHITECTURAL SPLIT
-      ========================================================================= */}
-      <section className="pt-6 sm:pt-10 md:pt-16 pb-14 md:pb-20 bg-white text-brand-dark border-t border-gray-150">
-        <div className="max-w-site mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          {/* Architectural Split directly below text */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
             <div className="lg:col-span-6 rounded-2xl overflow-hidden shadow-xl relative h-[380px] sm:h-[460px] img-zoom-container group">
               <img
                 src={IMAGES.aboutHero}
@@ -115,9 +110,9 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
               <div className="pt-2">
                 <button
                   onClick={onOpenConsultation}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.18em] font-semibold transition-all shadow-md shadow-brand-purple/25 hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.16em] font-semibold transition-all shadow-md shadow-brand-purple/25 hover:-translate-y-0.5"
                 >
-                  <span>Schedule Private Counsel</span>
+                  <span>Book a Consultation</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </button>
               </div>
@@ -125,7 +120,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
           </div>
 
           {/* Architectural Showcase Duo with Smooth Image Hover */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-16 pt-16 border-t border-gray-150">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8 md:mt-12 pt-6 sm:pt-8 md:pt-12 border-t border-gray-200/80">
             <div className="rounded-2xl overflow-hidden shadow-lg relative h-[240px] sm:h-[280px] img-zoom-container group">
               <img
                 src={IMAGES.aboutClubhouse}
