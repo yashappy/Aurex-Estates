@@ -306,10 +306,10 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
           THE ADVISORY PROCESS (Positioned below the word counter container)
           Animated process: 01 UNDERSTAND, 02 EVALUATE, 03 COMPARE, 04 EXECUTE
       ========================================================================= */}
-      <section id="advisory-process" className="py-12 md:py-18 bg-brand-warmWhite text-brand-dark relative border-t border-gray-150">
+      <section id="advisory-process" className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 pb-16 sm:pb-20 md:pb-24 lg:pb-28 bg-brand-warmWhite text-brand-dark relative">
         <div className="max-w-site mx-auto px-6 md:px-12">
           {/* Header */}
-          <motion.div {...fadeInUp} className="text-center max-w-2xl mx-auto mb-8 md:mb-12">
+          <motion.div {...fadeInUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-12 md:mb-14">
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               THE ADVISORY PROCESS
             </span>
@@ -473,7 +473,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
           {/* End statement */}
           <motion.div
             {...fadeInUp}
-            className="mt-8 md:mt-10 text-center max-w-xl mx-auto"
+            className="mt-10 sm:mt-12 md:mt-14 text-center max-w-xl mx-auto"
           >
             <p className="text-lg md:text-xl font-light text-gray-700 italic">
               “Better advice isn’t about selling more.<br />
@@ -487,7 +487,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
           SECTION 4 — BRAND PHILOSOPHY
           Premium split layout with Framer Motion reveal
       ========================================================================= */}
-      <section id="philosophy" className="py-12 md:py-18 bg-brand-warmWhite text-brand-dark relative">
+      <section id="philosophy" className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 pb-16 md:pb-24 bg-brand-warmWhite text-brand-dark relative border-t border-gray-150">
         <div className="max-w-site mx-auto px-6 md:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             {/* Left Content Side */}

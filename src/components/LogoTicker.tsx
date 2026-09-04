@@ -39,7 +39,7 @@ export const LogoTicker: React.FC = () => {
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-brand-warmWhite text-brand-dark overflow-hidden relative border-b border-gray-200/70">
+    <section className="pt-16 sm:pt-20 md:pt-24 pb-16 sm:pb-20 md:pb-24 bg-brand-warmWhite text-brand-dark overflow-hidden relative border-b border-gray-150">
       <style>{`
         @keyframes ticker-left {
           0% { transform: translateX(0); }
