@@ -58,7 +58,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
       <section className="pt-20 sm:pt-24 md:pt-28 pb-14 md:pb-20 bg-brand-warmWhite text-brand-dark relative">
         <div className="max-w-site mx-auto px-6 md:px-12">
           {/* Header Text Block */}
-          <div className="max-w-3xl mb-6 sm:mb-8 md:mb-12">
+          <div className="max-w-3xl mb-7 sm:mb-9 md:mb-12">
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               ABOUT AUREX ESTATES
             </span>
@@ -68,18 +68,14 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
               <span className="text-brand-purple">Driven by Perspective.</span>
             </h1>
 
-            <p className="text-lg sm:text-xl md:text-2xl text-gray-800 font-light leading-relaxed mb-4 sm:mb-6">
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-800 font-light leading-relaxed">
               “Aurex Estates was built around a simple belief: better real estate decisions come from better advice.”
-            </p>
-
-            <p className="text-sm sm:text-base md:text-lg text-gray-600 font-light leading-relaxed">
-              Over 6+ years, our work has been shaped by integrity, transparency, authenticity and long-term relationships.
             </p>
           </div>
 
           {/* Architectural Split directly below text */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
-            <div className="lg:col-span-6 rounded-2xl overflow-hidden shadow-xl relative h-[380px] sm:h-[460px] img-zoom-container group">
+            <div className="lg:col-span-6 rounded-2xl overflow-hidden shadow-xl relative h-[360px] sm:h-[440px] md:h-[460px] img-zoom-container group">
               <img
                 src={IMAGES.aboutHero}
                 alt="Curvilinear luxury architecture along Golf Course Extension Road Gurugram"
@@ -120,7 +116,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
           </div>
 
           {/* Architectural Showcase Duo with Smooth Image Hover */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8 md:mt-12 pt-6 sm:pt-8 md:pt-12 border-t border-gray-200/80">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mt-10 sm:mt-12 md:mt-16 pt-10 sm:pt-12 md:pt-16 border-t border-gray-200/80">
             <div className="rounded-2xl overflow-hidden shadow-lg relative h-[240px] sm:h-[280px] img-zoom-container group">
               <img
                 src={IMAGES.aboutClubhouse}
