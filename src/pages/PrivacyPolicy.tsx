@@ -29,7 +29,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               LEGAL & GOVERNANCE
             </span>
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-950 mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-gray-950 mb-4 leading-tight">
               Privacy & Discretion Policy.
             </h1>
             <p className="text-base sm:text-lg text-gray-600 font-light leading-relaxed">
@@ -54,7 +54,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
             {/* Left Summary Navigation Sticky Card */}
             <div className="lg:col-span-4 lg:sticky lg:top-32 space-y-6">
               <div className="luxury-card bg-white rounded-2xl p-7 border border-gray-200/80 shadow-md">
-                <h3 className="text-sm uppercase tracking-[0.2em] text-gray-950 font-bold mb-4 flex items-center gap-2">
+                <h3 className="text-sm uppercase tracking-[0.2em] text-gray-950 font-semibold mb-4 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-brand-purple" />
                   <span>Policy Overview</span>
                 </h3>
@@ -85,7 +85,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
 
               {/* Consultation Quick Card */}
               <div className="bg-brand-warmWhite rounded-2xl p-7 border border-gray-200/80">
-                <h4 className="text-sm font-bold text-gray-950 mb-2">Have specific compliance questions?</h4>
+                <h4 className="text-sm font-semibold text-gray-950 mb-2">Have specific compliance questions?</h4>
                 <p className="text-xs text-gray-600 font-light mb-5 leading-relaxed">
                   Our advisory partners operate under strict NDA protocols upon request for high-ticket portfolio mandates.
                 </p>
@@ -106,7 +106,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
                 <div className="w-10 h-10 rounded-xl bg-brand-purple/10 text-brand-purple flex items-center justify-center mb-5">
                   <Shield className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-950 mb-3 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-950 mb-3 tracking-tight">
                   1. Fiduciary Commitment & Strategic Discretion
                 </h2>
                 <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed mb-4">
@@ -122,7 +122,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
                 <div className="w-10 h-10 rounded-xl bg-brand-purple/10 text-brand-purple flex items-center justify-center mb-5">
                   <Lock className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-950 mb-3 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-950 mb-3 tracking-tight">
                   2. Information We Collect
                 </h2>
                 <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed mb-4">
@@ -149,7 +149,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
                 <div className="w-10 h-10 rounded-xl bg-brand-purple/10 text-brand-purple flex items-center justify-center mb-5">
                   <EyeOff className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-950 mb-3 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-950 mb-3 tracking-tight">
                   3. Zero Third-Party Resale & No-Spam Guarantee
                 </h2>
                 <div className="p-4 rounded-xl bg-brand-purple/5 border border-brand-purple/15 text-gray-900 text-sm mb-4 leading-relaxed font-medium">
@@ -165,7 +165,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
 
               {/* Clause 4 */}
               <div id="usage" className="luxury-card bg-white rounded-2xl p-8 sm:p-10 border border-gray-200/80 shadow-sm">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-950 mb-3 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-950 mb-3 tracking-tight">
                   4. Strategic Use of Information
                 </h2>
                 <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed mb-4">
@@ -173,19 +173,19 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm text-gray-700">
                   <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                    <span className="font-bold text-gray-950 block mb-1">Consultation Scheduling</span>
+                    <span className="font-semibold text-gray-950 block mb-1">Consultation Scheduling</span>
                     Facilitating private discussions and coordinating site inspections with developers.
                   </div>
                   <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                    <span className="font-bold text-gray-950 block mb-1">Market Due Diligence</span>
+                    <span className="font-semibold text-gray-950 block mb-1">Market Due Diligence</span>
                     Providing customized secondary pricing reports and corridor timeline intelligence.
                   </div>
                   <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                    <span className="font-bold text-gray-950 block mb-1">Mandate Representation</span>
+                    <span className="font-semibold text-gray-950 block mb-1">Mandate Representation</span>
                     Conducting structured negotiations and verifying title and master plan compliance.
                   </div>
                   <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                    <span className="font-bold text-gray-950 block mb-1">Client Fiduciary Updates</span>
+                    <span className="font-semibold text-gray-950 block mb-1">Client Fiduciary Updates</span>
                     Delivering milestone progress reports throughout the acquisition or divestment lifecycle.
                   </div>
                 </div>
@@ -193,7 +193,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
 
               {/* Clause 5 */}
               <div id="security" className="luxury-card bg-white rounded-2xl p-8 sm:p-10 border border-gray-200/80 shadow-sm">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-950 mb-3 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-950 mb-3 tracking-tight">
                   5. Security & Confidential Storage
                 </h2>
                 <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed mb-3">
@@ -206,7 +206,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
 
               {/* Clause 6 */}
               <div id="rights" className="luxury-card bg-white rounded-2xl p-8 sm:p-10 border border-gray-200/80 shadow-sm">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-950 mb-3 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-950 mb-3 tracking-tight">
                   6. Client Rights & Data Retention
                 </h2>
                 <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed mb-3">
@@ -224,7 +224,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
                 <div className="w-10 h-10 rounded-xl bg-brand-purple/10 text-brand-purple flex items-center justify-center mb-5">
                   <Building2 className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-950 mb-3 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-950 mb-3 tracking-tight">
                   7. Corporate Legal Desk & Enquiries
                 </h2>
                 <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed mb-6">
@@ -232,7 +232,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate, onOpen
                 </p>
 
                 <div className="p-6 rounded-2xl bg-brand-warmWhite border border-gray-200 space-y-3 text-sm text-gray-800">
-                  <p className="font-bold text-gray-950">AUREX ESTATES — Legal & Governance</p>
+                  <p className="font-semibold text-gray-950">AUREX ESTATES — Legal & Governance</p>
                   <p className="text-gray-600 font-light">
                     1610, 16th Floor, Tower 4, DLF Corporate Greens, Sector 74A,<br />
                     Gurugram, Haryana - 122004, India

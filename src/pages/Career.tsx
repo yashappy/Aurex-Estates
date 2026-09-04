@@ -53,10 +53,10 @@ export const Career: React.FC<CareerProps> = ({ onNavigate, onOpenConsultation: 
       {/* Hero Header - Simple, clean, grounded */}
       <section className="pt-6 pb-10 text-center">
         <div className="max-w-site mx-auto px-6 md:px-12">
-          <span className="text-xs uppercase tracking-[0.25em] text-brand-purple font-bold block mb-3">
+          <span className="text-xs uppercase tracking-[0.25em] text-brand-purple font-semibold block mb-3">
             CAREERS AT AUREX ESTATES
           </span>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-gray-950 mb-4 max-w-2xl mx-auto leading-snug">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-gray-950 mb-4 max-w-2xl mx-auto leading-snug">
             Build Your Career at Aurex Estates.
           </h1>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 font-light max-w-lg mx-auto leading-relaxed">
@@ -78,7 +78,7 @@ export const Career: React.FC<CareerProps> = ({ onNavigate, onOpenConsultation: 
               <Briefcase className="w-7 h-7" />
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-950 mb-3 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-950 mb-3 tracking-tight">
               Current Openings
             </h2>
 
@@ -90,7 +90,7 @@ export const Career: React.FC<CareerProps> = ({ onNavigate, onOpenConsultation: 
 
             {/* Contact / Resume Submission Box - Unbolded Prompt */}
             <div className="bg-gradient-to-br from-white to-[#F6F5F9] border-2 border-brand-purple/20 rounded-2xl p-6 sm:p-8 max-w-xl mx-auto mb-8 shadow-md text-left">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-purple mb-2.5">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-purple mb-2.5">
                 <Sparkles className="w-4 h-4 text-brand-purple" />
                 <span>Submit Your Profile For Future Opportunities</span>
               </div>
@@ -109,7 +109,7 @@ export const Career: React.FC<CareerProps> = ({ onNavigate, onOpenConsultation: 
                   </span>
                   <a
                     href="mailto:info@aurexestates.co.in?subject=Career%20Profile%20Submission%20-%20Aurex%20Estates"
-                    className="text-base sm:text-lg font-bold text-brand-purple hover:underline truncate block"
+                    className="text-base sm:text-lg font-semibold text-brand-purple hover:underline truncate block"
                   >
                     info@aurexestates.co.in
                   </a>
@@ -121,7 +121,7 @@ export const Career: React.FC<CareerProps> = ({ onNavigate, onOpenConsultation: 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
                 href="mailto:info@aurexestates.co.in?subject=Career%20Inquiry%20-%20Aurex%20Estates"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.18em] font-bold shadow-lg shadow-brand-purple/25 hover:shadow-brand-purple/40 transition-all duration-300"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.18em] font-semibold shadow-lg shadow-brand-purple/25 hover:shadow-brand-purple/40 transition-all duration-300"
               >
                 <span>Email Your Resume</span>
                 <ArrowUpRight className="w-4 h-4" />
@@ -145,7 +145,7 @@ export const Career: React.FC<CareerProps> = ({ onNavigate, onOpenConsultation: 
             <span className="text-xs uppercase tracking-[0.25em] text-brand-purple font-semibold block mb-3">
               OUR WORK CULTURE
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-950">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-950">
               Why Work With Us
             </h2>
           </div>
@@ -161,7 +161,7 @@ export const Career: React.FC<CareerProps> = ({ onNavigate, onOpenConsultation: 
                   <div className="w-12 h-12 rounded-xl bg-brand-purple/10 text-brand-purple flex items-center justify-center">
                     <Icon className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-950 tracking-tight">
+                  <h3 className="text-lg font-semibold text-gray-950 tracking-tight">
                     {pillar.title}
                   </h3>
                   <p className="text-sm text-gray-600 font-light leading-relaxed">

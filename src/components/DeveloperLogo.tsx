@@ -219,8 +219,8 @@ export const DeveloperLogo: React.FC<DeveloperLogoProps> = ({ id, className = "h
     case 'trehan':
       return (
         <div className={`flex items-center gap-2 ${className}`}>
-          <span className="w-5 h-5 rounded-sm bg-gray-800 text-white flex items-center justify-center font-bold text-xs">T</span>
-          <span className="font-bold text-xs md:text-sm tracking-[0.22em] text-gray-950 uppercase">TREHAN</span>
+          <span className="w-5 h-5 rounded-sm bg-gray-800 text-white flex items-center justify-center font-semibold text-xs">T</span>
+          <span className="font-semibold text-xs md:text-sm tracking-[0.22em] text-gray-950 uppercase">TREHAN</span>
         </div>
       );
 
@@ -281,7 +281,7 @@ export const DeveloperLogo: React.FC<DeveloperLogoProps> = ({ id, className = "h
 
     default:
       return (
-        <span className="font-bold text-sm tracking-widest text-gray-800 uppercase">{id}</span>
+        <span className="font-semibold text-sm tracking-widest text-gray-800 uppercase">{id}</span>
       );
   }
 };

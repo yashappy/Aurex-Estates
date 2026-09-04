@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-brand-warmWhite text-brand-dark">
           <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border border-gray-200 text-center">
-            <h2 className="text-2xl font-bold text-gray-950 mb-3">Something went wrong</h2>
+            <h2 className="text-2xl font-semibold text-gray-950 mb-3">Something went wrong</h2>
             <p className="text-sm text-gray-600 mb-6 font-light">
               An unexpected display issue occurred. Please refresh to reload the application.
             </p>

@@ -109,7 +109,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.85, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.08] mb-6 text-shadow-subtle"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-semibold tracking-tight text-white leading-[1.14] mb-6 text-shadow-subtle"
             >
               Real Estate Decisions,<br />
               <span className="text-white">
@@ -136,7 +136,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             >
               <button
                 onClick={() => onOpenConsultation()}
-                className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.2em] font-bold shadow-2xl shadow-brand-purple/40 hover:shadow-brand-purple/60 hover:-translate-y-0.5 transition-all duration-300"
+                className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.2em] font-semibold shadow-2xl shadow-brand-purple/40 hover:shadow-brand-purple/60 hover:-translate-y-0.5 transition-all duration-300"
               >
                 <span>Book a Consultation</span>
                 <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -206,7 +206,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                 THE AUREX APPROACH
               </span>
 
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-gray-950 leading-[1.15]">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950 leading-[1.15]">
                 “The right property is only the beginning.<br />
                 <span className="text-brand-purple">The right decision is what matters.</span>”
               </h2>
@@ -274,7 +274,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               DIFFERENT BY DESIGN
             </span>
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-950 mb-4">
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-4">
               Not Your Average Broker.<br />Your Growth Partner.
             </h2>
             <p className="text-base md:text-lg text-gray-600 font-light">
@@ -325,7 +325,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                   <span className="text-xs uppercase tracking-[0.22em] text-gray-400 font-semibold block mb-2">
                     {block.eyebrow}
                   </span>
-                  <h3 className="text-2xl font-bold text-gray-950 mb-3 tracking-tight">
+                  <h3 className="text-2xl font-semibold text-gray-950 mb-3 tracking-tight">
                     {block.title}
                   </h3>
                   <p className="text-gray-600 text-sm md:text-base font-light leading-relaxed">
@@ -349,7 +349,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               GUIDING PRINCIPLES
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-gray-950 leading-[1.2]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950 leading-[1.2]">
               <span className="block">Built on Trust.</span>
               <span className="block mt-1">Defined by How We Work.</span>
             </h2>
@@ -383,13 +383,13 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                       <div className="w-14 h-14 rounded-2xl bg-brand-purple/10 border border-brand-purple/15 text-brand-purple flex items-center justify-center group-hover:bg-brand-purple group-hover:text-white transition-all duration-300 group-hover:scale-105 shadow-sm">
                         <IconComponent className="w-7 h-7 stroke-[1.5]" />
                       </div>
-                      <span className="text-sm font-mono font-bold tracking-widest text-gray-400 group-hover:text-brand-purple transition-colors">
+                      <span className="text-sm font-mono font-semibold tracking-widest text-gray-400 group-hover:text-brand-purple transition-colors">
                         0{idx + 1}
                       </span>
                     </div>
 
                     {/* Bold Pillar Title */}
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-950 mb-3 tracking-tight group-hover:text-brand-purple transition-colors duration-200">
+                    <h3 className="text-xl sm:text-2xl font-semibold text-gray-950 mb-3 tracking-tight group-hover:text-brand-purple transition-colors duration-200">
                       {val.name}
                     </h3>
 
@@ -419,7 +419,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               PROPERTY ASSET CATEGORIES
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-gray-950 mb-5 leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-5 leading-tight">
               Strategic Real Estate Asset Portfolios.
             </h2>
             <p className="text-base md:text-lg text-gray-600 font-light leading-relaxed">
@@ -451,7 +451,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                   <span className="text-[10px] uppercase tracking-[0.25em] text-purple-300 font-semibold block mb-1">
                     RESIDENTIAL ASSET
                   </span>
-                  <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
+                  <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">
                     High Rise Apartments
                   </h3>
                   <p className="text-gray-200 text-xs md:text-sm font-light mt-1">
@@ -496,7 +496,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                     <span className="text-[9px] uppercase tracking-widest text-purple-300 font-semibold block">
                       INDEPENDENT LIVING
                     </span>
-                    <h4 className="text-base font-bold">Low Rise Floors</h4>
+                    <h4 className="text-base font-semibold">Low Rise Floors</h4>
                   </div>
                   <button
                     onClick={(e) => {
@@ -532,7 +532,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                     <span className="text-[9px] uppercase tracking-widest text-purple-300 font-semibold block">
                       LAND & TOWNSHIPS
                     </span>
-                    <h4 className="text-base font-bold">Plots</h4>
+                    <h4 className="text-base font-semibold">Plots</h4>
                   </div>
                   <button
                     onClick={(e) => {
@@ -569,7 +569,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                   <span className="text-[10px] uppercase tracking-widest text-purple-300 font-semibold block mb-0.5">
                     COMMERCIAL ASSET
                   </span>
-                  <h4 className="text-xl font-bold">Commercial Investment</h4>
+                  <h4 className="text-xl font-semibold">Commercial Investment</h4>
                   <p className="text-xs text-gray-300 font-light mt-0.5">Grade-A office suites, retail arcades, and pre-leased assets.</p>
                 </div>
                 <button
@@ -606,7 +606,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                   <span className="text-[10px] uppercase tracking-widest text-purple-300 font-semibold block mb-0.5">
                     STRATEGIC ENTRY
                   </span>
-                  <h4 className="text-xl font-bold">Affordable Investment</h4>
+                  <h4 className="text-xl font-semibold">Affordable Investment</h4>
                   <p className="text-xs text-gray-300 font-light mt-0.5">High-yield entry investments in smart planned communities.</p>
                 </div>
                 <button
@@ -650,7 +650,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               THE ADVISORY PROCESS
             </span>
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-950 mb-4">
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-4">
               Clarity Before Commitment.
             </h2>
             <p className="text-gray-600 text-sm md:text-base font-light">
@@ -678,10 +678,10 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                 whileHover={{ y: -6, transition: { duration: 0.25 } }}
                 className="luxury-card relative z-10 bg-white rounded-2xl p-8 border border-gray-200/80 shadow-sm group"
               >
-                <div className="w-12 h-12 rounded-full bg-brand-purple text-white font-bold text-sm flex items-center justify-center mb-6 shadow-md shadow-brand-purple/30 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-brand-purple/40 transition-all duration-300">
+                <div className="w-12 h-12 rounded-full bg-brand-purple text-white font-semibold text-sm flex items-center justify-center mb-6 shadow-md shadow-brand-purple/30 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-brand-purple/40 transition-all duration-300">
                   {item.step}
                 </div>
-                <h3 className="text-lg font-bold tracking-wider text-gray-950 mb-2 uppercase">
+                <h3 className="text-lg font-semibold tracking-wider text-gray-950 mb-2 uppercase">
                   {item.title}
                 </h3>
                 <p className="text-sm text-gray-600 font-light">
@@ -732,7 +732,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-4">
               TAKE THE NEXT STEP
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-gray-950 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-4">
               Let’s Start With a Conversation.
             </h2>
             <p className="text-gray-600 text-sm md:text-base font-light mb-8 max-w-md mx-auto leading-relaxed">
@@ -741,7 +741,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             <div className="flex items-center justify-center">
               <button
                 onClick={() => onOpenConsultation()}
-                className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.2em] font-bold shadow-lg shadow-brand-purple/30 hover:shadow-brand-purple/50 hover:-translate-y-0.5 transition-all duration-300"
+                className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.2em] font-semibold shadow-lg shadow-brand-purple/30 hover:shadow-brand-purple/50 hover:-translate-y-0.5 transition-all duration-300"
               >
                 <span>Book a Consultation</span>
                 <ArrowUpRight className="w-4 h-4" />

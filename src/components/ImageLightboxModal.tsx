@@ -85,7 +85,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
           {zoomLevel > 1 && (
             <button
               onClick={resetZoom}
-              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all text-[11px] font-bold"
+              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all text-[11px] font-semibold"
               title="Reset Zoom"
               aria-label="Reset Zoom"
             >
@@ -119,7 +119,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
         {/* Caption Bar */}
         {(title || caption) && (
           <div className="w-full text-center py-4 px-6 bg-black/60 backdrop-blur-md rounded-b-2xl border-t border-white/10">
-            <h4 className="text-white text-base font-bold tracking-tight">{title}</h4>
+            <h4 className="text-white text-base font-semibold tracking-tight">{title}</h4>
             {caption && <p className="text-gray-300 text-xs font-light mt-1">{caption}</p>}
           </div>
         )}

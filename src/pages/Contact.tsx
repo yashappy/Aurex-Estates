@@ -9,7 +9,7 @@ export const Contact: React.FC = () => {
       {/* Hero Header */}
       <section className="py-16 md:py-24 text-center">
         <div className="max-w-site mx-auto px-6 md:px-12">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-950 mb-4">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-gray-950 mb-4">
             Let’s Start With a Conversation.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-gray-600 font-light max-w-xl mx-auto">
@@ -34,7 +34,7 @@ export const Contact: React.FC = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6 text-white">
-                  <h3 className="text-xl font-bold">
+                  <h3 className="text-xl font-semibold">
                     DLF Corporate Greens, Sector 74A
                   </h3>
                 </div>
@@ -43,7 +43,7 @@ export const Contact: React.FC = () => {
               {/* Physical Coordinates Card */}
               <div className="luxury-card bg-white rounded-2xl p-8 border border-gray-200/80 shadow-lg space-y-6">
                 <div>
-                  <h4 className="text-lg font-bold text-gray-950 tracking-tight">
+                  <h4 className="text-lg font-semibold text-gray-950 tracking-tight">
                     AUREX ESTATES
                   </h4>
                 </div>

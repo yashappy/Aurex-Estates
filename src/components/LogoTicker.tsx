@@ -85,7 +85,7 @@ export const LogoTicker: React.FC = () => {
         <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
           INSTITUTIONAL DEVELOPER NETWORK
         </span>
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-gray-950">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950">
           Connected to Leading Developers.
         </h2>
       </div>

@@ -62,7 +62,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
               ABOUT AUREX ESTATES
             </span>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-950 leading-[1.1] mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-gray-950 leading-[1.1] mb-6">
               Built Around Trust.<br />
               <span className="text-brand-purple">Driven by Perspective.</span>
             </h1>
@@ -99,7 +99,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
                 OUR PHILOSOPHY
               </span>
 
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-950 tracking-tight leading-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-950 tracking-tight leading-tight">
                 Not a Property Broker.<br />
                 A Strategic Advisory Partner.
               </h2>
@@ -138,7 +138,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
                 <span className="text-[10px] uppercase tracking-widest text-brand-purpleLight font-semibold block mb-0.5">
                   RESIDENTIAL SANCTUARY
                 </span>
-                <h4 className="text-base font-bold">Resort-Style Amenities & Clubhouses</h4>
+                <h4 className="text-base font-semibold">Resort-Style Amenities & Clubhouses</h4>
               </div>
             </div>
 
@@ -154,7 +154,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
                 <span className="text-[10px] uppercase tracking-widest text-brand-purpleLight font-semibold block mb-0.5">
                   COMMERCIAL CORRIDOR
                 </span>
-                <h4 className="text-base font-bold">Institutional Grade Complexes</h4>
+                <h4 className="text-base font-semibold">Institutional Grade Complexes</h4>
               </div>
             </div>
           </div>
@@ -173,7 +173,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
                 <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-4">
                   OUR MISSION
                 </span>
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-950 mb-6 tracking-tight">
+                <h3 className="text-2xl sm:text-3xl font-semibold text-gray-950 mb-6 tracking-tight">
                   Purpose in Every Decision
                 </h3>
                 <p className="text-lg sm:text-xl text-gray-700 font-light leading-relaxed italic">
@@ -191,7 +191,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
                 <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-4">
                   OUR VISION
                 </span>
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-950 mb-6 tracking-tight">
+                <h3 className="text-2xl sm:text-3xl font-semibold text-gray-950 mb-6 tracking-tight">
                   Enduring Client Legacy
                 </h3>
                 <p className="text-lg sm:text-xl text-gray-700 font-light leading-relaxed italic">
@@ -215,7 +215,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
             <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
               WHAT WE STAND FOR
             </span>
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-950 mb-4">
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-4">
               Our Core Values.
             </h2>
             <p className="text-gray-600 text-sm md:text-base font-light">
@@ -234,7 +234,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
                   <div className="w-12 h-12 rounded-xl bg-brand-purple/10 text-brand-purple flex items-center justify-center mb-6 group-hover:bg-brand-purple group-hover:text-white transition-all duration-300 group-hover:scale-105">
                     <IconComp className="w-6 h-6 stroke-[1.5]" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-950 mb-2 tracking-tight">
+                  <h3 className="text-xl font-semibold text-gray-950 mb-2 tracking-tight">
                     {val.name}
                   </h3>
                   <p className="text-sm text-gray-600 font-light leading-relaxed">
@@ -269,7 +269,7 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
             <div className="pt-8 flex items-center justify-center">
               <button
                 onClick={onOpenConsultation}
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.2em] font-bold shadow-lg shadow-brand-purple/30 hover:shadow-brand-purple/50 transition-all hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.2em] font-semibold shadow-lg shadow-brand-purple/30 hover:shadow-brand-purple/50 transition-all hover:-translate-y-0.5"
               >
                 <span>Book a Consultation</span>
                 <ArrowUpRight className="w-4 h-4" />

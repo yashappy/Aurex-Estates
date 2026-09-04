@@ -41,7 +41,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, 
             <Shield className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xl font-bold tracking-tight text-gray-950">Privacy Policy</h3>
+            <h3 className="text-xl font-semibold tracking-tight text-gray-950">Privacy Policy</h3>
             <p className="text-xs text-gray-500">Effective as of 2026 • Aurex Estates</p>
           </div>
         </div>

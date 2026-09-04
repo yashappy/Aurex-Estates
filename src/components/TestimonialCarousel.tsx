@@ -60,7 +60,7 @@ export const TestimonialCarousel: React.FC = () => {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-10 md:mb-12"
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-gray-950">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-gray-950">
             What Our Clients Say.
           </h2>
           <p className="text-gray-500 text-xs sm:text-sm md:text-base font-light max-w-lg mx-auto mt-2.5">
@@ -108,12 +108,12 @@ export const TestimonialCarousel: React.FC = () => {
           <div className="mt-6 pt-5 border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-center sm:text-left">
               {/* Monogram Badge */}
-              <div className="w-10 h-10 rounded-full bg-brand-purple/10 text-brand-purple font-bold text-xs flex items-center justify-center border border-brand-purple/30 shadow-sm shrink-0">
+              <div className="w-10 h-10 rounded-full bg-brand-purple/10 text-brand-purple font-semibold text-xs flex items-center justify-center border border-brand-purple/30 shadow-sm shrink-0">
                 {initials}
               </div>
 
               <div>
-                <h4 className="text-sm font-bold text-gray-950 tracking-wide">
+                <h4 className="text-sm font-semibold text-gray-950 tracking-wide">
                   {current.clientName}
                 </h4>
                 <p className="text-[11px] text-brand-purple tracking-wider uppercase font-semibold mt-0.5">

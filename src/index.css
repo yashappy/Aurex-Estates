@@ -17,6 +17,9 @@
   button, input, optgroup, select, textarea {
     font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   }
+  b, strong {
+    font-weight: 600;
+  }
 }
 
 /* Custom Light Luxury Glassmorphism & Elevation */

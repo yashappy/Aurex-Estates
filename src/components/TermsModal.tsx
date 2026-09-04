@@ -41,7 +41,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xl font-bold tracking-tight text-gray-950">Terms & Conditions</h3>
+            <h3 className="text-xl font-semibold tracking-tight text-gray-950">Terms & Conditions</h3>
             <p className="text-xs text-gray-500">Aurex Estates • Advisory Protocol</p>
           </div>
         </div>

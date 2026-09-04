@@ -84,7 +84,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ className = '', source
         <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 border border-emerald-200 shadow-sm">
           <CheckCircle2 className="w-8 h-8" />
         </div>
-        <h3 className="text-2xl font-bold text-gray-950 mb-3">Enquiry Received</h3>
+        <h3 className="text-2xl font-semibold text-gray-950 mb-3">Enquiry Received</h3>
         <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-md mx-auto mb-8 font-light">
           Thank you. Your consultation request {category ? `for ${category}` : ''} has been received. An Aurex Estates senior advisor will connect with you shortly.
         </p>
@@ -114,7 +114,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ className = '', source
             </span>
           </div>
         )}
-        <h3 className="text-2xl md:text-3xl font-bold text-gray-950 tracking-tight">
+        <h3 className="text-2xl md:text-3xl font-semibold text-gray-950 tracking-tight">
           Request Consultation
         </h3>
       </div>
@@ -195,7 +195,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ className = '', source
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-4 px-8 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.2em] font-bold shadow-md shadow-brand-purple/25 hover:shadow-lg hover:shadow-brand-purple/35 transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-75 cursor-pointer disabled:cursor-not-allowed"
+            className="w-full py-4 px-8 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-[0.2em] font-semibold shadow-md shadow-brand-purple/25 hover:shadow-lg hover:shadow-brand-purple/35 transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-75 cursor-pointer disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>
