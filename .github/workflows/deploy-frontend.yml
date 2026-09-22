@@ -56,7 +56,12 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
           server-dir: public_html/
-          protocol: ftp
+          state-name: .sync-state-main.json
+          timeout: 300000
+          exclude: |
+            **/.git*
+            **/.git*/**
+            admin/**
 
       - name: 🌐 Deploy CMS Portal to Hostinger Subdomain (public_html/admin/)
         if: env.FTP_SERVER != ''
@@ -69,4 +74,5 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
           server-dir: public_html/admin/
-          protocol: ftp
+          state-name: .sync-state-admin.json
+          timeout: 300000
