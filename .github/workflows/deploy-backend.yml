@@ -71,5 +71,5 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./backend-deploy/
-          server-dir: public_html/admin/
+          server-dir: admin/
           protocol: ftp
