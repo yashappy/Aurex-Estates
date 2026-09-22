@@ -35,7 +35,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       aria-label="Floating Mobile Navigation Menu"
       className="fixed bottom-3 left-3 right-3 sm:left-4 sm:right-4 max-w-md mx-auto z-40 md:hidden bg-white/95 backdrop-blur-2xl border border-white/80 shadow-[0_12px_36px_rgba(13,13,18,0.14),0_2px_10px_rgba(107,57,244,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)] rounded-2xl p-1.5"
     >
-      <div className="grid grid-cols-5 gap-1 items-center w-full relative">
+      <div className="grid grid-cols-[0.9fr_1.2fr_1.2fr_0.85fr_0.85fr] gap-1 items-center w-full relative">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
@@ -70,7 +70,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   }`}
                 />
                 <span
-                  className={`text-[10px] tracking-tight leading-tight transition-colors duration-200 truncate w-full text-center ${
+                  className={`text-[9.5px] tracking-tight leading-tight whitespace-nowrap transition-colors duration-200 text-center ${
                     isActive ? 'text-brand-purple font-bold' : 'text-gray-600 font-medium'
                   }`}
                 >
