@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 55" width="220" height="55">
+  <g transform="translate(12, 10)">
+    <rect x="0" y="0" width="16" height="34" rx="3" fill="#006491"/>
+    <circle cx="8" cy="9" r="3" fill="#FFFFFF"/>
+    <rect x="18" y="0" width="16" height="34" rx="3" fill="#E31837"/>
+    <circle cx="26" cy="9" r="3" fill="#FFFFFF"/>
+    <circle cx="26" cy="25" r="3" fill="#FFFFFF"/>
+  </g>
+  <text x="56" y="34" font-family="'Futura', 'Arial Black', sans-serif" font-weight="900" font-size="24" fill="#006491" letter-spacing="1">Domino's</text>
+</svg>
