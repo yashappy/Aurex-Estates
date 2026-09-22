@@ -12,6 +12,7 @@ on:
       - 'package-lock.json'
       - 'vite.config.ts'
       - 'tsconfig*.json'
+      - 'scripts/**'
       - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
 
@@ -45,7 +46,7 @@ jobs:
           branch: production
           folder: dist
 
-      - name: 🌐 Deploy Main Site to Hostinger Root
+      - name: 🌐 Deploy via FTP to Hostinger (public_html/ including admin/)
         if: env.FTP_SERVER != ''
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         env:
@@ -55,24 +56,5 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
-          server-dir: ./
-          state-name: .sync-state-main.json
-          timeout: 300000
-          exclude: |
-            **/.git*
-            **/.git*/**
-            admin/**
-
-      - name: 🌐 Deploy CMS Portal to Hostinger Subdomain (admin/)
-        if: env.FTP_SERVER != ''
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
-          server-dir: admin/
-          state-name: .sync-state-admin.json
-          timeout: 300000
+          server-dir: public_html/
+          timeout: 600000
