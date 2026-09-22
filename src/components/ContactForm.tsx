@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Send, CheckCircle2, Building, Loader2 } from 'lucide-react';
-import { FORMS_CONFIG } from '../config/forms';
+import { submitLeadGlobally } from '../services/leadService';
 
 interface ContactFormProps {
   className?: string;
@@ -48,26 +48,16 @@ export const ContactForm: React.FC<ContactFormProps> = ({ className = '', source
     setError(null);
 
     try {
-      if (FORMS_CONFIG.googleScriptUrl && FORMS_CONFIG.googleScriptUrl.trim().length > 0) {
-        const payload = new FormData();
-        payload.append('fullName', formData.fullName.trim());
-        payload.append('phoneNumber', formData.phoneNumber.trim());
-        payload.append('emailAddress', formData.emailAddress.trim());
-        payload.append('category', category || 'General Consultation');
-        payload.append('message', formData.message.trim() || 'No specific notes provided');
-        payload.append('pageUrl', typeof window !== 'undefined' ? window.location.href : '');
-        payload.append('source', source || (category ? `Advisory Modal (${category})` : 'Contact Page'));
-        payload.append('timestamp', new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
+      await submitLeadGlobally({
+        name: formData.fullName.trim(),
+        phone: formData.phoneNumber.trim(),
+        email: formData.emailAddress.trim(),
+        projectName: category || 'Consultation Inquiry',
+        type: 'consultation',
+        message: formData.message.trim() || 'No specific notes provided',
+        source: source || (category ? `Advisory Modal (${category})` : 'Contact Page'),
+      });
 
-        await fetch(FORMS_CONFIG.googleScriptUrl.trim(), {
-          method: 'POST',
-          body: payload,
-          mode: 'no-cors',
-        });
-      } else {
-        // Graceful mock delay if Web App URL is not yet connected
-        await new Promise((resolve) => setTimeout(resolve, 600));
-      }
       setIsSubmitting(false);
       setIsSubmitted(true);
     } catch (err) {

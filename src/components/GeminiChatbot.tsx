@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sendChatMessageToGemini, type ChatMessage } from '../services/geminiService';
+import { submitLeadGlobally } from '../services/leadService';
 
 interface UiMessage {
   id: string;
@@ -183,6 +184,17 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
 
     setLeadFormError('');
     setIsLeadSubmitted(true);
+
+    // Submit lead globally to Google Sheets / Excel, email alert & CMS store
+    submitLeadGlobally({
+      name: clientName.trim(),
+      phone: clientPhone.trim(),
+      email: clientEmail.trim(),
+      projectName: collectedCategory ? `${collectedCategory} Advisory` : 'AI Advisory Inquiry',
+      type: 'chatbot',
+      source: 'AI Luxury Advisory Chatbot',
+      message: `Goal: ${collectedGoal || 'Advisory'} | Location: ${collectedLocation || 'Gurugram'}`,
+    });
 
     // Save lead to localStorage for consultation integration
     try {

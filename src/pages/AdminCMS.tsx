@@ -14,20 +14,30 @@ import {
   ArrowLeft,
   FileDown,
   Lock,
-  Unlock,
   Copy,
   Eye,
   EyeOff,
   LogOut,
+  Globe,
+  Sparkles,
+  ExternalLink,
+  CheckCircle2,
+  AlertCircle,
+  ChevronRight,
+  Link2,
+  RefreshCw,
+  FileCheck,
 } from 'lucide-react';
 import {
   cmsStore,
   type CMSProject,
+  type CMSBlogPost,
   type PageContent,
   type MediaItem,
   type LeadSubmission,
 } from '../services/cmsStore';
-import type { BlogPost } from '../data/blogPosts';
+import { generateLSIKeywords, analyzeSEO, type LSIKeywordResult } from '../utils/seoHelper';
+import { FORMS_CONFIG } from '../config/forms';
 import type { Page } from '../App';
 
 interface AdminCMSProps {
@@ -35,16 +45,24 @@ interface AdminCMSProps {
   onSelectProject?: (projectId: string) => void;
 }
 
-type CMSTab = 'projects' | 'posts' | 'pages' | 'media' | 'leads' | 'settings';
+type CMSTab = 'projects' | 'posts' | 'pages' | 'media' | 'leads' | 'seo';
+type PageSubTab = 'home' | 'about' | 'residential' | 'commercial' | 'plots' | 'career' | 'contact';
+type ViewMode = 'list' | 'edit-project' | 'edit-post' | 'preview-project' | 'preview-post';
 
-export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
+export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject }) => {
+  // Navigation & View Modes
   const [activeTab, setActiveTab] = useState<CMSTab>('projects');
+  const [activePageSubTab, setActivePageSubTab] = useState<PageSubTab>('home');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  // Core CMS Data
   const [projects, setProjects] = useState<CMSProject[]>([]);
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [posts, setPosts] = useState<CMSBlogPost[]>([]);
   const [pageContent, setPageContent] = useState<PageContent>(cmsStore.getPageContent());
   const [mediaLibrary, setMediaLibrary] = useState<MediaItem[]>([]);
   const [leads, setLeads] = useState<LeadSubmission[]>([]);
 
+  // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Authentication State
@@ -56,24 +74,52 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (usernameInput.trim() === 'admin' && passwordInput === 'Aurex@2026') {
-      sessionStorage.setItem('aurex_cms_auth', 'true');
-      setIsAuthenticated(true);
-      setAuthError(null);
-      showToast('Welcome, Administrator');
-    } else {
-      setAuthError('Invalid credentials. Please verify your username and password.');
-    }
-  };
+  // Filters & Search
+  const [projectSearch, setProjectSearch] = useState('');
+  const [projectCatFilter, setProjectCatFilter] = useState<'all' | 'residential' | 'commercial' | 'plots'>('all');
+  const [projectStatusFilter, setProjectStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('aurex_cms_auth');
-    setIsAuthenticated(false);
-    setUsernameInput('');
-    setPasswordInput('');
-    showToast('Signed out successfully.');
+  const [postSearch, setPostSearch] = useState('');
+  const [postStatusFilter, setPostStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
+
+  const [leadSearch, setLeadSearch] = useState('');
+  const [leadTypeFilter, setLeadTypeFilter] = useState<string>('all');
+
+  // Active item being edited (Full Page Editor)
+  const [editingProject, setEditingProject] = useState<CMSProject | null>(null);
+  const [editingPost, setEditingPost] = useState<CMSBlogPost | null>(null);
+
+  // Project Editor Sub-section Tab
+  const [projectEditorSection, setProjectEditorSection] = useState<
+    'basic' | 'pricing' | 'media' | 'brochure' | 'content' | 'floorplans' | 'seo'
+  >('basic');
+
+  // Internal Link Generator State
+  const [linkAnchorText, setLinkAnchorText] = useState('');
+  const [linkTargetUrl, setLinkTargetUrl] = useState('/residential');
+
+  // Gallery Add Image Input
+  const [newGalleryImageUrl, setNewGalleryImageUrl] = useState('');
+
+  // SEO Global Desk State
+  const [globalSeedKeyword, setGlobalSeedKeyword] = useState('luxury apartments dwarka expressway gurugram');
+  const [globalLsiCategory, setGlobalLsiCategory] = useState<'residential' | 'commercial' | 'plots'>('residential');
+
+  // Hidden File Inputs
+  const galleryImageUploadRef = useRef<HTMLInputElement>(null);
+  const brochureUploadRef = useRef<HTMLInputElement>(null);
+  const blogImageUploadRef = useRef<HTMLInputElement>(null);
+  const mediaLibraryUploadRef = useRef<HTMLInputElement>(null);
+  const jsonImportRef = useRef<HTMLInputElement>(null);
+
+  // File to Base64 utility
+  const readFileAsDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const showToast = (msg: string) => {
@@ -98,37 +144,31 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
     };
   }, []);
 
-  // Project Search & Filter
-  const [projectSearch, setProjectSearch] = useState('');
-  const [projectCatFilter, setProjectCatFilter] = useState<'all' | 'residential' | 'commercial' | 'plots'>('all');
+  // Login handler
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (usernameInput.trim() === 'admin' && passwordInput === 'Aurex@2026') {
+      sessionStorage.setItem('aurex_cms_auth', 'true');
+      setIsAuthenticated(true);
+      setAuthError(null);
+      showToast('Welcome, Administrator');
+    } else {
+      setAuthError('Invalid credentials. Please verify your username and password.');
+    }
+  };
 
-  // Edit / Create Project Modal
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<CMSProject | null>(null);
-
-  // Edit / Create Post Modal
-  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-
-  // Hidden file inputs for uploads
-  const imageUploadRef = useRef<HTMLInputElement>(null);
-  const brochureUploadRef = useRef<HTMLInputElement>(null);
-  const mediaLibraryUploadRef = useRef<HTMLInputElement>(null);
-  const jsonImportRef = useRef<HTMLInputElement>(null);
-
-  // Handle generic file reading to Base64
-  const readFileAsDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+  const handleLogout = () => {
+    sessionStorage.removeItem('aurex_cms_auth');
+    setIsAuthenticated(false);
+    setUsernameInput('');
+    setPasswordInput('');
+    setViewMode('list');
+    showToast('Signed out successfully.');
   };
 
   // ==================== PROJECT ACTIONS ====================
   const handleOpenNewProject = () => {
-    setEditingProject({
+    const newProj: CMSProject = {
       id: `project-${Date.now()}`,
       name: '',
       category: 'residential',
@@ -145,8 +185,10 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
       sizeMax: 3500,
       sizeDisplay: '2,000 - 3,500 sq ft',
       status: 'Under Construction',
+      statusMode: 'draft',
       image: '/images/meridien/club-facade.png',
-      brochureName: 'Official Brochure.pdf',
+      galleryImages: ['/images/meridien/club-facade.png'],
+      brochureName: '',
       brochureUrl: '',
       requireLeadForBrochure: true,
       highlights: ['Prime corridor connectivity', 'Integrated luxury clubhouse'],
@@ -157,24 +199,42 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
       totalFloors: 'G + 30 Floors',
       reraNumber: 'HARERA Registered',
       featured: false,
-    });
-    setIsProjectModalOpen(true);
+      focusKeyword: '',
+      metaTitle: '',
+      metaDescription: '',
+    };
+    setEditingProject(newProj);
+    setProjectEditorSection('basic');
+    setViewMode('edit-project');
   };
 
   const handleEditProject = (proj: CMSProject) => {
-    setEditingProject({ ...proj });
-    setIsProjectModalOpen(true);
+    setEditingProject({
+      ...proj,
+      statusMode: proj.statusMode || 'published',
+      galleryImages: proj.galleryImages || ((proj as any).images ? [...(proj as any).images] : [proj.image]),
+      focusKeyword: proj.focusKeyword || `${proj.name} Gurugram`,
+      metaTitle: proj.metaTitle || `${proj.name} | Luxury Property in ${proj.location}`,
+      metaDescription: proj.metaDescription || proj.description?.slice(0, 155),
+    });
+    setProjectEditorSection('basic');
+    setViewMode('edit-project');
   };
 
-  const handleSaveProject = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveProject = (status?: 'published' | 'draft') => {
     if (!editingProject || !editingProject.name.trim()) {
       showToast('Project name is required.');
       return;
     }
-    cmsStore.saveProject(editingProject);
-    setIsProjectModalOpen(false);
-    showToast(`Project "${editingProject.name}" saved successfully!`);
+    const updated: CMSProject = {
+      ...editingProject,
+      statusMode: status || editingProject.statusMode || 'published',
+    };
+    cmsStore.saveProject(updated);
+    setEditingProject(updated);
+    showToast(
+      `Project "${updated.name}" saved as ${updated.statusMode === 'published' ? '🟢 Published' : '🟡 Draft'}!`
+    );
   };
 
   const handleDeleteProject = (proj: CMSProject) => {
@@ -184,33 +244,71 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
     }
   };
 
-  const handleToggleBrochureGating = (proj: CMSProject) => {
-    const updated = {
-      ...proj,
-      requireLeadForBrochure: !proj.requireLeadForBrochure,
-    };
-    cmsStore.saveProject(updated);
-    showToast(`Brochure condition updated for ${proj.name}: ${updated.requireLeadForBrochure ? 'Requires User Details' : 'Open Download'}`);
-  };
-
-  // Upload Project Hero Image
-  const handleProjectHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload Additional Gallery Image
+  const handleGalleryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && editingProject) {
       try {
         const dataUrl = await readFileAsDataUrl(file);
-        setEditingProject({ ...editingProject, image: dataUrl });
+        const currentGallery = editingProject.galleryImages || [editingProject.image];
+        setEditingProject({
+          ...editingProject,
+          galleryImages: [...currentGallery, dataUrl],
+        });
         cmsStore.addMediaItem({
           name: file.name,
           type: 'image',
           url: dataUrl,
           size: `${Math.round(file.size / 1024)} KB`,
         });
-        showToast('Image uploaded successfully!');
+        showToast('Image added to gallery!');
       } catch {
-        showToast('Failed to upload image.');
+        showToast('Failed to upload gallery image.');
       }
     }
+  };
+
+  // Add Gallery Image from URL
+  const handleAddGalleryImageUrl = () => {
+    if (!newGalleryImageUrl.trim() || !editingProject) return;
+    const currentGallery = editingProject.galleryImages || [editingProject.image];
+    setEditingProject({
+      ...editingProject,
+      galleryImages: [...currentGallery, newGalleryImageUrl.trim()],
+    });
+    setNewGalleryImageUrl('');
+    showToast('Image URL added to gallery!');
+  };
+
+  // Delete Gallery Image
+  const handleDeleteGalleryImage = (index: number) => {
+    if (!editingProject) return;
+    const currentGallery = editingProject.galleryImages || [editingProject.image];
+    if (currentGallery.length <= 1) {
+      showToast('Project must have at least one image.');
+      return;
+    }
+    const updated = currentGallery.filter((_, i) => i !== index);
+    setEditingProject({
+      ...editingProject,
+      galleryImages: updated,
+      image: index === 0 ? updated[0] : editingProject.image,
+    });
+    showToast('Gallery image removed.');
+  };
+
+  // Set Gallery Image as Hero
+  const handleSetGalleryImageAsHero = (index: number) => {
+    if (!editingProject) return;
+    const currentGallery = editingProject.galleryImages || [editingProject.image];
+    const selectedImg = currentGallery[index];
+    const newGallery = [selectedImg, ...currentGallery.filter((_, i) => i !== index)];
+    setEditingProject({
+      ...editingProject,
+      image: selectedImg,
+      galleryImages: newGallery,
+    });
+    showToast('Image set as primary Hero image!');
   };
 
   // Upload Project PDF Brochure
@@ -230,16 +328,40 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
           url: dataUrl,
           size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
         });
-        showToast('PDF Brochure uploaded successfully!');
+        showToast(`Official brochure attached: ${file.name}`);
       } catch {
         showToast('Failed to upload PDF brochure.');
       }
     }
   };
 
+  // Remove Attached Brochure
+  const handleRemoveBrochure = () => {
+    if (!editingProject) return;
+    if (window.confirm('Are you sure you want to remove the attached PDF brochure?')) {
+      setEditingProject({
+        ...editingProject,
+        brochureName: '',
+        brochureUrl: '',
+      });
+      showToast('Brochure removed. You can now upload a new PDF brochure.');
+    }
+  };
+
+  // Insert Internal Link into Description
+  const handleInsertInternalLink = (anchor: string, url: string) => {
+    if (!editingProject) return;
+    const linkMarkdown = `[${anchor}](${url})`;
+    setEditingProject({
+      ...editingProject,
+      description: editingProject.description ? `${editingProject.description} ${linkMarkdown}` : linkMarkdown,
+    });
+    showToast(`Inserted link: ${linkMarkdown}`);
+  };
+
   // ==================== BLOG POST ACTIONS ====================
   const handleOpenNewPost = () => {
-    setEditingPost({
+    const newPost: CMSBlogPost = {
       id: `post-${Date.now()}`,
       slug: `market-insight-${Date.now()}`,
       title: '',
@@ -255,41 +377,152 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
       keyTakeaways: ['Institutional corridor capital velocity', 'Long-term risk-adjusted returns'],
       content: ['In-depth strategic advisory report for high-net-worth real estate investors.'],
       tags: ['Gurugram Real Estate', 'Investment Advisory'],
+      statusMode: 'draft',
+      focusKeyword: '',
+      metaTitle: '',
+      metaDescription: '',
+    };
+    setEditingPost(newPost);
+    setViewMode('edit-post');
+  };
+
+  const handleEditPost = (post: CMSBlogPost) => {
+    setEditingPost({
+      ...post,
+      statusMode: post.statusMode || 'published',
+      focusKeyword: post.focusKeyword || post.title.split(':')[0] || post.title,
+      metaTitle: post.metaTitle || `${post.title} | Aurex Estates Blogs`,
+      metaDescription: post.metaDescription || post.excerpt?.slice(0, 155),
     });
-    setIsPostModalOpen(true);
+    setViewMode('edit-post');
   };
 
-  const handleEditPost = (post: BlogPost) => {
-    setEditingPost({ ...post });
-    setIsPostModalOpen(true);
-  };
-
-  const handleSavePost = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSavePost = (status?: 'published' | 'draft') => {
     if (!editingPost || !editingPost.title.trim()) {
-      showToast('Article title is required.');
+      showToast('Blog title is required.');
       return;
     }
-    cmsStore.saveBlogPost(editingPost);
-    setIsPostModalOpen(false);
-    showToast(`Article "${editingPost.title}" published!`);
+    const updated: CMSBlogPost = {
+      ...editingPost,
+      statusMode: status || editingPost.statusMode || 'published',
+    };
+    cmsStore.saveBlogPost(updated);
+    setEditingPost(updated);
+    showToast(`Blog "${updated.title}" saved as ${updated.statusMode === 'published' ? '🟢 Published' : '🟡 Draft'}!`);
   };
 
-  const handleDeletePost = (post: BlogPost) => {
-    if (window.confirm(`Delete article "${post.title}"?`)) {
+  const handleDeletePost = (post: CMSBlogPost) => {
+    if (window.confirm(`Delete blog post "${post.title}"?`)) {
       cmsStore.deleteBlogPost(post.id);
-      showToast(`Article deleted.`);
+      showToast(`Blog post deleted.`);
     }
+  };
+
+  // Upload Blog Cover Image
+  const handleBlogImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingPost) {
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        setEditingPost({ ...editingPost, image: dataUrl });
+        cmsStore.addMediaItem({
+          name: file.name,
+          type: 'image',
+          url: dataUrl,
+          size: `${Math.round(file.size / 1024)} KB`,
+        });
+        showToast('Blog cover image updated!');
+      } catch {
+        showToast('Failed to upload image.');
+      }
+    }
+  };
+
+  // Insert Internal Link into Blog Content
+  const handleInsertBlogInternalLink = (anchor: string, url: string) => {
+    if (!editingPost) return;
+    const linkMarkdown = `[${anchor}](${url})`;
+    const currentParagraphs = Array.isArray(editingPost.content)
+      ? [...editingPost.content]
+      : [editingPost.content || ''];
+    if (currentParagraphs.length === 0) {
+      currentParagraphs.push(linkMarkdown);
+    } else {
+      currentParagraphs[currentParagraphs.length - 1] = `${currentParagraphs[currentParagraphs.length - 1]} ${linkMarkdown}`;
+    }
+    setEditingPost({
+      ...editingPost,
+      content: currentParagraphs,
+    });
+    showToast(`Inserted link: ${linkMarkdown}`);
   };
 
   // ==================== PAGE CONTENT SAVE ====================
   const handleSavePageContent = (e: React.FormEvent) => {
     e.preventDefault();
     cmsStore.savePageContent(pageContent);
-    showToast('Page content updated successfully!');
+    showToast('Page texts & elements updated successfully across the website!');
   };
 
-  // ==================== MEDIA LIBRARY UPLOAD ====================
+  // Add Job Opening to Careers
+  const handleAddJobOpening = () => {
+    const newJob = {
+      id: `job-${Date.now()}`,
+      title: 'New Position',
+      department: 'Advisory',
+      location: 'Gurugram',
+      type: 'Full-time',
+      description: 'Role overview and requirements.',
+    };
+    setPageContent({
+      ...pageContent,
+      career: {
+        ...pageContent.career,
+        openings: [newJob, ...(pageContent.career.openings || [])],
+      },
+    });
+    showToast('New job opening added. Edit details below and click Save.');
+  };
+
+  // Delete Job Opening
+  const handleDeleteJobOpening = (id: string) => {
+    setPageContent({
+      ...pageContent,
+      career: {
+        ...pageContent.career,
+        openings: (pageContent.career.openings || []).filter((j) => j.id !== id),
+      },
+    });
+    showToast('Job opening removed.');
+  };
+
+  // Add Home Stat Counter
+  const handleAddHomeStat = () => {
+    const newStat = { value: '100+', label: 'Stat Metric', sublabel: 'Prime NCR' };
+    setPageContent({
+      ...pageContent,
+      home: {
+        ...pageContent.home,
+        stats: [...(pageContent.home.stats || []), newStat],
+      },
+    });
+    showToast('New stat metric added.');
+  };
+
+  // Delete Home Stat Counter
+  const handleDeleteHomeStat = (idx: number) => {
+    const updated = (pageContent.home.stats || []).filter((_, i) => i !== idx);
+    setPageContent({
+      ...pageContent,
+      home: {
+        ...pageContent.home,
+        stats: updated,
+      },
+    });
+    showToast('Stat metric removed.');
+  };
+
+  // ==================== MEDIA LIBRARY ====================
   const handleGeneralMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -339,7 +572,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
 
   // ==================== JSON BACKUP & RESTORE ====================
   const handleExportJSON = () => {
-    const json = cmsStore.exportDatabaseJSON();
+    const json = cmsStore.exportFullBackup();
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -348,7 +581,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Database backup downloaded!');
+    showToast('Full website database backup exported!');
   };
 
   const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -357,7 +590,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const text = event.target?.result as string;
-        const success = cmsStore.importDatabaseJSON(text);
+        const success = cmsStore.importFullBackup(text);
         if (success) {
           showToast('Database restored successfully from backup!');
         } else {
@@ -368,22 +601,71 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
     }
   };
 
-  // Filtered projects
+  // ==================== FILTERED LISTS ====================
   const filteredProjects = projects.filter((p) => {
     if (projectCatFilter !== 'all' && p.category !== projectCatFilter) return false;
-    if (projectSearch.trim() && !p.name.toLowerCase().includes(projectSearch.toLowerCase()) && !p.developer.toLowerCase().includes(projectSearch.toLowerCase())) {
+    if (projectStatusFilter !== 'all' && (p.statusMode || 'published') !== projectStatusFilter) return false;
+    if (
+      projectSearch.trim() &&
+      !p.name.toLowerCase().includes(projectSearch.toLowerCase()) &&
+      !p.developer.toLowerCase().includes(projectSearch.toLowerCase())
+    ) {
       return false;
     }
     return true;
   });
 
-  // If not logged in, show secure login portal
+  const filteredPosts = posts.filter((post) => {
+    if (postStatusFilter !== 'all' && (post.statusMode || 'published') !== postStatusFilter) return false;
+    if (postSearch.trim() && !post.title.toLowerCase().includes(postSearch.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
+
+  const filteredLeads = leads.filter((lead) => {
+    if (leadTypeFilter !== 'all' && lead.type !== leadTypeFilter) return false;
+    if (
+      leadSearch.trim() &&
+      !lead.name.toLowerCase().includes(leadSearch.toLowerCase()) &&
+      !lead.phone.toLowerCase().includes(leadSearch.toLowerCase()) &&
+      !lead.email.toLowerCase().includes(leadSearch.toLowerCase()) &&
+      !(lead.projectName || '').toLowerCase().includes(leadSearch.toLowerCase())
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  // Calculate Real-time SEO analysis for editing project
+  const projectSeoAnalysis = editingProject
+    ? analyzeSEO({
+        title: editingProject.name,
+        description: editingProject.description || '',
+        focusKeyword: editingProject.focusKeyword,
+        metaTitle: editingProject.metaTitle,
+        metaDescription: editingProject.metaDescription,
+        highlights: editingProject.highlights,
+        amenities: editingProject.amenities,
+      })
+    : null;
+
+  // 10 LSI Keywords for editing project
+  const projectLsiKeywords: LSIKeywordResult[] = editingProject
+    ? generateLSIKeywords(editingProject.focusKeyword || editingProject.name, editingProject.category)
+    : [];
+
+  // 10 LSI Keywords for editing blog post
+  const blogLsiKeywords: LSIKeywordResult[] = editingPost
+    ? generateLSIKeywords(editingPost.focusKeyword || editingPost.title, 'residential')
+    : [];
+
+  // ==================== AUTHENTICATION SCREEN ====================
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#0A0A0F] text-white flex items-center justify-center px-4 py-20 relative overflow-hidden font-sans">
-        {/* Ambient Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-purple/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="min-h-screen bg-[#07070A] text-white flex items-center justify-center px-4 py-20 relative overflow-hidden font-sans">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-purple/20 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="max-w-md w-full relative z-10">
           <div className="text-center mb-8">
@@ -392,31 +674,28 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-400 hover:text-white transition-colors mb-6 border border-white/10"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Website</span>
+              <span>Back to Aurex Estates</span>
             </button>
 
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-brand-purple to-purple-500 flex items-center justify-center shadow-xl shadow-brand-purple/30 mb-4">
-              <Lock className="w-7 h-7 text-white" />
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-brand-purple to-purple-500 flex items-center justify-center shadow-xl shadow-brand-purple/30 mb-4 border border-brand-purple/40">
+              <Lock className="w-8 h-8 text-white" />
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Aurex CMS Portal
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-400 mt-2">
-              Sign in with your administrative credentials to manage website content, projects, and leads.
-            </p>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Aurex Admin Portal</h1>
+            <p className="text-xs text-gray-400 mt-1">Sign in with authorized administrator credentials</p>
           </div>
 
-          <div className="bg-[#14141E]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl">
-            <form onSubmit={handleLogin} className="space-y-5">
-              {authError && (
-                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium">
-                  {authError}
-                </div>
-              )}
+          <div className="bg-[#101016] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+            {authError && (
+              <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{authError}</span>
+              </div>
+            )}
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
                   Username
                 </label>
                 <input
@@ -425,13 +704,12 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
                   placeholder="admin"
-                  autoComplete="username"
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-brand-purple focus:ring-1 focus:ring-brand-purple text-white text-sm outline-none transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
                   Password
                 </label>
                 <div className="relative">
@@ -441,13 +719,12 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     placeholder="••••••••••••"
-                    autoComplete="current-password"
-                    className="w-full px-4 py-3 pr-11 rounded-xl bg-white/5 border border-white/10 focus:border-brand-purple focus:ring-1 focus:ring-brand-purple text-white text-sm outline-none transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all pr-11"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -456,82 +733,272 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
 
               <button
                 type="submit"
-                className="w-full py-3.5 px-4 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white text-sm font-bold tracking-wide transition-all duration-200 shadow-lg shadow-brand-purple/25 active:scale-[0.98] mt-2"
+                className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-brand-purple to-purple-600 hover:from-brand-purpleLight hover:to-purple-500 text-white font-semibold text-sm shadow-lg shadow-brand-purple/25 transition-all active:scale-[0.98]"
               >
-                Sign In to CMS
+                Sign In to Dashboard
               </button>
             </form>
-          </div>
 
-          <div className="text-center mt-6 text-xs text-gray-500">
-            Aurex Estates • Content Management System v2.0
+            <div className="mt-6 pt-5 border-t border-white/10 text-center">
+              <span className="text-[11px] text-gray-500 font-mono">
+                Aurex Estates Administrative Panel • Secured HTTPS
+              </span>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  // ==================== DASHBOARD MAIN LAYOUT ====================
   return (
-    <div className="min-h-screen bg-[#0F0F14] text-white pt-8 sm:pt-10 pb-24 font-sans">
-      {/* Toast Notification */}
+    <div className="min-h-screen bg-[#09090D] text-gray-200 flex font-sans antialiased overflow-x-hidden">
+      {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed top-24 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl bg-brand-purple text-white shadow-2xl border border-white/20 animate-fade-in">
-          <Check className="w-5 h-5 text-white shrink-0" />
-          <span className="text-sm font-semibold">{toastMessage}</span>
+        <div className="fixed top-5 right-5 z-50 px-4 py-3 rounded-xl bg-brand-purple text-white text-xs sm:text-sm font-semibold shadow-2xl flex items-center gap-2 border border-white/20 animate-in slide-in-from-top-4">
+          <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+          <span>{toastMessage}</span>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-8 border-b border-white/10">
-          <div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => onNavigate('home')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition-colors"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>View Live Site</span>
-              </button>
-              <span className="px-2.5 py-0.5 rounded-full bg-brand-purple/20 border border-brand-purple/40 text-brand-purpleLight text-[11px] font-mono font-bold tracking-wider">
-                AUREX CMS v2.0
-              </span>
+      {/* =========================================================================
+          LEFT SIDEBAR: WORDPRESS-STYLE NAVIGATION
+      ========================================================================= */}
+      <aside className="w-64 bg-[#0D0D14] border-r border-white/10 flex flex-col justify-between shrink-0 min-h-screen select-none z-30 sticky top-0 h-screen">
+        {/* Top Header / Branding */}
+        <div>
+          <div className="p-4 border-b border-white/10 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-purple to-purple-500 flex items-center justify-center font-bold text-white shadow-md shadow-brand-purple/30 text-sm">
+                A
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-white tracking-wide">Aurex Admin</h2>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] text-gray-400 font-medium">v2.5 Live Sync</span>
+                </div>
+              </div>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2">
-              Website Content Management System
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-400 mt-1">
-              Add, edit, or delete any project, blog post, page text, media asset, or PDF brochure with instant live updates.
-            </p>
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-brand-purple/20 text-brand-purpleLight border border-brand-purple/40">
+              CMS
+            </span>
           </div>
 
-          {/* Quick Database Metrics & Export */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          {/* Navigation Links */}
+          <nav className="p-3 space-y-1">
+            {/* 1. Projects */}
+            <button
+              onClick={() => {
+                setActiveTab('projects');
+                setViewMode('list');
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'projects' && viewMode === 'list'
+                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/25'
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Building2 className="w-4 h-4 text-purple-400" />
+                <span>Projects</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-white font-mono">
+                {projects.length}
+              </span>
+            </button>
+
+            {/* 2. Blogs (Renamed strictly as Blogs) */}
+            <button
+              onClick={() => {
+                setActiveTab('posts');
+                setViewMode('list');
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'posts' && viewMode === 'list'
+                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/25'
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-4 h-4 text-indigo-400" />
+                <span>Blogs</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-white font-mono">
+                {posts.length}
+              </span>
+            </button>
+
+            {/* 3. Pages & Elements */}
+            <button
+              onClick={() => {
+                setActiveTab('pages');
+                setViewMode('list');
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'pages' && viewMode === 'list'
+                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/25'
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Edit3 className="w-4 h-4 text-blue-400" />
+                <span>Pages & Elements</span>
+              </div>
+              <span className="text-[10px] text-gray-400 font-mono">7 Pages</span>
+            </button>
+
+            {/* 4. Media & PDF Library */}
+            <button
+              onClick={() => {
+                setActiveTab('media');
+                setViewMode('list');
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'media' && viewMode === 'list'
+                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/25'
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <ImageIcon className="w-4 h-4 text-amber-400" />
+                <span>Media & Brochures</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-white font-mono">
+                {mediaLibrary.length}
+              </span>
+            </button>
+
+            {/* 5. Leads & Inquiries */}
+            <button
+              onClick={() => {
+                setActiveTab('leads');
+                setViewMode('list');
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'leads' && viewMode === 'list'
+                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/25'
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-4 h-4 text-emerald-400" />
+                <span>Leads & Inquiries</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" title="Connected to Google Sheet & Email" />
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-mono font-bold">
+                  {leads.length}
+                </span>
+              </div>
+            </button>
+
+            {/* 6. SEO & LSI Engine */}
+            <button
+              onClick={() => {
+                setActiveTab('seo');
+                setViewMode('list');
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === 'seo' && viewMode === 'list'
+                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/25'
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-4 h-4 text-pink-400" />
+                <span>SEO & 10 LSI Desk</span>
+              </div>
+              <span className="px-1.5 py-0.5 rounded text-[9px] bg-pink-500/20 text-pink-300 font-semibold uppercase">
+                AI LSI
+              </span>
+            </button>
+          </nav>
+        </div>
+
+        {/* Sidebar Footer: View Live Site & Sign Out */}
+        <div className="p-3 border-t border-white/10 space-y-2">
+          <a
+            href="https://aurexestates.co.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 hover:text-white transition-all border border-white/5"
+          >
+            <div className="flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5 text-blue-400" />
+              <span>View Live Website</span>
+            </div>
+            <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
+          </a>
+
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.02]">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-brand-purple/30 text-brand-purpleLight flex items-center justify-center font-bold text-xs">
+                AD
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white leading-tight">Admin</p>
+                <p className="text-[10px] text-gray-500 leading-tight">aurex.estates01</p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+              title="Sign out of CMS"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* =========================================================================
+          MAIN WORKSPACE
+      ========================================================================= */}
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto">
+        {/* Top Header Bar (WordPress-style, clean breadcrumbs & quick actions, NO old banner text) */}
+        <header className="h-16 px-6 bg-[#0B0B11]/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Aurex CMS</span>
+            <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
+            <span className="text-sm font-bold text-white capitalize">
+              {viewMode === 'edit-project'
+                ? `Edit Project: ${editingProject?.name || 'New Project'}`
+                : viewMode === 'edit-post'
+                ? `Edit Blog: ${editingPost?.title || 'New Blog'}`
+                : activeTab === 'projects'
+                ? 'All Property Projects'
+                : activeTab === 'posts'
+                ? 'Blogs & Market Intelligence'
+                : activeTab === 'pages'
+                ? 'Pages & Content Elements'
+                : activeTab === 'media'
+                ? 'Media & Brochure Library'
+                : activeTab === 'leads'
+                ? 'Captured Leads & Inquiries'
+                : 'SEO & Real Estate LSI Engine'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            {/* Database Backup Actions */}
             <button
               onClick={handleExportJSON}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-all border border-white/10"
-              title="Backup entire website data to JSON"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-gray-300 hover:text-white transition-all border border-white/10"
+              title="Export complete database backup to JSON"
             >
-              <Download className="w-4 h-4 text-purple-300" />
-              <span>Export Backup (.JSON)</span>
+              <Download className="w-3.5 h-3.5 text-purple-400" />
+              <span>Export Backup</span>
             </button>
 
             <button
               onClick={() => jsonImportRef.current?.click()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-all border border-white/10"
-              title="Restore website data from JSON"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-gray-300 hover:text-white transition-all border border-white/10"
+              title="Import database backup JSON"
             >
-              <Upload className="w-4 h-4 text-emerald-400" />
+              <Upload className="w-3.5 h-3.5 text-emerald-400" />
               <span>Import Backup</span>
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-all"
-              title="Sign out of Admin CMS"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
             </button>
             <input
               type="file"
@@ -540,1013 +1007,2625 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
               accept=".json"
               className="hidden"
             />
-          </div>
-        </div>
 
-        {/* CMS Navigation Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto py-5 border-b border-white/10 scrollbar-none">
-          <button
-            onClick={() => setActiveTab('projects')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'projects'
-                ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/30'
-                : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Building2 className="w-4 h-4" />
-            <span>Projects ({projects.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('posts')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'posts'
-                ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/30'
-                : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>Blog & Insights ({posts.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('pages')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'pages'
-                ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/30'
-                : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Edit3 className="w-4 h-4" />
-            <span>Page Texts & Elements</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('media')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'media'
-                ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/30'
-                : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <ImageIcon className="w-4 h-4" />
-            <span>Media & PDF Library ({mediaLibrary.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('leads')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'leads'
-                ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/30'
-                : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Leads & Downloads ({leads.length})</span>
-          </button>
-        </div>
-
-        {/* =========================================================================
-            TAB 1: PROJECTS MANAGEMENT
-        ========================================================================= */}
-        {activeTab === 'projects' && (
-          <div className="pt-6 space-y-6">
-            {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative flex-1 sm:w-72">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    value={projectSearch}
-                    onChange={(e) => setProjectSearch(e.target.value)}
-                    placeholder="Search projects or developer..."
-                    className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 text-xs">
-                  {(['all', 'residential', 'commercial', 'plots'] as const).map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setProjectCatFilter(cat)}
-                      className={`px-3 py-1.5 rounded-lg capitalize font-medium transition-all ${
-                        projectCatFilter === cat ? 'bg-brand-purple text-white' : 'text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
+            {/* Quick Context Action Button */}
+            {viewMode === 'list' && activeTab === 'projects' && (
               <button
                 onClick={handleOpenNewProject}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-brand-purple/30 transition-all active:scale-95"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-md shadow-brand-purple/30 transition-all"
               >
-                <Plus className="w-4 h-4" />
-                <span>Add New Project</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Add Project</span>
               </button>
-            </div>
+            )}
 
-            {/* Projects Table */}
-            <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden shadow-xl">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-white/5 text-gray-400 font-semibold border-b border-white/10 uppercase tracking-wider text-[11px]">
-                    <tr>
-                      <th className="px-5 py-3.5">Project</th>
-                      <th className="px-4 py-3.5">Category / Segment</th>
-                      <th className="px-4 py-3.5">Location</th>
-                      <th className="px-4 py-3.5">Price Range</th>
-                      <th className="px-4 py-3.5">Brochure Download Condition</th>
-                      <th className="px-5 py-3.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5 text-gray-200">
-                    {filteredProjects.map((p) => (
-                      <tr key={p.id} className="hover:bg-white/[0.03] transition-colors">
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={p.image}
-                              alt={p.name}
-                              className="w-12 h-12 rounded-lg object-cover border border-white/15 shrink-0"
-                            />
-                            <div>
-                              <div className="font-bold text-white text-sm">{p.name}</div>
-                              <div className="text-gray-400 text-xs">{p.developer}</div>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-4">
-                          <div className="flex flex-col gap-1 items-start">
-                            <span className="capitalize font-medium text-purple-300">{p.category}</span>
-                            <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-gray-300 font-semibold">
-                              {p.segment}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-4 text-gray-300">
-                          <div>{p.location}</div>
-                          <div className="text-[11px] text-gray-500">{p.city}</div>
-                        </td>
-
-                        <td className="px-4 py-4">
-                          <div className="font-semibold text-emerald-400">{p.priceDisplay}</div>
-                          <div className="text-[10px] text-gray-400">{p.sizeDisplay}</div>
-                        </td>
-
-                        {/* Brochure Gating Condition */}
-                        <td className="px-4 py-4">
-                          <div className="flex flex-col items-start gap-1">
-                            <button
-                              onClick={() => handleToggleBrochureGating(p)}
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${
-                                p.requireLeadForBrochure
-                                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-                                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                              }`}
-                              title="Click to toggle condition"
-                            >
-                              {p.requireLeadForBrochure ? (
-                                <>
-                                  <Lock className="w-3 h-3" />
-                                  <span>Details Required to Download</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Unlock className="w-3 h-3" />
-                                  <span>Open Download</span>
-                                </>
-                              )}
-                            </button>
-                            {p.brochureUrl && (
-                              <span className="text-[10px] text-gray-400 truncate max-w-xs">
-                                {p.brochureName || 'PDF attached'}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        <td className="px-5 py-4 text-right">
-                          <div className="inline-flex items-center gap-2">
-                            <button
-                              onClick={() => handleEditProject(p)}
-                              className="p-2 rounded-lg bg-white/10 hover:bg-brand-purple text-white transition-colors"
-                              title="Edit Project"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-
-                            <button
-                              onClick={() => handleDeleteProject(p)}
-                              className="p-2 rounded-lg bg-white/10 hover:bg-red-600/80 text-white transition-colors"
-                              title="Delete Project"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* =========================================================================
-            TAB 2: BLOG POSTS MANAGEMENT
-        ========================================================================= */}
-        {activeTab === 'posts' && (
-          <div className="pt-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">Articles & Market Intelligence</h2>
+            {viewMode === 'list' && activeTab === 'posts' && (
               <button
                 onClick={handleOpenNewPost}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-brand-purple/30 transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-md shadow-brand-purple/30 transition-all"
               >
-                <Plus className="w-4 h-4" />
-                <span>Write New Article</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Add Blog</span>
               </button>
-            </div>
+            )}
+          </div>
+        </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post) => (
-                <div
-                  key={post.id}
-                  className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden flex flex-col justify-between p-5 hover:border-white/20 transition-all"
-                >
+        {/* Content Body */}
+        <div className="flex-1 p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          {/* =========================================================================
+              VIEW 1: FULL-PAGE PROJECT EDITOR (Replaces Popup Modal)
+          ========================================================================= */}
+          {viewMode === 'edit-project' && editingProject && (
+            <div className="space-y-6">
+              {/* Sticky Top Action Bar */}
+              <div className="p-4 rounded-2xl bg-[#111118] border border-white/10 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-10 shadow-xl backdrop-blur-md">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-colors"
+                    title="Return to Projects List"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
                   <div>
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-full h-40 object-cover rounded-xl border border-white/10 mb-4"
-                    />
-                    <div className="flex items-center justify-between text-xs text-brand-purpleLight font-semibold mb-2">
-                      <span>{post.category}</span>
-                      <span className="text-gray-400">{post.readTime}</span>
+                    <h2 className="text-base font-bold text-white">
+                      {editingProject.name ? editingProject.name : 'New Property Listing'}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          editingProject.statusMode === 'published'
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}
+                      >
+                        {editingProject.statusMode === 'published' ? '🟢 Published Live' : '🟡 Draft Mode'}
+                      </span>
+                      <span className="text-[11px] text-gray-400">
+                        {editingProject.category.toUpperCase()} • {editingProject.segment}
+                      </span>
                     </div>
-                    <h3 className="text-base font-bold text-white mb-2 line-clamp-2">
-                      {post.title}
+                  </div>
+                </div>
+
+                {/* Workflow Buttons: Preview without publish, Unpublish / Draft, Publish Live, Save */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Preview Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onSelectProject) {
+                        onSelectProject(editingProject.id);
+                      }
+                      showToast('Live preview opened in viewer.');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-all border border-white/10"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Preview (Without publishing)</span>
+                  </button>
+
+                  {/* Toggle Draft / Unpublish */}
+                  {editingProject.statusMode === 'published' ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSaveProject('draft')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold transition-all border border-amber-500/30"
+                    >
+                      <EyeOff className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Unpublish / Revert to Draft</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleSaveProject('published')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all border border-emerald-500/40"
+                    >
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Publish Live</span>
+                    </button>
+                  )}
+
+                  {/* Save Changes */}
+                  <button
+                    type="button"
+                    onClick={() => handleSaveProject(editingProject.statusMode)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30 transition-all"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Editor Sub-Navigation Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/10 scrollbar-none">
+                <button
+                  onClick={() => setProjectEditorSection('basic')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    projectEditorSection === 'basic' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  1. Identification & Classification
+                </button>
+                <button
+                  onClick={() => setProjectEditorSection('pricing')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    projectEditorSection === 'pricing' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  2. Pricing & Financials
+                </button>
+                <button
+                  onClick={() => setProjectEditorSection('media')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    projectEditorSection === 'media' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  3. Media & Multi-Image Gallery
+                </button>
+                <button
+                  onClick={() => setProjectEditorSection('brochure')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    projectEditorSection === 'brochure' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  4. Official PDF Brochure
+                </button>
+                <button
+                  onClick={() => setProjectEditorSection('content')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    projectEditorSection === 'content' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  5. Content & Internal Linking
+                </button>
+                <button
+                  onClick={() => setProjectEditorSection('floorplans')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    projectEditorSection === 'floorplans' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  6. Floor Plans & Landmarks
+                </button>
+                <button
+                  onClick={() => setProjectEditorSection('seo')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    projectEditorSection === 'seo' ? 'bg-pink-500/20 text-pink-300 border border-pink-500/30' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  ⚡ 7. SEO Structure & 10 LSI
+                </button>
+              </div>
+
+              {/* ================= CONTAINER 1: BASIC IDENTIFICATION ================= */}
+              {projectEditorSection === 'basic' && (
+                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                    Container 1: Core Property Identification & Corridor Classification
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Project Name *</label>
+                      <input
+                        type="text"
+                        value={editingProject.name}
+                        onChange={(e) => setEditingProject({ ...editingProject, name: e.target.value })}
+                        placeholder="e.g. Godrej Meridien"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Category *</label>
+                      <select
+                        value={editingProject.category}
+                        onChange={(e) =>
+                          setEditingProject({
+                            ...editingProject,
+                            category: e.target.value as 'residential' | 'commercial' | 'plots',
+                          })
+                        }
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#181822] border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      >
+                        <option value="residential">Residential Luxury</option>
+                        <option value="commercial">Commercial Grade-A</option>
+                        <option value="plots">Freehold Plotted Enclaves</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Segment</label>
+                      <select
+                        value={editingProject.segment}
+                        onChange={(e) =>
+                          setEditingProject({
+                            ...editingProject,
+                            segment: e.target.value as any,
+                          })
+                        }
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#181822] border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      >
+                        <option value="Affordable">Affordable (Within 1.5 Cr)</option>
+                        <option value="Luxury">Luxury (1.5 Cr - 6 Cr)</option>
+                        <option value="Super Luxury">Super Luxury (6 Cr - 15 Cr)</option>
+                        <option value="Ultra Luxury">Ultra Luxury (Above 15 Cr)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Developer Name</label>
+                      <input
+                        type="text"
+                        value={editingProject.developer}
+                        onChange={(e) => setEditingProject({ ...editingProject, developer: e.target.value })}
+                        placeholder="e.g. Godrej Properties"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Location & Corridor</label>
+                      <input
+                        type="text"
+                        value={editingProject.location}
+                        onChange={(e) => setEditingProject({ ...editingProject, location: e.target.value })}
+                        placeholder="e.g. Sector 106, Dwarka Expressway"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Total Project Area</label>
+                      <input
+                        type="text"
+                        value={editingProject.projectArea || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, projectArea: e.target.value })}
+                        placeholder="e.g. 14.5 Acres"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Launch Year</label>
+                      <input
+                        type="text"
+                        value={editingProject.launchYear || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, launchYear: e.target.value })}
+                        placeholder="e.g. 2018 or 2024"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Possession / Completion</label>
+                      <input
+                        type="text"
+                        value={editingProject.completionYear || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, completionYear: e.target.value })}
+                        placeholder="e.g. 2025 or Ready to Move"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">RERA Registration No</label>
+                      <input
+                        type="text"
+                        value={editingProject.reraNumber || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, reraNumber: e.target.value })}
+                        placeholder="e.g. HRERA-PKL-GGM-1240-2023"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-6">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={editingProject.featured || false}
+                          onChange={(e) => setEditingProject({ ...editingProject, featured: e.target.checked })}
+                          className="w-4 h-4 rounded text-brand-purple focus:ring-brand-purple"
+                        />
+                        <span>Feature on Homepage Spotlight</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ================= CONTAINER 2: PRICING & FINANCIALS ================= */}
+              {projectEditorSection === 'pricing' && (
+                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                    Container 2: Investment Financials & Price Display
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                        Price Display String * (Shown on Cards & Overview)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingProject.priceDisplay}
+                        onChange={(e) => setEditingProject({ ...editingProject, priceDisplay: e.target.value })}
+                        placeholder="e.g. ₹2.12 Cr - ₹5.66 Cr"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                        Size Display String (e.g. 1,004 - 2,027 sq ft)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingProject.sizeDisplay || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, sizeDisplay: e.target.value })}
+                        placeholder="e.g. 1,004 - 2,027 sq ft"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Min Price Numeric (Lakhs)</label>
+                      <input
+                        type="number"
+                        value={editingProject.priceMin}
+                        onChange={(e) => setEditingProject({ ...editingProject, priceMin: Number(e.target.value) })}
+                        placeholder="212"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Max Price Numeric (Lakhs)</label>
+                      <input
+                        type="number"
+                        value={editingProject.priceMax}
+                        onChange={(e) => setEditingProject({ ...editingProject, priceMax: Number(e.target.value) })}
+                        placeholder="566"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Price Per Sq Ft (Approx)</label>
+                      <input
+                        type="text"
+                        value={editingProject.pricePerSqFt || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, pricePerSqFt: e.target.value })}
+                        placeholder="e.g. ₹18,500 / sq ft"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">Expected Rental Yield (%)</label>
+                      <input
+                        type="text"
+                        value={editingProject.rentalYield || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, rentalYield: e.target.value })}
+                        placeholder="e.g. 4.2% - 5.1%"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ================= CONTAINER 3: MEDIA & MULTI-IMAGE GALLERY ================= */}
+              {projectEditorSection === 'media' && (
+                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-6">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                        Container 3: Media & Multi-Image Gallery Manager
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Add, replace, or delete images. Every image can be previewed or designated as the primary hero thumbnail.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => galleryImageUploadRef.current?.click()}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-semibold transition-all"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload Image File</span>
+                      </button>
+                      <input
+                        type="file"
+                        ref={galleryImageUploadRef}
+                        onChange={handleGalleryImageUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Add via URL */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={newGalleryImageUrl}
+                      onChange={(e) => setNewGalleryImageUrl(e.target.value)}
+                      placeholder="Paste image web URL (e.g. /images/meridien/facade.jpg or https://...)"
+                      className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddGalleryImageUrl}
+                      className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold"
+                    >
+                      Add URL
+                    </button>
+                  </div>
+
+                  {/* Gallery Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pt-2">
+                    {(editingProject.galleryImages || [editingProject.image]).map((imgUrl, idx) => {
+                      const isHero = imgUrl === editingProject.image;
+                      return (
+                        <div
+                          key={idx}
+                          className={`relative rounded-xl overflow-hidden border group transition-all ${
+                            isHero ? 'border-brand-purple ring-2 ring-brand-purple/40 shadow-lg' : 'border-white/10'
+                          }`}
+                        >
+                          <img
+                            src={imgUrl}
+                            alt={`Gallery asset ${idx + 1}`}
+                            className="w-full h-36 object-cover bg-black/40"
+                          />
+
+                          {isHero && (
+                            <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-brand-purple text-white text-[10px] font-bold uppercase tracking-wider shadow">
+                              ★ Hero Thumbnail
+                            </span>
+                          )}
+
+                          {/* Hover action overlay */}
+                          <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                            {!isHero && (
+                              <button
+                                type="button"
+                                onClick={() => handleSetGalleryImageAsHero(idx)}
+                                className="w-full py-1 rounded bg-brand-purple/90 text-white text-[11px] font-semibold hover:bg-brand-purple"
+                              >
+                                Set as Hero
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteGalleryImage(idx)}
+                              className="w-full py-1 rounded bg-rose-500/80 text-white text-[11px] font-semibold hover:bg-rose-600 flex items-center justify-center gap-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Delete Image</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ================= CONTAINER 4: OFFICIAL PDF BROCHURE ================= */}
+              {projectEditorSection === 'brochure' && (
+                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      Container 4: Official Verified PDF Brochure
                     </h3>
-                    <p className="text-xs text-gray-400 line-clamp-3 mb-4">
-                      {post.excerpt}
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Manage the property PDF brochure download gating and verified document attachment.
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-white/10 flex items-center justify-between">
-                    <span className="text-xs text-gray-400">{post.date}</span>
-                    <div className="flex items-center gap-2">
+                  {/* Brochure Upload State UX */}
+                  {editingProject.brochureUrl || editingProject.brochureName ? (
+                    /* STATE A: BROCHURE ATTACHED - Hide Upload Button, Show Attached File Card */
+                    <div className="p-5 rounded-2xl bg-white/[0.03] border border-emerald-500/30 flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-xl bg-red-950/40 border border-red-500/40 flex items-center justify-center text-red-400">
+                          <FileDown className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-white">
+                              {editingProject.brochureName || `${editingProject.name} Official Brochure.pdf`}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                              🟢 Attached & Live
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            Official verified document ready for instant visitor download.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* Preview / Test Download */}
+                        <a
+                          href={editingProject.brochureUrl}
+                          download={editingProject.brochureName || 'Brochure.pdf'}
+                          className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Preview PDF</span>
+                        </a>
+
+                        {/* Replace Brochure */}
+                        <button
+                          type="button"
+                          onClick={() => brochureUploadRef.current?.click()}
+                          className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Replace File</span>
+                        </button>
+                        <input
+                          type="file"
+                          ref={brochureUploadRef}
+                          onChange={handleProjectBrochureUpload}
+                          accept="application/pdf"
+                          className="hidden"
+                        />
+
+                        {/* Delete Brochure */}
+                        <button
+                          type="button"
+                          onClick={handleRemoveBrochure}
+                          className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-1.5 border border-rose-500/30 transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Remove Brochure</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* STATE B: NO BROCHURE ATTACHED - Show Upload Button */
+                    <div className="p-8 rounded-2xl bg-white/[0.02] border-2 border-dashed border-white/15 text-center space-y-3">
+                      <div className="w-12 h-12 rounded-xl bg-red-950/30 border border-red-500/30 flex items-center justify-center text-red-400 mx-auto">
+                        <FileDown className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white">No PDF Brochure Attached Yet</h4>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Upload the official developer PDF brochure to enable visitor downloads.
+                        </p>
+                      </div>
                       <button
-                        onClick={() => handleEditPost(post)}
-                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-brand-purple text-xs font-semibold transition-colors"
+                        type="button"
+                        onClick={() => brochureUploadRef.current?.click()}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-950/40 border border-red-500/40 hover:bg-red-950/60 text-red-300 text-xs font-bold transition-all shadow-lg"
                       >
-                        Edit
+                        <Upload className="w-4 h-4" />
+                        <span>Upload PDF Brochure</span>
+                      </button>
+                      <input
+                        type="file"
+                        ref={brochureUploadRef}
+                        onChange={handleProjectBrochureUpload}
+                        accept="application/pdf"
+                        className="hidden"
+                      />
+                    </div>
+                  )}
+
+                  {/* Lead Requirement Gating Checkbox */}
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <label className="flex items-start gap-3 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editingProject.requireLeadForBrochure ?? true}
+                        onChange={(e) =>
+                          setEditingProject({
+                            ...editingProject,
+                            requireLeadForBrochure: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 mt-1 text-brand-purple rounded border-gray-600 focus:ring-brand-purple"
+                      />
+                      <div>
+                        <span className="font-bold text-white text-xs block">
+                          Require visitor contact details before PDF download starts
+                        </span>
+                        <span className="text-gray-400 text-[11px] block mt-0.5">
+                          When checked, visitors must provide their Name, 10-digit Phone, and Email. The lead is automatically logged in the Attached Excel / Google Sheet and sends an email notification to aurex.estates01@gmail.com, then immediately downloads the PDF brochure.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* ================= CONTAINER 5: CONTENT & INTERNAL LINKING ================= */}
+              {projectEditorSection === 'content' && (
+                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      Container 5: Comprehensive Project Description & Internal Hyperlinking
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Write in-depth property narratives with one-click internal link insertion for maximum SEO authority.
+                    </p>
+                  </div>
+
+                  {/* Internal Linking Helper Toolbar */}
+                  <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="w-4 h-4 text-brand-purpleLight" />
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">
+                        Quick Internal Linking Toolbar
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleInsertInternalLink('Golf Course Road', '/residential')}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 hover:text-white border border-white/10"
+                      >
+                        + [Golf Course Road](/residential)
                       </button>
                       <button
-                        onClick={() => handleDeletePost(post)}
-                        className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/80 text-xs transition-colors"
+                        type="button"
+                        onClick={() => handleInsertInternalLink('Dwarka Expressway', '/residential')}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 hover:text-white border border-white/10"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        + [Dwarka Expressway](/residential)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertInternalLink('Commercial Portfolios', '/commercial')}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 hover:text-white border border-white/10"
+                      >
+                        + [Commercial Portfolios](/commercial)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertInternalLink('Freehold Plotted Enclaves', '/plots')}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 hover:text-white border border-white/10"
+                      >
+                        + [Plotted Enclaves](/plots)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertInternalLink('Senior Advisory Desk', '/contact')}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 hover:text-white border border-white/10"
+                      >
+                        + [Advisory Desk](/contact)
+                      </button>
+                    </div>
+
+                    {/* Custom Link Builder */}
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/5">
+                      <input
+                        type="text"
+                        value={linkAnchorText}
+                        onChange={(e) => setLinkAnchorText(e.target.value)}
+                        placeholder="Custom anchor text (e.g. DLF Privana)"
+                        className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/15 text-white text-xs w-48"
+                      />
+                      <select
+                        value={linkTargetUrl}
+                        onChange={(e) => setLinkTargetUrl(e.target.value)}
+                        className="px-3 py-1.5 rounded-lg bg-[#181822] border border-white/15 text-white text-xs"
+                      >
+                        <option value="/residential">/residential (Prime Residential)</option>
+                        <option value="/commercial">/commercial (Commercial Assets)</option>
+                        <option value="/plots">/plots (Plotted Enclaves)</option>
+                        <option value="/blogs">/blogs (Blogs & Research)</option>
+                        <option value="/about">/about (About Aurex)</option>
+                        <option value="/contact">/contact (Advisory Desk)</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (linkAnchorText.trim()) {
+                            handleInsertInternalLink(linkAnchorText.trim(), linkTargetUrl);
+                            setLinkAnchorText('');
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-semibold"
+                      >
+                        Insert Hyperlink
                       </button>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* =========================================================================
-            TAB 3: PAGE CONTENT & TEXTS EDITOR
-        ========================================================================= */}
-        {activeTab === 'pages' && (
-          <form onSubmit={handleSavePageContent} className="pt-6 space-y-8 max-w-4xl">
-            {/* Home Page Section */}
-            <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-5">
-              <div className="flex items-center gap-2 text-brand-purpleLight text-sm font-bold uppercase tracking-wider">
-                <Edit3 className="w-4 h-4" />
-                <span>Home Page Main Content</span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 text-xs">
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Hero Eyebrow Tag</label>
-                  <input
-                    type="text"
-                    value={pageContent.home.heroTag}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        home: { ...pageContent.home, heroTag: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Hero Title</label>
-                  <input
-                    type="text"
-                    value={pageContent.home.heroTitle}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        home: { ...pageContent.home, heroTitle: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Hero Subtitle</label>
-                  <textarea
-                    rows={3}
-                    value={pageContent.home.heroSubtitle}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        home: { ...pageContent.home, heroSubtitle: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Advisory Process Heading</label>
-                  <input
-                    type="text"
-                    value={pageContent.home.advisoryHeading}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        home: { ...pageContent.home, advisoryHeading: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* About Page Section */}
-            <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-5">
-              <div className="flex items-center gap-2 text-brand-purpleLight text-sm font-bold uppercase tracking-wider">
-                <Edit3 className="w-4 h-4" />
-                <span>About Us Page Content</span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 text-xs">
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">About Hero Title</label>
-                  <input
-                    type="text"
-                    value={pageContent.about.heroTitle}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        about: { ...pageContent.about, heroTitle: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Mission Statement</label>
-                  <textarea
-                    rows={3}
-                    value={pageContent.about.missionText}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        about: { ...pageContent.about, missionText: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Vision Statement</label>
-                  <textarea
-                    rows={3}
-                    value={pageContent.about.visionText}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        about: { ...pageContent.about, visionText: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Corporate Coordinates */}
-            <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-5">
-              <div className="flex items-center gap-2 text-brand-purpleLight text-sm font-bold uppercase tracking-wider">
-                <Edit3 className="w-4 h-4" />
-                <span>Corporate Coordinates & Contact</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Direct Phone</label>
-                  <input
-                    type="text"
-                    value={pageContent.contact.phone}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        contact: { ...pageContent.contact, phone: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Direct Email</label>
-                  <input
-                    type="text"
-                    value={pageContent.contact.email}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        contact: { ...pageContent.contact, email: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-gray-300 font-semibold mb-1">Office Address</label>
-                  <input
-                    type="text"
-                    value={pageContent.contact.address}
-                    onChange={(e) =>
-                      setPageContent({
-                        ...pageContent,
-                        contact: { ...pageContent.contact, address: e.target.value },
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="px-8 py-3 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-brand-purple/40 transition-all active:scale-95"
-            >
-              Save All Page Content Changes
-            </button>
-          </form>
-        )}
-
-        {/* =========================================================================
-            TAB 4: MEDIA & PDF LIBRARY
-        ========================================================================= */}
-        {activeTab === 'media' && (
-          <div className="pt-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-white">Media & PDF Brochure Library</h2>
-                <p className="text-xs text-gray-400">Upload and manage image assets and brochure PDFs.</p>
-              </div>
-
-              <button
-                onClick={() => mediaLibraryUploadRef.current?.click()}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-brand-purple/30 transition-all"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Upload Asset (Image / PDF)</span>
-              </button>
-              <input
-                type="file"
-                ref={mediaLibraryUploadRef}
-                onChange={handleGeneralMediaUpload}
-                accept="image/*,application/pdf"
-                className="hidden"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {mediaLibrary.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-white/5 rounded-xl border border-white/10 p-3 flex flex-col justify-between group hover:border-white/20 transition-all"
-                >
+                  {/* Main Description Textarea */}
                   <div>
-                    {item.type === 'image' ? (
-                      <img
-                        src={item.url}
-                        alt={item.name}
-                        className="w-full h-32 object-cover rounded-lg border border-white/10 mb-2.5"
-                      />
-                    ) : (
-                      <div className="w-full h-32 rounded-lg bg-red-950/30 border border-red-500/20 flex flex-col items-center justify-center text-red-400 mb-2.5">
-                        <FileDown className="w-10 h-10 mb-1" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">PDF Brochure</span>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Full Property Narrative & Advisory Overview
+                    </label>
+                    <textarea
+                      rows={8}
+                      value={editingProject.description}
+                      onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
+                      placeholder="Comprehensive architectural narrative, location advantage, and developer pedigree..."
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple font-mono"
+                    />
+                    <div className="flex items-center justify-between text-[11px] text-gray-500 mt-1">
+                      <span>Internal links supported format: [Anchor Text](/page)</span>
+                      <span>{editingProject.description?.split(/\s+/).filter(Boolean).length || 0} words</span>
+                    </div>
+                  </div>
+
+                  {/* Highlights Bullet List */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Bullet Highlights (Comma separated or per line)
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={(editingProject.highlights || []).join('\n')}
+                      onChange={(e) =>
+                        setEditingProject({
+                          ...editingProject,
+                          highlights: e.target.value.split('\n').filter((h) => h.trim().length > 0),
+                        })
+                      }
+                      placeholder="One highlight per line:&#10;Olympian Olympic-Length Clubhouse&#10;Private Lift Lobby per Apartment&#10;24/7 Concierge Standards"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple font-mono"
+                    />
+                  </div>
+
+                  {/* Amenities List */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Key Amenities (Comma separated)
+                    </label>
+                    <input
+                      type="text"
+                      value={(editingProject.amenities || []).join(', ')}
+                      onChange={(e) =>
+                        setEditingProject({
+                          ...editingProject,
+                          amenities: e.target.value.split(',').map((a) => a.trim()).filter(Boolean),
+                        })
+                      }
+                      placeholder="Clubhouse, Heated Swimming Pool, Spa, Tennis Court, Banquet Hall"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* ================= CONTAINER 6: FLOOR PLANS & CONNECTIVITY ================= */}
+              {projectEditorSection === 'floorplans' && (
+                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      Container 6: Floor Plans & Strategic Travel Radii
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Add and edit architectural unit typologies, dimensions, and drive times to core landmarks.
+                    </p>
+                  </div>
+
+                  {/* Drive Times */}
+                  <div className="space-y-3">
+                    <label className="block text-xs font-semibold text-gray-300">
+                      Drive Times & Landmark Proximity
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {(editingProject.driveTimes || [
+                        { time: '15 Mins', label: 'IGI Airport T3' },
+                        { time: '5 Mins', label: 'Cyber City / Commercial Hub' },
+                        { time: '7 Mins', label: 'Golf Course Road' },
+                        { time: '10 Mins', label: 'Metro Station' },
+                      ]).map((dt, idx) => (
+                        <div key={idx} className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10">
+                          <input
+                            type="text"
+                            value={dt.time}
+                            onChange={(e) => {
+                              const updated = [...(editingProject.driveTimes || [])];
+                              updated[idx] = { ...dt, time: e.target.value };
+                              setEditingProject({ ...editingProject, driveTimes: updated });
+                            }}
+                            placeholder="e.g. 15 Mins"
+                            className="w-24 px-2 py-1 rounded bg-black/40 border border-white/15 text-white text-xs font-bold"
+                          />
+                          <input
+                            type="text"
+                            value={dt.label}
+                            onChange={(e) => {
+                              const updated = [...(editingProject.driveTimes || [])];
+                              updated[idx] = { ...dt, label: e.target.value };
+                              setEditingProject({ ...editingProject, driveTimes: updated });
+                            }}
+                            placeholder="e.g. IGI Airport T3"
+                            className="flex-1 px-2 py-1 rounded bg-black/40 border border-white/15 text-white text-xs"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ================= CONTAINER 7: SEO STRUCTURE & 10 LSI SUGGESTIONS ================= */}
+              {projectEditorSection === 'seo' && (
+                <div className="p-6 rounded-2xl bg-[#111118] border border-pink-500/20 space-y-6">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider text-pink-400 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        <span>Container 7: Real-Time SEO Structure & 10 LSI Keyword Intelligence</span>
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Inspect heading hierarchy (H1, H2s), word count, SERP snippet, and automatically suggested real estate LSI keywords.
+                      </p>
+                    </div>
+
+                    {projectSeoAnalysis && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+                        <span className="text-xs text-gray-400">SEO Health Score:</span>
+                        <span
+                          className={`text-sm font-bold font-mono ${
+                            projectSeoAnalysis.score >= 80
+                              ? 'text-emerald-400'
+                              : projectSeoAnalysis.score >= 60
+                              ? 'text-amber-400'
+                              : 'text-rose-400'
+                          }`}
+                        >
+                          {projectSeoAnalysis.score}/100
+                        </span>
                       </div>
                     )}
-                    <div className="font-semibold text-white text-xs truncate" title={item.name}>
-                      {item.name}
-                    </div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">
-                      {item.size || 'Standard'} • {item.uploadedAt}
+                  </div>
+
+                  {/* Seed Keyword Input */}
+                  <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Seed Focus Keyword (Used to auto-generate 10 LSI variations)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingProject.focusKeyword || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, focusKeyword: e.target.value })}
+                        placeholder={`e.g. ${editingProject.name} Dwarka Expressway`}
+                        className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-pink-500"
+                      />
                     </div>
                   </div>
 
-                  <div className="pt-2.5 mt-2 border-t border-white/10 flex items-center justify-between">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(item.url);
-                        showToast('Asset link copied to clipboard!');
-                      }}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-purpleLight hover:underline"
-                    >
-                      <Copy className="w-3 h-3" />
-                      <span>Copy URL</span>
-                    </button>
+                  {/* 10 Automatically Suggested LSI Keywords */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">
+                        10 Recommended Real Estate LSI Keywords
+                      </span>
+                      <span className="text-[11px] text-gray-400">
+                        Click "+ Insert" to add directly to content narrative
+                      </span>
+                    </div>
 
-                    <button
-                      onClick={() => {
-                        cmsStore.deleteMediaItem(item.id);
-                        showToast('Asset removed from library.');
-                      }}
-                      className="p-1 rounded text-gray-400 hover:text-red-400"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {projectLsiKeywords.map((lsi, idx) => {
+                        const isIncluded =
+                          editingProject.description?.toLowerCase().includes(lsi.keyword.toLowerCase()) || false;
+                        return (
+                          <div
+                            key={idx}
+                            className={`p-3 rounded-xl border flex items-center justify-between gap-2 transition-all ${
+                              isIncluded
+                                ? 'bg-emerald-950/20 border-emerald-500/30'
+                                : 'bg-white/[0.02] border-white/10 hover:border-white/20'
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-medium text-white truncate">{lsi.keyword}</span>
+                                {isIncluded && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="Included" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase bg-white/10 text-gray-400">
+                                  {lsi.intent}
+                                </span>
+                                <span className="text-[10px] text-gray-500">
+                                  {isIncluded ? '🟢 In content' : '⚪ Missing'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentDesc = editingProject.description || '';
+                                setEditingProject({
+                                  ...editingProject,
+                                  description: `${currentDesc} ${lsi.keyword}.`,
+                                });
+                                showToast(`Added LSI: "${lsi.keyword}"`);
+                              }}
+                              className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/15 text-pink-300 text-[11px] font-semibold shrink-0"
+                            >
+                              + Insert
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Heading Hierarchy Preview (H1, H2s, H3s) */}
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
+                    <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                      Heading & Structural Hierarchy (H-Tags & P-Tags)
+                    </span>
+
+                    <div className="space-y-2 text-xs font-mono">
+                      <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 text-brand-purpleLight flex items-center gap-2">
+                        <span className="px-1.5 py-0.5 rounded bg-brand-purple/30 text-[10px] font-bold">H1</span>
+                        <span>{editingProject.name || 'Untitled Property'}</span>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 text-gray-300 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
+                            H2
+                          </span>
+                          <span>Property Overview & Strategic Connectivity</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
+                            H2
+                          </span>
+                          <span>Pricing & Investment Typologies</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
+                            H2
+                          </span>
+                          <span>Architectural Highlights & Verified Brochure</span>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 text-gray-400 flex items-center justify-between">
+                        <span>Paragraph Count (&lt;p&gt; tags): {editingProject.description ? '3 Containers' : '0'}</span>
+                        <span>Word Count: {projectSeoAnalysis?.wordCount || 0} words</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Meta Title & Meta Description with Google SERP Simulation */}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-gray-300">
+                          Meta Title Tag (Google Search Result Title)
+                        </label>
+                        <span className="text-[11px] text-gray-400">
+                          {(editingProject.metaTitle || '').length}/60 chars
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={editingProject.metaTitle || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, metaTitle: e.target.value })}
+                        placeholder={`${editingProject.name} | Luxury Property in ${editingProject.location}`}
+                        className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-gray-300">
+                          Meta Description Tag (Google Snippet)
+                        </label>
+                        <span className="text-[11px] text-gray-400">
+                          {(editingProject.metaDescription || '').length}/160 chars
+                        </span>
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={editingProject.metaDescription || ''}
+                        onChange={(e) => setEditingProject({ ...editingProject, metaDescription: e.target.value })}
+                        placeholder="Explore verified pricing, floor plans, and official brochure download..."
+                        className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    {/* Google SERP Snippet Preview */}
+                    <div className="p-4 rounded-xl bg-[#1e1f24] border border-gray-700/50 space-y-1 font-sans">
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <span>https://aurexestates.co.in</span>
+                        <span>›</span>
+                        <span>{editingProject.category}</span>
+                      </div>
+                      <h4 className="text-sm font-semibold text-[#8ab4f8] hover:underline cursor-pointer">
+                        {editingProject.metaTitle || `${editingProject.name} | Luxury Property`}
+                      </h4>
+                      <p className="text-xs text-[#bdc1c6] line-clamp-2">
+                        {editingProject.metaDescription ||
+                          editingProject.description?.slice(0, 155) ||
+                          'Official project specifications, floor plans, and verified brochure.'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* =========================================================================
-            TAB 5: LEADS & BROCHURE DOWNLOAD LOG
-        ========================================================================= */}
-        {activeTab === 'leads' && (
-          <div className="pt-6 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-bold text-white">Visitor Leads & Download Activity</h2>
-                <p className="text-xs text-gray-400">
-                  Real-time log of visitors who gave details before downloading official brochures or enquiring.
-                </p>
+          {/* =========================================================================
+              VIEW 2: FULL-PAGE BLOG EDITOR (Replaces Popup Modal)
+          ========================================================================= */}
+          {viewMode === 'edit-post' && editingPost && (
+            <div className="space-y-6">
+              {/* Sticky Top Action Bar */}
+              <div className="p-4 rounded-2xl bg-[#111118] border border-white/10 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-10 shadow-xl backdrop-blur-md">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <div>
+                    <h2 className="text-base font-bold text-white">
+                      {editingPost.title ? editingPost.title : 'New Blog Article'}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          editingPost.statusMode === 'published'
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}
+                      >
+                        {editingPost.statusMode === 'published' ? '🟢 Published Live' : '🟡 Draft Mode'}
+                      </span>
+                      <span className="text-[11px] text-gray-400">{editingPost.category}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Draft / Publish Toggle */}
+                  {editingPost.statusMode === 'published' ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSavePost('draft')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/30"
+                    >
+                      <EyeOff className="w-3.5 h-3.5" />
+                      <span>Revert to Draft</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleSavePost('published')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-semibold border border-emerald-500/40"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Publish Live</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleSavePost(editingPost.statusMode)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Save Blog</span>
+                  </button>
+                </div>
               </div>
 
-              <button
-                onClick={handleExportLeadsCSV}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all active:scale-95"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export to CSV ({leads.length})</span>
-              </button>
-            </div>
+              {/* Blog Metadata Form */}
+              <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">Article Title *</label>
+                    <input
+                      type="text"
+                      value={editingPost.title}
+                      onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                      placeholder="e.g. Golf Course Road vs Dwarka Expressway: The High-Net-Worth Thesis"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
 
-            {leads.length === 0 ? (
-              <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
-                <Users className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                <h3 className="text-base font-semibold text-white">No Leads Recorded Yet</h3>
-                <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
-                  When visitors unlock floor plans or download official PDF brochures, their verified phone, name, and email will appear here in real time.
-                </p>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">Category</label>
+                    <input
+                      type="text"
+                      value={editingPost.category}
+                      onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value as any })}
+                      placeholder="Market Intelligence / Investment Advisory"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">Read Time</label>
+                    <input
+                      type="text"
+                      value={editingPost.readTime}
+                      onChange={(e) => setEditingPost({ ...editingPost, readTime: e.target.value })}
+                      placeholder="6 min read"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
+
+                  {/* Cover Image */}
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="block text-xs font-semibold text-gray-300">Blog Cover Image</label>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={editingPost.image}
+                        alt="Blog Cover"
+                        className="w-20 h-14 rounded-lg object-cover border border-white/15"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => blogImageUploadRef.current?.click()}
+                        className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload Cover Image</span>
+                      </button>
+                      <input
+                        type="file"
+                        ref={blogImageUploadRef}
+                        onChange={handleBlogImageUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">Executive Excerpt</label>
+                    <textarea
+                      rows={2}
+                      value={editingPost.excerpt}
+                      onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
+                      placeholder="Concise summary for previews and social sharing cards..."
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
+
+                  {/* Internal Linking Helper for Blogs */}
+                  <div className="md:col-span-2 p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                    <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                      Quick Internal Linking Toolbar
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleInsertBlogInternalLink('Golf Course Road', '/residential')}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 hover:text-white border border-white/10"
+                      >
+                        + [Golf Course Road](/residential)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertBlogInternalLink('Dwarka Expressway Portfolios', '/residential')}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 hover:text-white border border-white/10"
+                      >
+                        + [Dwarka Expressway](/residential)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertBlogInternalLink('Grade-A Commercial Assets', '/commercial')}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 hover:text-white border border-white/10"
+                      >
+                        + [Commercial](/commercial)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertBlogInternalLink('Private Advisory Desk', '/contact')}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-gray-300 hover:text-white border border-white/10"
+                      >
+                        + [Advisory Desk](/contact)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Blog Body Paragraphs */}
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Full Article Body Content (Paragraphs)
+                    </label>
+                    <textarea
+                      rows={12}
+                      value={Array.isArray(editingPost.content) ? editingPost.content.join('\n\n') : editingPost.content}
+                      onChange={(e) =>
+                        setEditingPost({
+                          ...editingPost,
+                          content: e.target.value.split('\n\n').filter(Boolean),
+                        })
+                      }
+                      placeholder="Write blog paragraphs separated by empty lines..."
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* 10 LSI Auto-Suggestions for Blog */}
+                <div className="pt-4 border-t border-white/10 space-y-3">
+                  <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                    10 Suggested LSI Keywords for Market Insights
+                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {blogLsiKeywords.map((lsi, idx) => (
+                      <div
+                        key={idx}
+                        className="p-2.5 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between text-xs"
+                      >
+                        <span className="text-gray-300">{lsi.keyword}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleInsertBlogInternalLink(lsi.keyword, '/residential')}
+                          className="px-2 py-0.5 rounded bg-brand-purple/40 text-brand-purpleLight text-[10px] font-semibold hover:bg-brand-purple/60"
+                        >
+                          + Insert
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden shadow-xl">
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW 3: PROJECTS LIST TAB
+          ========================================================================= */}
+          {viewMode === 'list' && activeTab === 'projects' && (
+            <div className="space-y-5">
+              {/* Search & Filter Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={projectSearch}
+                      onChange={(e) => setProjectSearch(e.target.value)}
+                      placeholder="Search projects or developer..."
+                      className="pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 text-xs w-64 focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
+
+                  {/* Category Pill Filters */}
+                  <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
+                    {(['all', 'residential', 'commercial', 'plots'] as const).map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setProjectCatFilter(cat)}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                          projectCatFilter === cat
+                            ? 'bg-brand-purple text-white shadow'
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Status Pill Filters */}
+                  <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
+                    {(['all', 'published', 'draft'] as const).map((stat) => (
+                      <button
+                        key={stat}
+                        onClick={() => setProjectStatusFilter(stat)}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                          projectStatusFilter === stat
+                            ? 'bg-white/20 text-white shadow'
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        {stat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleOpenNewProject}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Add New Project</span>
+                </button>
+              </div>
+
+              {/* Projects Table */}
+              <div className="bg-[#101016] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-white/5 text-gray-400 font-semibold border-b border-white/10 uppercase tracking-wider text-[11px]">
+                    <thead className="bg-white/5 border-b border-white/10 uppercase tracking-wider text-[11px] text-gray-400">
                       <tr>
-                        <th className="px-5 py-3.5">Visitor Name</th>
-                        <th className="px-4 py-3.5">Contact Phone</th>
-                        <th className="px-4 py-3.5">Email Address</th>
-                        <th className="px-4 py-3.5">Project / Brochure</th>
-                        <th className="px-4 py-3.5">Date & Time</th>
-                        <th className="px-4 py-3.5 text-right">Action</th>
+                        <th className="py-3 px-4">Project</th>
+                        <th className="py-3 px-4">Category & Segment</th>
+                        <th className="py-3 px-4">Location</th>
+                        <th className="py-3 px-4">Price Range</th>
+                        <th className="py-3 px-4">Brochure Status</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5 text-gray-200">
-                      {leads.map((lead) => (
-                        <tr key={lead.id} className="hover:bg-white/[0.03] transition-colors">
-                          <td className="px-5 py-3.5 font-bold text-white">{lead.name}</td>
-                          <td className="px-4 py-3.5">
-                            <a
-                              href={`tel:${lead.phone}`}
-                              className="text-emerald-400 hover:underline font-mono font-medium"
-                            >
-                              {lead.phone}
-                            </a>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <a
-                              href={`mailto:${lead.email}`}
-                              className="text-purple-300 hover:underline"
-                            >
-                              {lead.email}
-                            </a>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <span className="font-semibold text-white">{lead.projectName || 'General Enquiry'}</span>
-                            {lead.brochureName && (
-                              <div className="text-[10px] text-gray-400">{lead.brochureName}</div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3.5 text-gray-400 text-[11px] font-mono">
-                            {lead.timestamp}
-                          </td>
-                          <td className="px-4 py-3.5 text-right">
-                            <button
-                              onClick={() => {
-                                cmsStore.deleteLead(lead.id);
-                                showToast('Lead record removed.');
-                              }}
-                              className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/80 text-white transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                    <tbody className="divide-y divide-white/5">
+                      {filteredProjects.map((p) => {
+                        const hasBrochure = Boolean(p.brochureUrl || p.brochureName);
+                        const isPublished = (p.statusMode || 'published') === 'published';
+                        return (
+                          <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={p.image}
+                                  alt={p.name}
+                                  className="w-10 h-10 rounded-lg object-cover border border-white/10"
+                                />
+                                <div>
+                                  <p className="font-bold text-white text-xs">{p.name}</p>
+                                  <p className="text-[11px] text-gray-400">{p.developer}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="capitalize text-gray-300 font-semibold">{p.category}</span>
+                              <span className="block text-[11px] text-brand-purpleLight font-medium">
+                                {p.segment}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <p className="text-gray-300 font-medium truncate max-w-[180px]">{p.location}</p>
+                              <p className="text-[11px] text-gray-500">{p.city}</p>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <p className="font-semibold text-emerald-400">{p.priceDisplay}</p>
+                              <p className="text-[11px] text-gray-500">{p.sizeDisplay || '1,500 - 3,500 sq ft'}</p>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              {hasBrochure ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                  <Check className="w-3 h-3" />
+                                  <span>Attached & Ready</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-gray-500 bg-white/5">
+                                  No Brochure
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                  isPublished
+                                    ? 'bg-emerald-500/20 text-emerald-400'
+                                    : 'bg-amber-500/20 text-amber-400'
+                                }`}
+                              >
+                                {isPublished ? 'Published' : 'Draft'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => handleEditProject(p)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-all font-semibold flex items-center gap-1"
+                                  title="Edit full project container"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5 text-purple-400" />
+                                  <span>Edit Full Page</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProject(p)}
+                                  className="p-1.5 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                  title="Delete project"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* =========================================================================
-          MODAL: ADD / EDIT PROJECT
-      ========================================================================= */}
-      {isProjectModalOpen && editingProject && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#181820] border border-white/15 rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto scrollbar-thin shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
-              <h2 className="text-xl font-bold text-white">
-                {editingProject.id.startsWith('project-') ? 'Add New Project' : `Edit: ${editingProject.name}`}
-              </h2>
-              <button
-                onClick={() => setIsProjectModalOpen(false)}
-                className="p-2 text-gray-400 hover:text-white rounded-lg bg-white/5"
-              >
-                ✕
-              </button>
             </div>
+          )}
 
-            <form onSubmit={handleSaveProject} className="space-y-5 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-gray-300 font-semibold mb-1">Project Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingProject.name}
-                    onChange={(e) => setEditingProject({ ...editingProject, name: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
+          {/* =========================================================================
+              VIEW 4: BLOGS TAB (Strictly "Blogs", replacing "Articles & Market Intelligence")
+          ========================================================================= */}
+          {viewMode === 'list' && activeTab === 'posts' && (
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={postSearch}
+                      onChange={(e) => setPostSearch(e.target.value)}
+                      placeholder="Search blogs..."
+                      className="pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 text-xs w-64 focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
+                    {(['all', 'published', 'draft'] as const).map((stat) => (
+                      <button
+                        key={stat}
+                        onClick={() => setPostStatusFilter(stat)}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                          postStatusFilter === stat ? 'bg-white/20 text-white shadow' : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        {stat}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Category</label>
-                  <select
-                    value={editingProject.category}
-                    onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        category: e.target.value as 'residential' | 'commercial' | 'plots',
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  >
-                    <option value="residential" className="bg-[#181820]">Residential</option>
-                    <option value="commercial" className="bg-[#181820]">Commercial</option>
-                    <option value="plots" className="bg-[#181820]">Plots & Land</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Segment</label>
-                  <select
-                    value={editingProject.segment}
-                    onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        segment: e.target.value as any,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  >
-                    <option value="Affordable" className="bg-[#181820]">Affordable (Within 1.5 Cr)</option>
-                    <option value="Luxury" className="bg-[#181820]">Luxury (1.5 Cr - 6 Cr)</option>
-                    <option value="Super Luxury" className="bg-[#181820]">Super Luxury (6 Cr - 15 Cr)</option>
-                    <option value="Ultra Luxury" className="bg-[#181820]">Ultra Luxury (Above 15 Cr)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Developer</label>
-                  <input
-                    type="text"
-                    value={editingProject.developer}
-                    onChange={(e) => setEditingProject({ ...editingProject, developer: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Location & Sector</label>
-                  <input
-                    type="text"
-                    value={editingProject.location}
-                    onChange={(e) => setEditingProject({ ...editingProject, location: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Price Display (e.g. ₹2.85 Cr - ₹5.60 Cr)</label>
-                  <input
-                    type="text"
-                    value={editingProject.priceDisplay}
-                    onChange={(e) => setEditingProject({ ...editingProject, priceDisplay: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Launch Year (e.g. 2018 or 2024)</label>
-                  <input
-                    type="text"
-                    value={editingProject.launchYear || ''}
-                    onChange={(e) => setEditingProject({ ...editingProject, launchYear: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Project Area (e.g. 14.5 Acres)</label>
-                  <input
-                    type="text"
-                    value={editingProject.projectArea || ''}
-                    onChange={(e) => setEditingProject({ ...editingProject, projectArea: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Possession Year (e.g. 2032 or Ready)</label>
-                  <input
-                    type="text"
-                    value={editingProject.completionYear || ''}
-                    onChange={(e) => setEditingProject({ ...editingProject, completionYear: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  />
-                </div>
+                <button
+                  onClick={handleOpenNewPost}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Write New Blog</span>
+                </button>
               </div>
 
-              {/* Uploads Section */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
-                <h3 className="font-bold text-white text-xs uppercase tracking-wider text-brand-purpleLight">
-                  Media & Official PDF Brochure Upload
-                </h3>
-
-                {/* Hero Image */}
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Project Hero Thumbnail Image</label>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={editingProject.image}
-                      alt="Preview"
-                      className="w-14 h-14 rounded-lg object-cover border border-white/15"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => imageUploadRef.current?.click()}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold"
+              {/* Blogs Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredPosts.map((post) => {
+                  const isPublished = (post.statusMode || 'published') === 'published';
+                  return (
+                    <div
+                      key={post.id}
+                      className="rounded-2xl bg-[#111118] border border-white/10 overflow-hidden flex flex-col justify-between hover:border-brand-purple/40 transition-all group shadow-xl"
                     >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>Upload New Image</span>
-                    </button>
-                    <input
-                      type="file"
-                      ref={imageUploadRef}
-                      onChange={handleProjectHeroUpload}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                  </div>
-                </div>
+                      <div>
+                        <div className="relative h-44 overflow-hidden">
+                          <img
+                            src={post.image}
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <span
+                            className={`absolute top-3 right-3 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shadow ${
+                              isPublished ? 'bg-emerald-500/80 text-white' : 'bg-amber-500/80 text-white'
+                            }`}
+                          >
+                            {isPublished ? 'Published' : 'Draft'}
+                          </span>
+                        </div>
 
-                {/* PDF Brochure Upload */}
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Official Brochure (PDF File)</label>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => brochureUploadRef.current?.click()}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-950/40 border border-red-500/30 hover:bg-red-950/60 text-red-300 font-semibold"
-                    >
-                      <FileDown className="w-3.5 h-3.5" />
-                      <span>Upload PDF Brochure</span>
-                    </button>
-                    <input
-                      type="file"
-                      ref={brochureUploadRef}
-                      onChange={handleProjectBrochureUpload}
-                      accept="application/pdf"
-                      className="hidden"
-                    />
+                        <div className="p-5 space-y-2">
+                          <span className="text-[11px] font-bold text-brand-purpleLight uppercase tracking-wider">
+                            {post.category} • {post.readTime}
+                          </span>
+                          <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug">{post.title}</h3>
+                          <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">{post.excerpt}</p>
+                        </div>
+                      </div>
 
-                    {editingProject.brochureUrl && (
-                      <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Attached: {editingProject.brochureName || 'Brochure.pdf'}</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Condition: Give details then download start */}
-                <div className="pt-2 border-t border-white/10">
-                  <label className="flex items-start gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={editingProject.requireLeadForBrochure ?? true}
-                      onChange={(e) =>
-                        setEditingProject({
-                          ...editingProject,
-                          requireLeadForBrochure: e.target.checked,
-                        })
-                      }
-                      className="w-4 h-4 mt-0.5 text-brand-purple rounded border-gray-600 focus:ring-brand-purple"
-                    />
-                    <div>
-                      <span className="font-bold text-white text-xs block">
-                        Require visitor contact details before PDF download starts
-                      </span>
-                      <span className="text-gray-400 text-[11px]">
-                        When checked, clicking "Download Brochure" prompts the visitor for their Name, 10-digit Phone, and Email. The lead is recorded and the download begins immediately.
-                      </span>
+                      <div className="p-4 pt-0 border-t border-white/5 flex items-center justify-between mt-2">
+                        <span className="text-[11px] text-gray-500">{post.date}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEditPost(post)}
+                            className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1"
+                          >
+                            <Edit3 className="w-3 h-3 text-purple-400" />
+                            <span>Edit Full Page</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeletePost(post)}
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10"
+                            title="Delete article"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </label>
-                </div>
+                  );
+                })}
               </div>
-
-              {/* Description & Details */}
-              <div>
-                <label className="block text-gray-300 font-semibold mb-1">Description</label>
-                <textarea
-                  rows={3}
-                  value={editingProject.description}
-                  onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setIsProjectModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white font-bold shadow-lg shadow-brand-purple/40"
-                >
-                  Save Project
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          MODAL: ADD / EDIT BLOG POST
-      ========================================================================= */}
-      {isPostModalOpen && editingPost && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#181820] border border-white/15 rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto scrollbar-thin shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
-              <h2 className="text-xl font-bold text-white">
-                {editingPost.id.startsWith('post-') ? 'Create New Article' : `Edit Article`}
-              </h2>
-              <button
-                onClick={() => setIsPostModalOpen(false)}
-                className="p-2 text-gray-400 hover:text-white rounded-lg bg-white/5"
-              >
-                ✕
-              </button>
             </div>
+          )}
 
-            <form onSubmit={handleSavePost} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-gray-300 font-semibold mb-1">Article Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={editingPost.title}
-                  onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                />
+          {/* =========================================================================
+              VIEW 5: PAGES & ELEMENTS GRANULAR EDITOR
+          ========================================================================= */}
+          {viewMode === 'list' && activeTab === 'pages' && (
+            <div className="space-y-6">
+              {/* Sub-Tabs for Every Single Page on the Website */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/10 scrollbar-none">
+                <button
+                  onClick={() => setActivePageSubTab('home')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    activePageSubTab === 'home' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  🏠 Home Page Elements
+                </button>
+                <button
+                  onClick={() => setActivePageSubTab('about')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    activePageSubTab === 'about' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  📖 About Us Elements
+                </button>
+                <button
+                  onClick={() => setActivePageSubTab('residential')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    activePageSubTab === 'residential' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  🏙️ Residential Page
+                </button>
+                <button
+                  onClick={() => setActivePageSubTab('commercial')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    activePageSubTab === 'commercial' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  🏢 Commercial Page
+                </button>
+                <button
+                  onClick={() => setActivePageSubTab('plots')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    activePageSubTab === 'plots' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  🌳 Plots & Land Page
+                </button>
+                <button
+                  onClick={() => setActivePageSubTab('career')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    activePageSubTab === 'career' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  💼 Careers & Job Openings
+                </button>
+                <button
+                  onClick={() => setActivePageSubTab('contact')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                    activePageSubTab === 'contact' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  📞 Contact Info & Excel Webhook
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Category</label>
-                  <select
-                    value={editingPost.category}
-                    onChange={(e) =>
-                      setEditingPost({
-                        ...editingPost,
-                        category: e.target.value as any,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
+              <form onSubmit={handleSavePageContent} className="space-y-6">
+                {/* 1. Home Page Sub-Tab */}
+                {activePageSubTab === 'home' && (
+                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      Home Page: Hero, Advisory Process & Stats Counters
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Eyebrow Tag</label>
+                        <input
+                          type="text"
+                          value={pageContent.home.heroTag}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              home: { ...pageContent.home, heroTag: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Main Title</label>
+                        <input
+                          type="text"
+                          value={pageContent.home.heroTitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              home: { ...pageContent.home, heroTitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
+                        <textarea
+                          rows={2}
+                          value={pageContent.home.heroSubtitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              home: { ...pageContent.home, heroSubtitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Advisory Process Heading</label>
+                        <input
+                          type="text"
+                          value={pageContent.home.advisoryHeading}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              home: { ...pageContent.home, advisoryHeading: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Categories Title</label>
+                        <input
+                          type="text"
+                          value={pageContent.home.categoriesTitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              home: { ...pageContent.home, categoriesTitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Stats Counters Manager */}
+                    <div className="pt-4 border-t border-white/10 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                          Key Stats Counters ({pageContent.home.stats?.length || 0})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleAddHomeStat}
+                          className="px-3 py-1 rounded-lg bg-brand-purple text-white text-xs font-semibold"
+                        >
+                          + Add Stat
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        {(pageContent.home.stats || []).map((stat, idx) => (
+                          <div key={idx} className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2 relative">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteHomeStat(idx)}
+                              className="absolute top-2 right-2 text-gray-500 hover:text-rose-400"
+                              title="Delete stat"
+                            >
+                              ✕
+                            </button>
+                            <input
+                              type="text"
+                              value={stat.value}
+                              onChange={(e) => {
+                                const updated = [...pageContent.home.stats];
+                                updated[idx] = { ...stat, value: e.target.value };
+                                setPageContent({
+                                  ...pageContent,
+                                  home: { ...pageContent.home, stats: updated },
+                                });
+                              }}
+                              placeholder="e.g. ₹5,000+ Cr"
+                              className="w-full px-2 py-1 rounded bg-black/40 border border-white/15 text-white text-xs font-bold"
+                            />
+                            <input
+                              type="text"
+                              value={stat.label}
+                              onChange={(e) => {
+                                const updated = [...pageContent.home.stats];
+                                updated[idx] = { ...stat, label: e.target.value };
+                                setPageContent({
+                                  ...pageContent,
+                                  home: { ...pageContent.home, stats: updated },
+                                });
+                              }}
+                              placeholder="Transaction Advisory"
+                              className="w-full px-2 py-1 rounded bg-black/40 border border-white/15 text-white text-xs"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. About Us Sub-Tab */}
+                {activePageSubTab === 'about' && (
+                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      About Us: Fiduciary Principles & Corporate Mission
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
+                        <input
+                          type="text"
+                          value={pageContent.about.heroTitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              about: { ...pageContent.about, heroTitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Mission Title</label>
+                        <input
+                          type="text"
+                          value={pageContent.about.missionTitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              about: { ...pageContent.about, missionTitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
+                        <textarea
+                          rows={2}
+                          value={pageContent.about.heroSubtitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              about: { ...pageContent.about, heroSubtitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Mission Statement</label>
+                        <textarea
+                          rows={3}
+                          value={pageContent.about.missionText}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              about: { ...pageContent.about, missionText: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Vision Title</label>
+                        <input
+                          type="text"
+                          value={pageContent.about.visionTitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              about: { ...pageContent.about, visionTitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Vision Statement</label>
+                        <textarea
+                          rows={3}
+                          value={pageContent.about.visionText}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              about: { ...pageContent.about, visionText: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Commercial Sub-Tab */}
+                {activePageSubTab === 'commercial' && (
+                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      Commercial Page: Hero & High-Yield Narrative
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
+                        <input
+                          type="text"
+                          value={pageContent.commercial.heroTitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              commercial: { ...pageContent.commercial, heroTitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Tagline</label>
+                        <input
+                          type="text"
+                          value={pageContent.commercial.tagline}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              commercial: { ...pageContent.commercial, tagline: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
+                        <textarea
+                          rows={3}
+                          value={pageContent.commercial.heroSubtitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              commercial: { ...pageContent.commercial, heroSubtitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Residential Sub-Tab */}
+                {activePageSubTab === 'residential' && (
+                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      Residential Page: Hero & Luxury Corridors
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
+                        <input
+                          type="text"
+                          value={pageContent.residential.heroTitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              residential: { ...pageContent.residential, heroTitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Tagline</label>
+                        <input
+                          type="text"
+                          value={pageContent.residential.tagline}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              residential: { ...pageContent.residential, tagline: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
+                        <textarea
+                          rows={3}
+                          value={pageContent.residential.heroSubtitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              residential: { ...pageContent.residential, heroSubtitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. Plots Sub-Tab */}
+                {activePageSubTab === 'plots' && (
+                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      Plots Page: Sovereignty & Freehold Registry
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
+                        <input
+                          type="text"
+                          value={pageContent.plots.heroTitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              plots: { ...pageContent.plots, heroTitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Tagline</label>
+                        <input
+                          type="text"
+                          value={pageContent.plots.tagline}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              plots: { ...pageContent.plots, tagline: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
+                        <textarea
+                          rows={3}
+                          value={pageContent.plots.heroSubtitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              plots: { ...pageContent.plots, heroSubtitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. Careers Sub-Tab */}
+                {activePageSubTab === 'career' && (
+                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                        Careers: Job Openings Manager
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={handleAddJobOpening}
+                        className="px-3.5 py-1.5 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold"
+                      >
+                        + Add Job Opening
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
+                        <input
+                          type="text"
+                          value={pageContent.career.heroTitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              career: { ...pageContent.career, heroTitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
+                        <input
+                          type="text"
+                          value={pageContent.career.heroSubtitle}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              career: { ...pageContent.career, heroSubtitle: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-3 border-t border-white/10">
+                      <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                        Active Job Positions ({(pageContent.career.openings || []).length})
+                      </span>
+
+                      <div className="space-y-3">
+                        {(pageContent.career.openings || []).map((job, idx) => (
+                          <div
+                            key={job.id}
+                            className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3 relative"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteJobOpening(job.id)}
+                              className="absolute top-3 right-3 text-gray-400 hover:text-rose-400 p-1"
+                              title="Delete position"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pr-8">
+                              <div>
+                                <label className="block text-[11px] text-gray-400 mb-1">Job Title</label>
+                                <input
+                                  type="text"
+                                  value={job.title}
+                                  onChange={(e) => {
+                                    const updated = [...pageContent.career.openings];
+                                    updated[idx] = { ...job, title: e.target.value };
+                                    setPageContent({
+                                      ...pageContent,
+                                      career: { ...pageContent.career, openings: updated },
+                                    });
+                                  }}
+                                  className="w-full px-3 py-1.5 rounded-lg bg-black/40 border border-white/15 text-white text-xs font-bold"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] text-gray-400 mb-1">Department</label>
+                                <input
+                                  type="text"
+                                  value={job.department}
+                                  onChange={(e) => {
+                                    const updated = [...pageContent.career.openings];
+                                    updated[idx] = { ...job, department: e.target.value };
+                                    setPageContent({
+                                      ...pageContent,
+                                      career: { ...pageContent.career, openings: updated },
+                                    });
+                                  }}
+                                  className="w-full px-3 py-1.5 rounded-lg bg-black/40 border border-white/15 text-white text-xs"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] text-gray-400 mb-1">Location & Type</label>
+                                <input
+                                  type="text"
+                                  value={job.location}
+                                  onChange={(e) => {
+                                    const updated = [...pageContent.career.openings];
+                                    updated[idx] = { ...job, location: e.target.value };
+                                    setPageContent({
+                                      ...pageContent,
+                                      career: { ...pageContent.career, openings: updated },
+                                    });
+                                  }}
+                                  className="w-full px-3 py-1.5 rounded-lg bg-black/40 border border-white/15 text-white text-xs"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] text-gray-400 mb-1">Brief Description</label>
+                              <input
+                                type="text"
+                                value={job.description || ''}
+                                onChange={(e) => {
+                                  const updated = [...pageContent.career.openings];
+                                  updated[idx] = { ...job, description: e.target.value };
+                                  setPageContent({
+                                    ...pageContent,
+                                    career: { ...pageContent.career, openings: updated },
+                                  });
+                                }}
+                                className="w-full px-3 py-1.5 rounded-lg bg-black/40 border border-white/15 text-white text-xs"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 7. Contact & Webhook Sub-Tab */}
+                {activePageSubTab === 'contact' && (
+                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      Contact Information & Live Google Sheets / Excel Webhook
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Official Phone</label>
+                        <input
+                          type="text"
+                          value={pageContent.contact.phone}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              contact: { ...pageContent.contact, phone: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Official Email</label>
+                        <input
+                          type="text"
+                          value={pageContent.contact.email}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              contact: { ...pageContent.contact, email: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">WhatsApp Mobile No</label>
+                        <input
+                          type="text"
+                          value={pageContent.contact.whatsappNumber}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              contact: { ...pageContent.contact, whatsappNumber: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">HARERA Registration No</label>
+                        <input
+                          type="text"
+                          value={pageContent.contact.reraNumber}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              contact: { ...pageContent.contact, reraNumber: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Corporate Office Address</label>
+                        <input
+                          type="text"
+                          value={pageContent.contact.address}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              contact: { ...pageContent.contact, address: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                        />
+                      </div>
+
+                      {/* Google Sheets Webhook URL */}
+                      <div className="md:col-span-2 p-4 rounded-xl bg-white/[0.03] border border-emerald-500/30 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                            <span>Attached Google Sheets / Excel Webhook URL</span>
+                          </label>
+                          <span className="text-[10px] text-emerald-400 font-mono">
+                            Auto-Email Recipient: {FORMS_CONFIG.notificationEmail}
+                          </span>
+                        </div>
+                        <input
+                          type="url"
+                          value={pageContent.contact.googleSheetsWebhook || FORMS_CONFIG.googleScriptUrl}
+                          onChange={(e) =>
+                            setPageContent({
+                              ...pageContent,
+                              contact: { ...pageContent.contact, googleSheetsWebhook: e.target.value },
+                            })
+                          }
+                          className="w-full px-4 py-2 rounded-xl bg-black/40 border border-white/15 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-500"
+                        />
+                        <p className="text-[11px] text-gray-400">
+                          Every single lead submitted anywhere on the site (Contact Form, Brochure Download, Site Visit Request, Layout View, or AI Chatbot) is instantly routed here, written to the attached spreadsheet, and dispatched as an email alert to {FORMS_CONFIG.notificationEmail}.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Save Page Elements Button */}
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30 transition-all flex items-center gap-2"
                   >
-                    <option value="Market Intelligence" className="bg-[#181820]">Market Intelligence</option>
-                    <option value="Investment Advisory" className="bg-[#181820]">Investment Advisory</option>
-                    <option value="Luxury Living" className="bg-[#181820]">Luxury Living</option>
-                    <option value="Micro-Market Analysis" className="bg-[#181820]">Micro-Market Analysis</option>
-                  </select>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Save All Page Changes Live</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW 6: MEDIA & PDF BROCHURES LIBRARY TAB
+          ========================================================================= */}
+          {viewMode === 'list' && activeTab === 'media' && (
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                    Centralized Media & Brochure Repository ({mediaLibrary.length} Items)
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Browse all uploaded property photos, architectural renders, and official PDF brochures.
+                  </p>
                 </div>
 
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">Read Time (e.g. 6 min read)</label>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => mediaLibraryUploadRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload New File</span>
+                  </button>
                   <input
-                    type="text"
-                    value={editingPost.readTime}
-                    onChange={(e) => setEditingPost({ ...editingPost, readTime: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
+                    type="file"
+                    ref={mediaLibraryUploadRef}
+                    onChange={handleGeneralMediaUpload}
+                    accept="image/*,application/pdf"
+                    className="hidden"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-gray-300 font-semibold mb-1">Excerpt / Summary</label>
-                <textarea
-                  rows={2}
-                  value={editingPost.excerpt}
-                  onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                />
+              {/* Media Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {mediaLibrary.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl bg-[#111118] border border-white/10 overflow-hidden flex flex-col justify-between group hover:border-brand-purple/40 transition-all shadow-lg"
+                  >
+                    {item.type === 'pdf' ? (
+                      <div className="h-32 bg-red-950/20 flex flex-col items-center justify-center p-3 text-red-400">
+                        <FileDown className="w-10 h-10 mb-1" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-300">PDF Brochure</span>
+                      </div>
+                    ) : (
+                      <img src={item.url} alt={item.name} className="h-32 w-full object-cover bg-black/40" />
+                    )}
+
+                    <div className="p-3 border-t border-white/5 space-y-1">
+                      <p className="text-xs font-semibold text-white truncate" title={item.name}>
+                        {item.name}
+                      </p>
+                      <div className="flex items-center justify-between text-[10px] text-gray-500">
+                        <span>{item.size || 'Attached'}</span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(item.url);
+                              showToast('Asset link copied to clipboard!');
+                            }}
+                            className="text-gray-400 hover:text-white"
+                            title="Copy link"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Delete "${item.name}" from library?`)) {
+                                cmsStore.deleteMediaItem(item.id);
+                                showToast('File deleted.');
+                              }
+                            }}
+                            className="text-gray-500 hover:text-rose-400"
+                            title="Delete file"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW 7: LEADS & INQUIRIES TAB (Connected to Google Sheets & Email)
+          ========================================================================= */}
+          {viewMode === 'list' && activeTab === 'leads' && (
+            <div className="space-y-6">
+              {/* Live Integration Status Banner */}
+              <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                    <FileCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>Attached Excel / Google Sheet Webhook & Email Active</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Target Email: <span className="text-emerald-300 font-semibold">{FORMS_CONFIG.notificationEmail}</span> • All site inquiries are auto-synchronized.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleExportLeadsCSV}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>📥 Export All to Excel / CSV</span>
+                  </button>
+
+                  {leads.length > 0 && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Clear all local leads history? (Google Sheet records will remain safe)')) {
+                          cmsStore.clearAllLeads();
+                          showToast('Local leads log cleared.');
+                        }
+                      }}
+                      className="px-3 py-2 rounded-xl bg-white/5 hover:bg-rose-500/10 text-gray-400 hover:text-rose-400 text-xs font-semibold transition-all"
+                    >
+                      Clear Log
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-gray-300 font-semibold mb-1">Article Paragraphs (one per block)</label>
-                <textarea
-                  rows={6}
-                  value={editingPost.content.join('\n\n')}
-                  onChange={(e) =>
-                    setEditingPost({
-                      ...editingPost,
-                      content: e.target.value.split('\n\n').filter(Boolean),
-                    })
-                  }
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-brand-purple"
-                  placeholder="Separate paragraphs with a blank line"
-                />
+              {/* Filters */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={leadSearch}
+                      onChange={(e) => setLeadSearch(e.target.value)}
+                      placeholder="Search name, phone, email..."
+                      className="pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 text-xs w-64 focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
+                    {['all', 'brochure-download', 'consultation', 'general'].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setLeadTypeFilter(type)}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                          leadTypeFilter === type ? 'bg-white/20 text-white shadow' : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        {type.replace('-', ' ')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <span className="text-xs text-gray-400">Total Leads: {filteredLeads.length}</span>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setIsPostModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white font-bold shadow-lg shadow-brand-purple/40"
-                >
-                  Publish Article
-                </button>
+              {/* Leads Table */}
+              <div className="bg-[#101016] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                {filteredLeads.length === 0 ? (
+                  <div className="py-16 text-center space-y-2">
+                    <Users className="w-10 h-10 text-gray-600 mx-auto" />
+                    <h4 className="text-sm font-bold text-gray-400">No Inquiries Found</h4>
+                    <p className="text-xs text-gray-600">
+                      When visitors download a brochure or request advisory, their records appear here instantly.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-white/5 border-b border-white/10 uppercase tracking-wider text-[11px] text-gray-400">
+                        <tr>
+                          <th className="py-3 px-4">Visitor Name</th>
+                          <th className="py-3 px-4">Mobile & Email</th>
+                          <th className="py-3 px-4">Project / Asset</th>
+                          <th className="py-3 px-4">Type</th>
+                          <th className="py-3 px-4">Date & Time</th>
+                          <th className="py-3 px-4 text-right">Delete</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {filteredLeads.map((lead) => (
+                          <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors">
+                            <td className="py-3.5 px-4 font-bold text-white">{lead.name}</td>
+                            <td className="py-3.5 px-4">
+                              <a
+                                href={`tel:${lead.phone}`}
+                                className="text-emerald-400 font-mono hover:underline block"
+                              >
+                                {lead.phone}
+                              </a>
+                              <a
+                                href={`mailto:${lead.email}`}
+                                className="text-gray-400 text-[11px] hover:text-white truncate block max-w-[200px]"
+                              >
+                                {lead.email}
+                              </a>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="text-gray-300 font-semibold">{lead.projectName || 'General Inquiry'}</span>
+                              {lead.brochureName && (
+                                <span className="block text-[11px] text-red-300 truncate max-w-[220px]">
+                                  📄 {lead.brochureName}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-brand-purple/20 text-brand-purpleLight border border-brand-purple/30">
+                                {lead.type}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-gray-400 text-[11px] font-mono">
+                              {new Date(lead.timestamp).toLocaleString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => {
+                                  cmsStore.deleteLead(lead.id);
+                                  showToast('Lead removed from local view.');
+                                }}
+                                className="p-1.5 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10"
+                                title="Delete lead"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-            </form>
-          </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW 8: GLOBAL SEO & 10 LSI DESK
+          ========================================================================= */}
+          {viewMode === 'list' && activeTab === 'seo' && (
+            <div className="space-y-6">
+              <div className="p-6 rounded-2xl bg-[#111118] border border-pink-500/20 space-y-5">
+                <div>
+                  <h3 className="text-base font-bold text-white uppercase tracking-wider text-pink-400 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    <span>Real Estate SEO & 10 LSI Keyword Generator</span>
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Generate 10 high-intent Latent Semantic Indexing keywords tailored to NCR luxury corridors, commercial yields, and plotted enclaves.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Seed Focus Keyword
+                    </label>
+                    <input
+                      type="text"
+                      value={globalSeedKeyword}
+                      onChange={(e) => setGlobalSeedKeyword(e.target.value)}
+                      placeholder="e.g. Godrej Meridien Sector 106 or DLF Privana"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-pink-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">Property Sector</label>
+                    <select
+                      value={globalLsiCategory}
+                      onChange={(e) => setGlobalLsiCategory(e.target.value as any)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#181822] border border-white/15 text-white text-xs focus:outline-none focus:border-pink-500"
+                    >
+                      <option value="residential">Residential Luxury</option>
+                      <option value="commercial">Grade-A Commercial</option>
+                      <option value="plots">Freehold Plots & Land</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 10 LSI Generated Results */}
+                <div className="pt-4 border-t border-white/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      10 Generated LSI Keywords for "{globalSeedKeyword}"
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const lsiList = generateLSIKeywords(globalSeedKeyword, globalLsiCategory)
+                          .map((l) => l.keyword)
+                          .join('\n');
+                        navigator.clipboard.writeText(lsiList);
+                        showToast('All 10 LSI keywords copied to clipboard!');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy All 10 Keywords</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {generateLSIKeywords(globalSeedKeyword, globalLsiCategory).map((lsi, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-pink-500/40 transition-all flex items-center justify-between gap-3"
+                      >
+                        <div>
+                          <p className="text-xs font-semibold text-white">{lsi.keyword}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono uppercase bg-pink-500/20 text-pink-300">
+                              {lsi.intent} Intent
+                            </span>
+                            <span className="text-[10px] text-gray-500 capitalize">{lsi.relevance} Relevance</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(lsi.keyword);
+                            showToast(`Copied: "${lsi.keyword}"`);
+                          }}
+                          className="p-2 rounded-lg bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white"
+                          title="Copy keyword"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </main>
     </div>
   );
 };

@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PROJECTS, getProjectFloorPlans, type FloorPlan } from '../data/projects';
 import { cmsStore, type CMSProject } from '../services/cmsStore';
 import { DeveloperLogo } from '../components/DeveloperLogo';
+import { submitLeadGlobally } from '../services/leadService';
 
 const CORPORATE_LOGO_MAP: Record<string, string> = {
   // Corporates (Route 65, Jewel, Urbana)
@@ -225,14 +226,15 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     setIsSubmitted(true);
     setIsFloorPlanUnlocked(true);
 
-    // Record lead in CMS Store
-    cmsStore.addLead({
+    // Submit lead globally to Google Sheets / Excel, email alert & CMS store
+    submitLeadGlobally({
       name: userName.trim(),
       phone: userPhone.trim(),
       email: userEmail.trim(),
       projectName: project.name,
       brochureName: project.brochureName || `${project.name} Official Brochure.pdf`,
-      type: modalMode === 'brochure' ? 'brochure-download' : modalMode === 'site-visit' ? 'consultation' : 'general',
+      type: modalMode === 'brochure' ? 'brochure-download' : modalMode === 'site-visit' ? 'site-visit' : 'general',
+      source: `Project Detail: ${project.name} (${modalMode})`,
     });
 
     // Automatically trigger brochure download
