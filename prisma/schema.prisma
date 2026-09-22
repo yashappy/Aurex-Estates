@@ -1,0 +1,85 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id             String   @id
+  name           String
+  developer      String
+  tagline        String   @default("")
+  category       String   // residential | commercial | plots
+  status         String   // New Launch | Under Construction | Ready to Move
+  location       String
+  city           String   @default("Gurugram")
+  priceRange     String
+  priceNumeric   Float    @default(0)
+  typology       String
+  size           String
+  projectArea    String?
+  possessionYear String
+  launchYear     String?
+  description    String
+  thumbnail      String
+  images         String   @default("[]") // JSON stringified array of image URLs
+  amenities      String   @default("[]") // JSON stringified array
+  highlights     String   @default("[]") // JSON stringified array
+  brochureUrl    String?
+  isFeatured     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Lead {
+  id           String   @id @default(uuid())
+  name         String
+  phone        String
+  email        String
+  type         String   // Consultation | Brochure Download | Site Visit
+  projectId    String?
+  projectName  String?
+  brochureName String?
+  notes        String?
+  createdAt    DateTime @default(now())
+}
+
+model BlogPost {
+  id        String   @id
+  title     String
+  excerpt   String
+  category  String
+  readTime  String
+  date      String
+  image     String
+  content   String
+  author    String   @default("Aurex Research Desk")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MediaItem {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   // image | pdf
+  url       String
+  size      String
+  createdAt DateTime @default(now())
+}
+
+model PageContent {
+  key       String   @id
+  data      String   // JSON stringified page content
+  updatedAt DateTime @updatedAt
+}
