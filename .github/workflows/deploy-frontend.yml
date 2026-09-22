@@ -1,9 +1,18 @@
-name: Deploy to Hostinger
+name: Deploy Frontend (Main Site)
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tsconfig*.json'
+      - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
 
 permissions:
@@ -11,7 +20,7 @@ permissions:
 
 jobs:
   build-and-deploy:
-    name: 🚀 Build & Deploy
+    name: 🚀 Build & Deploy Frontend
     runs-on: ubuntu-latest
 
     steps:
@@ -24,19 +33,19 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: 📦 Install Dependencies
+      - name: 📦 Install Frontend Dependencies
         run: npm ci
 
-      - name: 🔨 Build Production App
+      - name: 🔨 Build Production Frontend
         run: npm run build
 
-      - name: 📦 Push Compiled App to 'production' Branch (For Hostinger Git Auto-Deploy)
+      - name: 📦 Push Compiled App to 'production' Branch (Hostinger Git Deploy)
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: production
           folder: dist
 
-      - name: 🌐 Deploy via FTP to Hostinger (Optional / Backup)
+      - name: 🌐 Deploy via FTP to Hostinger Root (public_html/)
         if: env.FTP_SERVER != ''
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         env:
