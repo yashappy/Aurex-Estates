@@ -1,4 +1,4 @@
-name: Deploy Frontend (Main Site)
+name: Deploy Frontend & CMS Subdomain
 
 on:
   push:
@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   build-and-deploy:
-    name: 🚀 Build & Deploy Frontend
+    name: 🚀 Build & Deploy Website & CMS
     runs-on: ubuntu-latest
 
     steps:
@@ -36,7 +36,7 @@ jobs:
       - name: 📦 Install Frontend Dependencies
         run: npm ci
 
-      - name: 🔨 Build Production Frontend
+      - name: 🔨 Build Production App (Frontend + CMS)
         run: npm run build
 
       - name: 📦 Push Compiled App to 'production' Branch (Hostinger Git Deploy)
@@ -45,7 +45,7 @@ jobs:
           branch: production
           folder: dist
 
-      - name: 🌐 Deploy via FTP to Hostinger Root (public_html/)
+      - name: 🌐 Deploy Main Site to Hostinger Root (public_html/)
         if: env.FTP_SERVER != ''
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         env:
@@ -56,4 +56,17 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
           server-dir: public_html/
+          protocol: ftp
+
+      - name: 🌐 Deploy CMS Portal to Hostinger Subdomain (public_html/admin/)
+        if: env.FTP_SERVER != ''
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: public_html/admin/
           protocol: ftp

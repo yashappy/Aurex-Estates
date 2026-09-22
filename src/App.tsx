@@ -31,8 +31,23 @@ export type Page =
   | 'tools'
   | 'admin';
 
+const isAdminSubdomain = typeof window !== 'undefined' && (
+  window.location.hostname.toLowerCase().startsWith('admin.') ||
+  window.location.hostname.toLowerCase() === 'admin'
+);
+
 export const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname.toLowerCase();
+      if (hostname.startsWith('admin.') || hostname === 'admin') return 'admin';
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      const pathname = window.location.pathname.replace(/^\//, '').toLowerCase();
+      const route = hash || pathname;
+      if (route === 'admin' || route === 'cms') return 'admin';
+    }
+    return 'home';
+  });
   const [selectedProjectId, setSelectedProjectId] = useState<string>('dlf-camellias');
   const [previousCategory, setPreviousCategory] = useState<'residential' | 'commercial' | 'plots'>('residential');
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
@@ -42,6 +57,9 @@ export const App: React.FC = () => {
   // Sync with browser URL hash & path for clean direct linking & back button support
   useEffect(() => {
     const handleHashChange = () => {
+      const hostname = window.location.hostname.toLowerCase();
+      const isAdminHost = hostname.startsWith('admin.') || hostname === 'admin';
+
       const rawHash = window.location.hash.replace('#', '');
       const hash = rawHash.toLowerCase();
       const pathname = window.location.pathname.replace(/^\//, '').toLowerCase();
@@ -88,6 +106,8 @@ export const App: React.FC = () => {
         setCurrentPage('admin');
       } else if (route === 'consultation') {
         setIsConsultationOpen(true);
+      } else if (isAdminHost && (!route || route === 'home')) {
+        setCurrentPage('admin');
       } else {
         setCurrentPage('home');
       }
@@ -103,6 +123,10 @@ export const App: React.FC = () => {
   }, []);
 
   const handleNavigate = (page: Page) => {
+    if (page === 'home' && isAdminSubdomain) {
+      window.location.href = 'https://aurexestates.co.in';
+      return;
+    }
     setCurrentPage(page);
     window.location.hash = page === 'home' ? '' : page;
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -126,11 +150,13 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-brand-warmWhite text-brand-dark antialiased font-sans selection:bg-brand-purple selection:text-white pb-16 md:pb-0">
       {/* Sticky Glassmorphism Header */}
-      <Header
-        currentPage={currentPage}
-        onNavigate={handleNavigate}
-        onOpenConsultation={() => handleOpenConsultation()}
-      />
+      {currentPage !== 'admin' && (
+        <Header
+          currentPage={currentPage}
+          onNavigate={handleNavigate}
+          onOpenConsultation={() => handleOpenConsultation()}
+        />
+      )}
 
       {/* Main Content Area */}
       <main className="flex-grow">
@@ -214,10 +240,12 @@ export const App: React.FC = () => {
       </main>
 
       {/* Sophisticated Light Luxury Footer */}
-      <Footer
-        onNavigate={handleNavigate}
-        onOpenTerms={() => setIsTermsOpen(true)}
-      />
+      {currentPage !== 'admin' && (
+        <Footer
+          onNavigate={handleNavigate}
+          onOpenTerms={() => setIsTermsOpen(true)}
+        />
+      )}
 
       {/* Mobile App-Style Bottom Navigation Bar (Hidden in Admin CMS) */}
       {currentPage !== 'admin' && (
@@ -244,7 +272,7 @@ export const App: React.FC = () => {
       />
 
       {/* Floating Gemini AI Property Advisor Chatbot */}
-      <GeminiChatbot onNavigate={handleNavigate} />
+      {currentPage !== 'admin' && <GeminiChatbot onNavigate={handleNavigate} />}
     </div>
   );
 };

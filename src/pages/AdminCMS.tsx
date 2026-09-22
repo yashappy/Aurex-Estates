@@ -472,7 +472,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F14] text-white pt-20 pb-24 font-sans">
+    <div className="min-h-screen bg-[#0F0F14] text-white pt-8 sm:pt-10 pb-24 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-24 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl bg-brand-purple text-white shadow-2xl border border-white/20 animate-fade-in">
