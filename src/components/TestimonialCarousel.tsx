@@ -63,8 +63,8 @@ export const TestimonialCarousel: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-gray-950">
             What Our Clients Say.
           </h2>
-          <p className="text-gray-500 text-xs sm:text-sm md:text-base font-light max-w-lg mx-auto mt-2.5">
-            Real experiences from investors and families who trusted Aurex Estates as their strategic growth partner.
+          <p className="text-gray-500 text-xs sm:text-sm font-medium max-w-lg mx-auto mt-2">
+            Testimonials
           </p>
         </motion.div>
 

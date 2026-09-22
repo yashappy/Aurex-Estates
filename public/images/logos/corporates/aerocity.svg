@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 55" width="220" height="55">
+  <circle cx="28" cy="27" r="16" fill="#002B49"/>
+  <text x="28" y="35" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#D4AF37">&#9992;</text>
+  <text x="54" y="28" font-family="'Arial Black', sans-serif" font-weight="900" font-size="18" fill="#002B49" letter-spacing="1">AEROCITY</text>
+  <text x="54" y="43" font-family="sans-serif" font-weight="700" font-size="7.5" fill="#888888" letter-spacing="2">HOSPITALITY DISTRICT</text>
+</svg>

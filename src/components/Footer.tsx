@@ -1,8 +1,9 @@
 import React from 'react';
 import { Phone, Mail, MapPin, ArrowUpRight } from 'lucide-react';
+import type { Page } from '../App';
 
 interface FooterProps {
-  onNavigate: (page: 'home' | 'about' | 'contact' | 'privacy' | 'career') => void;
+  onNavigate: (page: Page) => void;
   onOpenTerms: () => void;
 }
 
@@ -98,7 +99,7 @@ export const Footer: React.FC<FooterProps> = ({
             <span className="text-xs uppercase tracking-[0.25em] text-brand-purple font-semibold block mb-2">
               Navigation
             </span>
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               <li>
                 <button
                   onClick={() => {
@@ -113,12 +114,67 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   onClick={() => {
+                    onNavigate('residential');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="text-sm text-gray-700 hover:text-brand-purple transition-colors font-medium"
+                >
+                  Residential Projects
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    onNavigate('commercial');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="text-sm text-gray-700 hover:text-brand-purple transition-colors font-medium"
+                >
+                  Commercial Investment
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    onNavigate('plots');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="text-sm text-gray-700 hover:text-brand-purple transition-colors font-medium"
+                >
+                  Plots & Land
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    onNavigate('tools');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="text-sm text-gray-700 hover:text-brand-purple transition-colors font-medium"
+                >
+                  Advisory Tools
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    onNavigate('blog');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="text-sm text-gray-700 hover:text-brand-purple transition-colors font-medium"
+                >
+                  Blog
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
                     onNavigate('about');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className="text-sm text-gray-700 hover:text-brand-purple transition-colors font-medium"
                 >
-                  About
+                  About Us
                 </button>
               </li>
               <li>

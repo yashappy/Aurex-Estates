@@ -8,13 +8,11 @@ import {
   Eye,
   Sparkles,
   Users,
-  MapPin,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IMAGES } from '../data/images';
-import { CORRIDORS } from '../data/corridors';
 import { VALUES } from '../data/advisory';
 import { LogoTicker } from '../components/LogoTicker';
 import { StatBlock } from '../components/StatBlock';
@@ -178,6 +176,14 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
     return () => clearInterval(timer);
   }, [currentSlide]);
 
+  useEffect(() => {
+    if (window.location.hash.includes('developer') || window.location.hash.includes('network')) {
+      setTimeout(() => {
+        document.getElementById('developer-network')?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    }
+  }, []);
+
 
 
   return (
@@ -310,15 +316,9 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
         <div className="max-w-site mx-auto px-6 md:px-12">
           {/* Header */}
           <motion.div {...fadeInUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-12 md:mb-14">
-            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
-              THE ADVISORY PROCESS
-            </span>
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-4">
-              Clarity Before Commitment.
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-950">
+              Our Advisory Process
             </h2>
-            <p className="text-gray-600 text-sm md:text-base font-light">
-              A structured, analytical protocol designed to remove bias and protect your interests.
-            </p>
           </motion.div>
 
           {/* ==================== DESKTOP VIEW (>= md) ==================== */}
@@ -470,16 +470,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
             </div>
           </div>
 
-          {/* End statement */}
-          <motion.div
-            {...fadeInUp}
-            className="mt-10 sm:mt-12 md:mt-14 text-center max-w-xl mx-auto"
-          >
-            <p className="text-lg md:text-xl font-light text-gray-700 italic">
-              “Better advice isn’t about selling more.<br />
-              <span className="text-gray-950 font-medium not-italic">It’s about helping you decide better.</span>”
-            </p>
-          </motion.div>
+
         </div>
       </section>
 
@@ -848,7 +839,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent group-hover:from-black/90 transition-all" />
 
-              <div className="absolute bottom-8 left-8 right-8 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div className="absolute bottom-6 left-6 right-6 sm:bottom-8 sm:left-8 sm:right-8 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div className="max-w-md">
                   <span className="text-[10px] uppercase tracking-[0.25em] text-purple-300 font-semibold block mb-1">
                     RESIDENTIAL ASSET
@@ -856,9 +847,6 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                   <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">
                     High Rise Apartments
                   </h3>
-                  <p className="text-gray-200 text-xs md:text-sm font-light mt-1">
-                    Luxury high-rise condominiums, penthouses, and gated vertical communities across prime corridors.
-                  </p>
                 </div>
 
                 {/* Form Button */}
@@ -867,7 +855,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                     e.stopPropagation();
                     onOpenConsultation('High Rise Apartments');
                   }}
-                  className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-lg shadow-brand-purple/40 hover:shadow-brand-purple/60 hover:-translate-y-0.5 transition-all"
+                  className="w-fit self-start sm:self-auto shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-lg shadow-brand-purple/40 hover:shadow-brand-purple/60 hover:-translate-y-0.5 transition-all"
                 >
                   <span>Enquire</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -972,14 +960,13 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                     COMMERCIAL ASSET
                   </span>
                   <h4 className="text-xl font-semibold">Commercial Investment</h4>
-                  <p className="text-xs text-gray-300 font-light mt-0.5">Grade-A office suites, retail arcades, and pre-leased assets.</p>
                 </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onOpenConsultation('Commercial Investment');
                   }}
-                  className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-md transition-all"
+                  className="w-fit shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-md transition-all"
                 >
                   <span>Enquire</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -1009,33 +996,19 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                     STRATEGIC ENTRY
                   </span>
                   <h4 className="text-xl font-semibold">Affordable Investment</h4>
-                  <p className="text-xs text-gray-300 font-light mt-0.5">High-yield entry investments in smart planned communities.</p>
                 </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onOpenConsultation('Affordable Investment');
                   }}
-                  className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-md transition-all"
+                  className="w-fit shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-md transition-all"
                 >
                   <span>Enquire</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </motion.div>
-          </div>
-
-          {/* Location Markers with Smooth Hover Flow */}
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 pt-2">
-            {CORRIDORS.map((corridor) => (
-              <div
-                key={corridor.id}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200/90 shadow-sm text-gray-800 text-xs sm:text-sm font-medium hover:border-brand-purple hover:text-brand-purple hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-default"
-              >
-                <MapPin className="w-3.5 h-3.5 text-brand-purple shrink-0" />
-                <span>{corridor.name}</span>
-              </div>
-            ))}
           </div>
         </div>
       </section>

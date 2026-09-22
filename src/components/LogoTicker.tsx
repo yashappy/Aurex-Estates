@@ -2,7 +2,7 @@ import React from 'react';
 import { DeveloperLogo } from './DeveloperLogo';
 
 export const LogoTicker: React.FC = () => {
-  // ROW 1: 8 Unique Developer Brands
+  // ROW 1: Unique Developer Brands
   const row1Logos = [
     { id: 'dlf', name: 'DLF' },
     { id: 'oberoi', name: 'Oberoi Realty' },
@@ -12,9 +12,11 @@ export const LogoTicker: React.FC = () => {
     { id: 'birla', name: 'Birla Estates' },
     { id: 'emaar', name: 'Emaar' },
     { id: 'ats', name: 'ATS HomeKraft' },
+    { id: 'whiteland', name: 'Whiteland Corporation' },
+    { id: '4s', name: '4S Developers' },
   ];
 
-  // ROW 2: 8 Unique Developer Brands (Zero overlap with Row 1 & Row 3)
+  // ROW 2: Unique Developer Brands
   const row2Logos = [
     { id: 'pareena', name: 'Pareena' },
     { id: 'ganga', name: 'Ganga Realty' },
@@ -24,9 +26,10 @@ export const LogoTicker: React.FC = () => {
     { id: 'm3m', name: 'M3M' },
     { id: 'mahindra', name: 'Mahindra Lifespaces' },
     { id: 'adani', name: 'Adani Realty' },
+    { id: 'county', name: 'County Group' },
   ];
 
-  // ROW 3: 8 Unique Developer Brands (Zero overlap with Row 1 & Row 2)
+  // ROW 3: Unique Developer Brands
   const row3Logos = [
     { id: 'signature', name: 'Signature Global' },
     { id: 'smartworld', name: 'Smart World' },
@@ -36,10 +39,12 @@ export const LogoTicker: React.FC = () => {
     { id: 'ireo', name: 'IREO' },
     { id: 'aipl', name: 'AIPL' },
     { id: 'wal', name: 'WAL Developers' },
+    { id: 'reach', name: 'Reach Group' },
+    { id: 'suncity', name: 'Suncity Projects' },
   ];
 
   return (
-    <section className="pt-16 sm:pt-20 md:pt-24 pb-16 sm:pb-20 md:pb-24 bg-brand-warmWhite text-brand-dark overflow-hidden relative border-b border-gray-150">
+    <section id="developer-network" className="pt-16 sm:pt-20 md:pt-24 pb-16 sm:pb-20 md:pb-24 bg-brand-warmWhite text-brand-dark overflow-hidden relative border-b border-gray-150">
       <style>{`
         @keyframes ticker-left {
           0% { transform: translateX(0); }

@@ -62,6 +62,17 @@ export const DeveloperLogo: React.FC<DeveloperLogoProps> = ({ id, className = "h
         </div>
       );
 
+    case 'whiteland':
+      return (
+        <div className={`flex items-center ${className}`}>
+          <img
+            src="/images/developers/whiteland.png"
+            alt="Whiteland Corporation"
+            className="h-full w-auto max-h-8 md:max-h-9 object-contain filter hover:scale-105 transition-all duration-300"
+          />
+        </div>
+      );
+
     case 'emaar':
       return (
         <div className={`flex items-center ${className}`}>
@@ -274,6 +285,50 @@ export const DeveloperLogo: React.FC<DeveloperLogoProps> = ({ id, className = "h
           <img
             src="/images/developers/smartworld.png"
             alt="Smart World Developers"
+            className="h-full w-auto max-h-8 md:max-h-9 object-contain filter hover:scale-105 transition-all duration-300"
+          />
+        </div>
+      );
+
+    case 'reach':
+      return (
+        <div className={`flex items-center ${className}`}>
+          <img
+            src="/images/developers/reach.png"
+            alt="Reach Group"
+            className="h-full w-auto max-h-8 md:max-h-9 object-contain filter hover:scale-105 transition-all duration-300"
+          />
+        </div>
+      );
+
+    case '4s':
+      return (
+        <div className={`flex items-center ${className}`}>
+          <img
+            src="/images/developers/4s.png"
+            alt="4S Developers"
+            className="h-full w-auto max-h-8 md:max-h-9 object-contain filter hover:scale-105 transition-all duration-300"
+          />
+        </div>
+      );
+
+    case 'county':
+      return (
+        <div className={`flex items-center ${className}`}>
+          <img
+            src="/images/developers/county.png"
+            alt="County Group"
+            className="h-full w-auto max-h-8 md:max-h-9 object-contain filter hover:scale-105 transition-all duration-300"
+          />
+        </div>
+      );
+
+    case 'suncity':
+      return (
+        <div className={`flex items-center ${className}`}>
+          <img
+            src="/images/developers/suncity.png"
+            alt="Suncity Projects"
             className="h-full w-auto max-h-8 md:max-h-9 object-contain filter hover:scale-105 transition-all duration-300"
           />
         </div>

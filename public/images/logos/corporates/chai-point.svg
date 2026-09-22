@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 55" width="220" height="55">
+  <circle cx="28" cy="27" r="16" fill="#F37023"/>
+  <text x="28" y="34" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#FFFFFF">☕</text>
+  <text x="54" y="30" font-family="'Arial Black', sans-serif" font-weight="900" font-size="20" fill="#231F20" letter-spacing="1">CHAI</text>
+  <text x="115" y="30" font-family="'Arial Black', sans-serif" font-weight="900" font-size="20" fill="#F37023" letter-spacing="1">POINT</text>
+  <text x="55" y="44" font-family="sans-serif" font-weight="700" font-size="8" fill="#666666" letter-spacing="2">INDIA'S CHAI HUB</text>
+</svg>

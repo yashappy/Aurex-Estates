@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 55" width="210" height="55">
+  <circle cx="28" cy="27" r="17" fill="#FDC100"/>
+  <text x="28" y="33" dominant-baseline="middle" text-anchor="middle" font-family="'Arial Black', sans-serif" font-weight="900" font-size="13" fill="#E31E24">wow!</text>
+  <text x="54" y="35" font-family="'Arial Black', sans-serif" font-weight="900" font-size="22" fill="#E31E24" letter-spacing="1">momo</text>
+</svg>

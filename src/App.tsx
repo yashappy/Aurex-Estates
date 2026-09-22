@@ -6,14 +6,35 @@ import { About } from './pages/About';
 import { Contact } from './pages/Contact';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { Career } from './pages/Career';
+import { ProjectsListing } from './pages/ProjectsListing';
+import { ProjectDetail } from './pages/ProjectDetail';
+import { Blog } from './pages/Blog';
 import { ConsultationModal } from './components/ConsultationModal';
 import { TermsModal } from './components/TermsModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { GeminiChatbot } from './components/GeminiChatbot';
+import { AdminCMS } from './pages/AdminCMS';
+import { Tools } from './pages/Tools';
+import { PROJECTS } from './data/projects';
 
-type Page = 'home' | 'about' | 'contact' | 'privacy' | 'career';
+export type Page =
+  | 'home'
+  | 'about'
+  | 'contact'
+  | 'privacy'
+  | 'career'
+  | 'residential'
+  | 'commercial'
+  | 'plots'
+  | 'blog'
+  | 'project-detail'
+  | 'tools'
+  | 'admin';
 
 export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('dlf-camellias');
+  const [previousCategory, setPreviousCategory] = useState<'residential' | 'commercial' | 'plots'>('residential');
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
   const [consultationCategory, setConsultationCategory] = useState<string | undefined>(undefined);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
@@ -21,8 +42,26 @@ export const App: React.FC = () => {
   // Sync with browser URL hash for clean direct linking & back button support
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (hash === 'about') {
+      const rawHash = window.location.hash.replace('#', '');
+      const hash = rawHash.toLowerCase();
+
+      if (hash.startsWith('project/')) {
+        const rawPId = rawHash.slice(8).split('/')[0];
+        const normalizedId =
+          rawPId === 'westin' ||
+          rawPId === 'westin-residences' ||
+          rawPId === 'the-westin-residences' ||
+          rawPId === 'the-westin-residences-gurugram' ||
+          rawPId === 'westin-residences-gurugram'
+            ? 'whiteland-westin-residences'
+            : rawPId;
+        setSelectedProjectId(normalizedId);
+        const found = PROJECTS.find((p) => p.id === normalizedId);
+        if (found && (found.category === 'residential' || found.category === 'commercial' || found.category === 'plots')) {
+          setPreviousCategory(found.category);
+        }
+        setCurrentPage('project-detail');
+      } else if (hash === 'about') {
         setCurrentPage('about');
       } else if (hash === 'contact') {
         setCurrentPage('contact');
@@ -30,6 +69,21 @@ export const App: React.FC = () => {
         setCurrentPage('privacy');
       } else if (hash === 'career' || hash === 'careers') {
         setCurrentPage('career');
+      } else if (hash.startsWith('residential')) {
+        setCurrentPage('residential');
+        setPreviousCategory('residential');
+      } else if (hash.startsWith('commercial')) {
+        setCurrentPage('commercial');
+        setPreviousCategory('commercial');
+      } else if (hash.startsWith('plots')) {
+        setCurrentPage('plots');
+        setPreviousCategory('plots');
+      } else if (hash === 'blog' || hash === 'insights') {
+        setCurrentPage('blog');
+      } else if (hash === 'tools' || hash === 'calculators' || hash === 'calculator') {
+        setCurrentPage('tools');
+      } else if (hash === 'admin' || hash === 'cms') {
+        setCurrentPage('admin');
       } else if (hash === 'consultation') {
         setIsConsultationOpen(true);
       } else {
@@ -48,8 +102,18 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleOpenConsultation = (category?: string) => {
-    setConsultationCategory(category);
+  const handleSelectProject = (projectId: string) => {
+    if (currentPage === 'residential' || currentPage === 'commercial' || currentPage === 'plots') {
+      setPreviousCategory(currentPage);
+    }
+    setSelectedProjectId(projectId);
+    setCurrentPage('project-detail');
+    window.location.hash = `project/${projectId}`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenConsultation = (categoryOrProject?: string) => {
+    setConsultationCategory(categoryOrProject);
     setIsConsultationOpen(true);
   };
 
@@ -91,6 +155,56 @@ export const App: React.FC = () => {
             onOpenConsultation={() => handleOpenConsultation()}
           />
         )}
+        {currentPage === 'residential' && (
+          <ProjectsListing
+            key={currentPage}
+            initialCategory="residential"
+            onOpenConsultation={handleOpenConsultation}
+            onSelectProject={handleSelectProject}
+          />
+        )}
+        {currentPage === 'commercial' && (
+          <ProjectsListing
+            key={currentPage}
+            initialCategory="commercial"
+            onOpenConsultation={handleOpenConsultation}
+            onSelectProject={handleSelectProject}
+          />
+        )}
+        {currentPage === 'plots' && (
+          <ProjectsListing
+            key={currentPage}
+            initialCategory="plots"
+            onOpenConsultation={handleOpenConsultation}
+            onSelectProject={handleSelectProject}
+          />
+        )}
+        {currentPage === 'project-detail' && (
+          <ProjectDetail
+            projectId={selectedProjectId}
+            onBack={() => handleNavigate(previousCategory)}
+            onOpenConsultation={handleOpenConsultation}
+            onNavigate={handleNavigate}
+          />
+        )}
+        {currentPage === 'blog' && (
+          <Blog
+            onOpenConsultation={handleOpenConsultation}
+            onNavigate={handleNavigate}
+          />
+        )}
+        {currentPage === 'tools' && (
+          <Tools
+            onNavigateProjects={(cat) => handleNavigate(cat || 'residential')}
+            onOpenConsultation={handleOpenConsultation}
+          />
+        )}
+        {currentPage === 'admin' && (
+          <AdminCMS
+            onNavigate={handleNavigate}
+            onSelectProject={handleSelectProject}
+          />
+        )}
       </main>
 
       {/* Sophisticated Light Luxury Footer */}
@@ -99,13 +213,15 @@ export const App: React.FC = () => {
         onOpenTerms={() => setIsTermsOpen(true)}
       />
 
-      {/* Mobile App-Style Bottom Navigation Bar */}
-      <MobileBottomNav
-        currentPage={currentPage}
-        onNavigate={handleNavigate}
-      />
+      {/* Mobile App-Style Bottom Navigation Bar (Hidden in Admin CMS) */}
+      {currentPage !== 'admin' && (
+        <MobileBottomNav
+          currentPage={currentPage}
+          onNavigate={handleNavigate}
+        />
+      )}
 
-      {/* Consultation Modal with Category Support */}
+      {/* Consultation Modal with Category/Project Support */}
       <ConsultationModal
         isOpen={isConsultationOpen}
         onClose={() => {
@@ -120,6 +236,9 @@ export const App: React.FC = () => {
         isOpen={isTermsOpen}
         onClose={() => setIsTermsOpen(false)}
       />
+
+      {/* Floating Gemini AI Property Advisor Chatbot */}
+      <GeminiChatbot onNavigate={handleNavigate} />
     </div>
   );
 };

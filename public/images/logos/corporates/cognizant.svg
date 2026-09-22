@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 55" width="220" height="55">
+  <circle cx="28" cy="28" r="15" fill="none" stroke="#0033A0" stroke-width="4"/>
+  <circle cx="28" cy="28" r="6" fill="#00B5E2"/>
+  <text x="54" y="37" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="25" fill="#0033A0" letter-spacing="0.5">cognizant</text>
+</svg>

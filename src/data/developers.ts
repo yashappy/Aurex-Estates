@@ -30,4 +30,9 @@ export const DEVELOPERS: Developer[] = [
   { id: 'centralpark', name: 'Central Park', category: 'Resort Living' },
   { id: 'bptp', name: 'BPTP', category: 'Integrated Living' },
   { id: 'elan', name: 'Elan Group', category: 'Commercial & Luxury' },
+  { id: 'whiteland', name: 'Whiteland Corporation', category: 'Global Outlook' },
+  { id: 'reach', name: 'Reach Group', category: 'Commercial Excellence' },
+  { id: '4s', name: '4S Developers', category: 'Uber Luxury Living' },
+  { id: 'county', name: 'County Group', category: 'Masterplanned Living' },
+  { id: 'suncity', name: 'Suncity Projects', category: 'Pinnacle of Luxury' },
 ];

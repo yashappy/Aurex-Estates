@@ -115,40 +115,6 @@ export const About: React.FC<AboutProps> = ({ onOpenConsultation, onNavigate: _o
             </div>
           </div>
 
-          {/* Architectural Showcase Duo with Smooth Image Hover */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mt-10 sm:mt-12 md:mt-16 pt-10 sm:pt-12 md:pt-16 border-t border-gray-200/80">
-            <div className="rounded-2xl overflow-hidden shadow-lg relative h-[240px] sm:h-[280px] img-zoom-container group">
-              <img
-                src={IMAGES.aboutClubhouse}
-                alt="Luxury residential clubhouse and pool deck"
-                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5 text-white">
-                <span className="text-[10px] uppercase tracking-widest text-brand-purpleLight font-semibold block mb-0.5">
-                  RESIDENTIAL SANCTUARY
-                </span>
-                <h4 className="text-base font-semibold">Resort-Style Amenities & Clubhouses</h4>
-              </div>
-            </div>
-
-            <div className="rounded-2xl overflow-hidden shadow-lg relative h-[240px] sm:h-[280px] img-zoom-container group">
-              <img
-                src={IMAGES.aboutCyberCity}
-                alt="DLF Cyber City Horizon Centre Gurugram"
-                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5 text-white">
-                <span className="text-[10px] uppercase tracking-widest text-brand-purpleLight font-semibold block mb-0.5">
-                  COMMERCIAL CORRIDOR
-                </span>
-                <h4 className="text-base font-semibold">Institutional Grade Complexes</h4>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
