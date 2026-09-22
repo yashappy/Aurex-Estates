@@ -39,14 +39,16 @@ export const App: React.FC = () => {
   const [consultationCategory, setConsultationCategory] = useState<string | undefined>(undefined);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
 
-  // Sync with browser URL hash for clean direct linking & back button support
+  // Sync with browser URL hash & path for clean direct linking & back button support
   useEffect(() => {
     const handleHashChange = () => {
       const rawHash = window.location.hash.replace('#', '');
       const hash = rawHash.toLowerCase();
+      const pathname = window.location.pathname.replace(/^\//, '').toLowerCase();
+      const route = hash || pathname;
 
-      if (hash.startsWith('project/')) {
-        const rawPId = rawHash.slice(8).split('/')[0];
+      if (route.startsWith('project/')) {
+        const rawPId = (rawHash ? rawHash.slice(8) : pathname.slice(8)).split('/')[0];
         const normalizedId =
           rawPId === 'westin' ||
           rawPId === 'westin-residences' ||
@@ -61,30 +63,30 @@ export const App: React.FC = () => {
           setPreviousCategory(found.category);
         }
         setCurrentPage('project-detail');
-      } else if (hash === 'about') {
+      } else if (route === 'about') {
         setCurrentPage('about');
-      } else if (hash === 'contact') {
+      } else if (route === 'contact') {
         setCurrentPage('contact');
-      } else if (hash === 'privacy') {
+      } else if (route === 'privacy') {
         setCurrentPage('privacy');
-      } else if (hash === 'career' || hash === 'careers') {
+      } else if (route === 'career' || route === 'careers') {
         setCurrentPage('career');
-      } else if (hash.startsWith('residential')) {
+      } else if (route.startsWith('residential')) {
         setCurrentPage('residential');
         setPreviousCategory('residential');
-      } else if (hash.startsWith('commercial')) {
+      } else if (route.startsWith('commercial')) {
         setCurrentPage('commercial');
         setPreviousCategory('commercial');
-      } else if (hash.startsWith('plots')) {
+      } else if (route.startsWith('plots')) {
         setCurrentPage('plots');
         setPreviousCategory('plots');
-      } else if (hash === 'blog' || hash === 'insights') {
+      } else if (route === 'blog' || route === 'insights') {
         setCurrentPage('blog');
-      } else if (hash === 'tools' || hash === 'calculators' || hash === 'calculator') {
+      } else if (route === 'tools' || route === 'calculators' || route === 'calculator') {
         setCurrentPage('tools');
-      } else if (hash === 'admin' || hash === 'cms') {
+      } else if (route === 'admin' || route === 'cms') {
         setCurrentPage('admin');
-      } else if (hash === 'consultation') {
+      } else if (route === 'consultation') {
         setIsConsultationOpen(true);
       } else {
         setCurrentPage('home');
@@ -93,7 +95,11 @@ export const App: React.FC = () => {
 
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
   }, []);
 
   const handleNavigate = (page: Page) => {

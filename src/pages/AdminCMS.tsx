@@ -16,6 +16,9 @@ import {
   Lock,
   Unlock,
   Copy,
+  Eye,
+  EyeOff,
+  LogOut,
 } from 'lucide-react';
 import {
   cmsStore,
@@ -43,6 +46,35 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
   const [leads, setLeads] = useState<LeadSubmission[]>([]);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('aurex_cms_auth') === 'true';
+  });
+  const [usernameInput, setUsernameInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (usernameInput.trim() === 'admin' && passwordInput === 'Aurex@2026') {
+      sessionStorage.setItem('aurex_cms_auth', 'true');
+      setIsAuthenticated(true);
+      setAuthError(null);
+      showToast('Welcome, Administrator');
+    } else {
+      setAuthError('Invalid credentials. Please verify your username and password.');
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('aurex_cms_auth');
+    setIsAuthenticated(false);
+    setUsernameInput('');
+    setPasswordInput('');
+    showToast('Signed out successfully.');
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -345,6 +377,100 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
     return true;
   });
 
+  // If not logged in, show secure login portal
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0F] text-white flex items-center justify-center px-4 py-20 relative overflow-hidden font-sans">
+        {/* Ambient Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-purple/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="max-w-md w-full relative z-10">
+          <div className="text-center mb-8">
+            <button
+              onClick={() => onNavigate('home')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-400 hover:text-white transition-colors mb-6 border border-white/10"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Website</span>
+            </button>
+
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-brand-purple to-purple-500 flex items-center justify-center shadow-xl shadow-brand-purple/30 mb-4">
+              <Lock className="w-7 h-7 text-white" />
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              Aurex CMS Portal
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-400 mt-2">
+              Sign in with your administrative credentials to manage website content, projects, and leads.
+            </p>
+          </div>
+
+          <div className="bg-[#14141E]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl">
+            <form onSubmit={handleLogin} className="space-y-5">
+              {authError && (
+                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium">
+                  {authError}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  placeholder="admin"
+                  autoComplete="username"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-brand-purple focus:ring-1 focus:ring-brand-purple text-white text-sm outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    placeholder="••••••••••••"
+                    autoComplete="current-password"
+                    className="w-full px-4 py-3 pr-11 rounded-xl bg-white/5 border border-white/10 focus:border-brand-purple focus:ring-1 focus:ring-brand-purple text-white text-sm outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 px-4 rounded-xl bg-brand-purple hover:bg-brand-purpleDark text-white text-sm font-bold tracking-wide transition-all duration-200 shadow-lg shadow-brand-purple/25 active:scale-[0.98] mt-2"
+              >
+                Sign In to CMS
+              </button>
+            </form>
+          </div>
+
+          <div className="text-center mt-6 text-xs text-gray-500">
+            Aurex Estates • Content Management System v2.0
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0F0F14] text-white pt-20 pb-24 font-sans">
       {/* Toast Notification */}
@@ -397,6 +523,15 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate }) => {
             >
               <Upload className="w-4 h-4 text-emerald-400" />
               <span>Import Backup</span>
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-all"
+              title="Sign out of Admin CMS"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
             </button>
             <input
               type="file"
