@@ -1,6 +1,6 @@
 /**
  * Aurex Estates - AI Real Estate Property Advisory Service
- * Powered by Google Gemini API with Intelligent Human-Like Real Estate Conversational Engine
+ * Powered by Live Multi-Turn AI & Intelligent Human-Like Real Estate Conversational Engine
  */
 
 export interface ChatMessage {
@@ -12,16 +12,11 @@ const GEMINI_API_KEY =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) || '';
 
 const SYSTEM_INSTRUCTION = `
-You are "Aura", a sophisticated, knowledgeable, and polite real estate AI advisor for Aurex Estates.
+You are "Aura", a sophisticated, knowledgeable, and polite real estate AI advisor for Aurex Estates in India (Delhi NCR, Gurugram, Mumbai, Goa).
 Speak naturally like an experienced, warm human property advisor: respectful, sharp, and helpful.
 Answer whatever question, greeting, or comment the user types naturally and directly.
 Keep responses concise (1 to 2 clear sentences max). Zero marketing fluff, zero pushy sales talk.
-
-Core Knowledge & Persona:
-1. When asked about who you are, introduce yourself as Aura, real estate advisor at Aurex Estates.
-2. When asked questions about locations (Golf Course Road, Dwarka Expressway, SPR, New Gurugram, Cyber City, Goa, Ayodhya, Neemrana, Noida), developers (DLF, Godrej, Sobha, Max Estates), rental yields, RERA, market trends, or commercial vs residential, answer directly and intelligently with real market facts.
-3. When users share budget, location, or property type preferences, acknowledge them warmly and help them evaluate options.
-4. If the user uses vulgarity or profanity, reply calmly: "I am here to assist with genuine property searches. Which property category can I help you explore?"
+Never repeat the same question if the user changes the topic, says no, or asks something else.
 `;
 
 const VULGAR_REGEX = /\b(fuck|shit|bitch|bastard|asshole|idiot|stupid|chutiya|harami|gandu|madarchod|bhenchod|cunt|dick)\b/i;
@@ -29,6 +24,7 @@ const VULGAR_REGEX = /\b(fuck|shit|bitch|bastard|asshole|idiot|stupid|chutiya|ha
 /**
  * Intelligent Local Conversational Advisor:
  * Entertains every user input with tailored, personalized, respectful human answers.
+ * Guarantees zero stuck loops and natural human conversation flow.
  */
 function getIntelligentLocalReply(history: ChatMessage[]): string {
   const userMessages = history.filter((m) => m.role === 'user');
@@ -63,23 +59,45 @@ function getIntelligentLocalReply(history: ChatMessage[]): string {
     return "I'm Aura, your AI real estate advisor at Aurex Estates. I provide unbiased market insights, rental yield analytics, and verified property shortlists across Delhi NCR, Mumbai, Goa, and key emerging corridors. How can I help with your property search?";
   }
 
-  // 4. How are you / Politeness
+  // 4. Courtesy & Pleasantries
   if (lower.includes('how are you') || lower.includes('how r u') || lower.includes("how's it going")) {
     return "I'm doing well, thank you! Ready to help you evaluate India's most promising real estate opportunities. What property goals are you currently considering?";
   }
 
-  // 5. Gratitude / Acknowledgment
   if (lower.includes('thank') || lower.includes('thx') || lower.includes('appreciate')) {
     return "You're most welcome! Feel free to ask if you'd like to analyze any specific developer, micro-market pricing, or investment yield.";
   }
 
-  if (lower === 'ok' || lower === 'okay' || lower === 'cool' || lower === 'got it' || lower === 'great' || lower === 'noted' || lower === 'sure') {
+  if (lower === 'ok' || lower === 'okay' || lower === 'cool' || lower === 'got it' || lower === 'great' || lower === 'noted') {
     return "Glad to hear. Are you exploring residential luxury, commercial yields, or freehold plots?";
   }
 
-  // 6. Direct Market & Financial Questions
+  // 5. User Declining / Answering "no"
+  if (
+    lower === 'no' ||
+    lower === 'nope' ||
+    lower === 'not really' ||
+    lower === 'neither' ||
+    lower === 'nah' ||
+    lower === 'cancel' ||
+    lower.startsWith('no ')
+  ) {
+    return "No problem at all! Feel free to ask any question about Gurgaon real estate, prices, developers, or areas, and I'll be glad to help.";
+  }
+
+  // 6. User Answering "yes" / "sure"
+  if (lower === 'yes' || lower === 'yeah' || lower === 'sure' || lower === 'yep') {
+    return "Great! Which location, sector, or budget range would you like us to look into?";
+  }
+
+  // 7. Rental & Lease Inquiries ("i need rent", "rental", etc.)
+  if (lower.includes('rent') || lower.includes('lease') || lower.includes('tenant') || lower.includes('pg')) {
+    return "Understood! While Aurex Estates focuses primarily on property acquisitions and high-yield investment assets, we also assist with luxury rentals in prime gated communities. Which sector and monthly rent budget are you considering?";
+  }
+
+  // 8. Direct Market & Financial Questions
   // Rental Yield & ROI
-  if (lower.includes('yield') || lower.includes('roi') || lower.includes('rental') || lower.includes('return') || lower.includes('cap rate')) {
+  if (lower.includes('yield') || lower.includes('roi') || lower.includes('return') || lower.includes('cap rate')) {
     if (lower.includes('commercial') || lower.includes('office') || lower.includes('retail') || lower.includes('sco')) {
       return "Grade-A pre-leased commercial offices in Gurugram currently yield 8.0% to 9.2% gross returns with institutional 9-year lease structures. Prime high-street retail spaces can reach 9.5%–10.5%.";
     }
@@ -154,43 +172,61 @@ function getIntelligentLocalReply(history: ChatMessage[]): string {
     return "Commercial assets excel for immediate quarterly cash flow and predictable 8–9% yields, while residential luxury historically delivers larger multi-year capital compounding.";
   }
 
-  // Pricing & Budget Context
+  // 9. Pricing & Budget Specific Mentions
   const budgetMatch = lower.match(/(\d+(\.\d+)?)\s*(cr|crore|lakh|lacs|lac|k)/i);
-  if (budgetMatch || lower.includes('budget') || lower.includes('price') || lower.includes('cost')) {
-    if (budgetMatch) {
-      const val = budgetMatch[0];
-      return `A budget of ${val} opens up prime options across top NCR corridors. Are you prioritizing immediate rental returns or long-term family living?`;
-    }
-    return "Pricing in prime NCR spans from ₹80 Lakhs in emerging plotted hubs to ₹5–15 Cr+ along Golf Course Extension and Dwarka Expressway. What approximate budget are you comfortable with?";
+  if (budgetMatch) {
+    const val = budgetMatch[0];
+    return `A budget of ${val} opens up prime options across top NCR corridors. What timeline are you targeting for your investment?`;
   }
 
-  // 7. Structured Discovery Fallbacks (if user is giving inquiry steps)
-  const allUserText = history
-    .filter((m) => m.role === 'user')
-    .map((m) => m.text.toLowerCase())
-    .join(' ');
+  // 10. Direct Discovery Step Selection (ONLY triggers when user is explicitly answering category / purpose / budget / timeline)
+  const isDirectCategory =
+    lower === 'residential' ||
+    lower === 'commercial' ||
+    lower === 'plots' ||
+    (lower.startsWith('residential') && lower.length < 25) ||
+    (lower.startsWith('commercial') && lower.length < 25) ||
+    (lower.startsWith('plots') && lower.length < 25);
 
-  const hasResidential = allUserText.includes('residential') || allUserText.includes('apartment') || allUserText.includes('flat') || allUserText.includes('penthouse') || allUserText.includes('villa');
-  const hasCommercial = allUserText.includes('commercial') || allUserText.includes('retail') || allUserText.includes('office') || allUserText.includes('sco') || allUserText.includes('shop');
-  const hasPlots = allUserText.includes('plot') || allUserText.includes('land') || allUserText.includes('acres') || allUserText.includes('sq yd');
-
-  const hasPurpose = allUserText.includes('invest') || allUserText.includes('end-use') || allUserText.includes('end use') || allUserText.includes('self-use') || allUserText.includes('self use') || allUserText.includes('living');
-  const hasBudget = allUserText.includes('cr') || allUserText.includes('lakh') || allUserText.includes('budget') || allUserText.includes('under') || allUserText.includes('above');
-  const hasTimeline = allUserText.includes('month') || allUserText.includes('soon') || allUserText.includes('immediate') || allUserText.includes('ready') || allUserText.includes('exploring') || allUserText.includes('year');
-
-  if ((hasResidential || hasCommercial || hasPlots) && !hasPurpose) {
-    return "Understood. Is your purchase intended primarily for capital investment or personal end-use?";
+  if (isDirectCategory) {
+    return "Understood! Is your purchase intended primarily for capital investment or personal family end-use?";
   }
 
-  if ((hasResidential || hasCommercial || hasPlots) && !hasBudget) {
-    return "What approximate budget range are you comfortable planning around?";
+  const isDirectPurpose =
+    lower === 'investment' ||
+    lower === 'end-use' ||
+    lower === 'end use' ||
+    lower === 'self-use' ||
+    lower === 'self use' ||
+    (lower.includes('invest') && lower.length < 20);
+
+  if (isDirectPurpose) {
+    return "Got it! What approximate budget range are you comfortable planning around?";
   }
 
-  if ((hasResidential || hasCommercial || hasPlots) && !hasTimeline) {
-    return "How soon are you planning to make an acquisition?";
+  const isDirectBudget =
+    lower.includes('cr') ||
+    lower.includes('lakh') ||
+    lower.includes('under') ||
+    lower.includes('above') ||
+    lower.includes('budget');
+
+  if (isDirectBudget) {
+    return "Understood. A budget in that range gives you prime options across Gurugram and NCR. How soon are you planning to make an acquisition?";
   }
 
-  // 8. General Open-Ended Question Fallback
+  const isDirectTimeline =
+    lower.includes('immediate') ||
+    lower.includes('ready') ||
+    lower.includes('month') ||
+    lower.includes('exploring') ||
+    lower.includes('soon');
+
+  if (isDirectTimeline) {
+    return "Perfect. Please share your contact details below so our senior advisor can share verified inventory brochures with you directly.";
+  }
+
+  // 11. General Open-Ended Question Fallback
   if (
     lower.includes('?') ||
     lower.startsWith('what') ||
@@ -206,11 +242,60 @@ function getIntelligentLocalReply(history: ChatMessage[]): string {
     return `Regarding ${topic}, our advisory desk tracks verified micro-market data and builder inventories on this daily. Which specific location or project would you like me to focus on?`;
   }
 
-  // 9. Intelligent Contextual Fallback
+  // 12. Intelligent Contextual Default
   return `Thank you for sharing that. We advise clients across residential luxury, commercial yields, and strategic land. How can I best guide your property search today?`;
 }
 
+/**
+ * Send Chat Message:
+ * 1. Queries live unmetered LLM (Pollinations AI) with full multi-turn conversational history.
+ * 2. If Gemini API key is configured, also attempts Google Gemini.
+ * 3. Seamlessly falls back to rich, non-looping local conversational engine.
+ */
 export async function sendChatMessageToGemini(history: ChatMessage[]): Promise<string> {
+  // 1. Try Live Pollinations AI (Instant multi-turn real human AI)
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const formattedMessages = [
+      {
+        role: 'system',
+        content:
+          'You are Aura, an elite, knowledgeable, and polite real estate AI advisor for Aurex Estates in India (Delhi NCR, Gurugram, Mumbai, Goa). Talk like a warm, experienced human property expert. Answer whatever question, comment, or greeting the user types naturally and directly in strictly 1-2 concise sentences. Never repeat questions if the user changes the topic or says no. Zero marketing fluff.',
+      },
+      ...history.slice(-6).map((m) => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      })),
+    ];
+
+    const response = await fetch('https://text.pollinations.ai/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: formattedMessages,
+        model: 'openai',
+        seed: 42,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const text = await response.text();
+      if (text && text.trim().length > 0 && !text.includes('Error') && !text.includes('503')) {
+        return text.trim();
+      }
+    }
+  } catch {
+    // Network or timeout, proceed to fallback
+  }
+
+  // 2. Try Gemini API if key is present
   if (GEMINI_API_KEY && GEMINI_API_KEY.trim().length > 0) {
     const models = [
       'gemini-flash-lite-latest',
@@ -263,6 +348,6 @@ export async function sendChatMessageToGemini(history: ChatMessage[]): Promise<s
     }
   }
 
-  // Always use the intelligent local advisor (personalized, respectful, zero fluff)
+  // 3. Fallback: Intelligent, non-looping local human advisor
   return getIntelligentLocalReply(history);
 }
