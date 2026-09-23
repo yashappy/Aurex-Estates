@@ -12,23 +12,25 @@ const GEMINI_API_KEY =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) || '';
 
 const SYSTEM_INSTRUCTION = `
-You are "Aura", a real estate AI assistant for Aurex Estates.
-Answer in strictly 1 short sentence. Zero marketing fluff, zero filler.
+You are "Aura", a sophisticated, knowledgeable, and polite real estate AI assistant for Aurex Estates.
+Speak naturally like an experienced human property advisor: respectful, sharp, and helpful.
+Keep responses concise (1 to 2 clear sentences max). Zero marketing fluff, zero pushy sales talk.
 
-Conversational Progression:
-1. If property type (Residential, Commercial, Plots) is known, ask: "Is your purchase intended for investment or personal end-use?"
-2. If purpose is known, ask: "What approximate budget range are you comfortable with?"
-3. If budget is known, ask: "How soon are you planning to invest?"
-4. NEVER repeat a question already answered.
-5. NEVER mention developer pricing, shortlisted verified properties, or long marketing speeches.
-6. If user is abusive, reply: "I am here to assist with genuine property searches. Which property type can I help you explore?"
+Core Behavior:
+1. When asked questions about locations (e.g. Golf Course Road, Dwarka Expressway, Southern Peripheral Road, New Gurugram, Cyber City, Goa, Ayodhya, Neemrana), developers (DLF, Godrej, Sobha, Max Estates), rental yields, RERA, market trends, or commercial vs residential, answer directly and intelligently with real market facts.
+2. During the property discovery flow:
+   - Category -> Purpose (Investment vs End-Use) -> Budget range -> Timeline.
+3. If the user has shared their preferences or asks how to see projects/brochures, politely invite them to leave their contact details so a senior advisor can share tailored inventories.
+4. If the user asks general questions after the contact form, entertain them respectfully and informatively.
+5. If the user uses vulgarity or profanity, reply calmly: "I am here to assist with genuine property searches. Which property category can I help you explore?"
 `;
 
 const VULGAR_REGEX = /\b(fuck|shit|bitch|bastard|asshole|idiot|stupid|chutiya|harami|gandu|madarchod|bhenchod|cunt|dick)\b/i;
 
 /**
  * Intelligent Local Conversational Advisor:
- * Guarantees zero repetition, concise progressive questions (purpose -> budget -> timeline).
+ * Entertains general real estate questions with human knowledge, respect, and conciseness,
+ * while guiding structured inquiries (Category -> Purpose -> Budget -> Timeline).
  */
 function getIntelligentLocalReply(history: ChatMessage[]): string {
   const lastUserMsg = history.filter((m) => m.role === 'user').pop()?.text || '';
@@ -36,10 +38,50 @@ function getIntelligentLocalReply(history: ChatMessage[]): string {
 
   // 1. Guard against abusive language or vulgarity
   if (VULGAR_REGEX.test(lower)) {
-    return "I am here to assist with genuine property searches. Which property type can I help you explore?";
+    return "I am here to assist with genuine property searches. Which property category can I help you explore?";
   }
 
-  // Aggregate user context from full history
+  // 2. Answer general questions directly and intelligently (like a knowledgeable human)
+  if (lower.includes('yield') || lower.includes('roi') || lower.includes('return') || lower.includes('rental')) {
+    if (lower.includes('commercial') || lower.includes('retail') || lower.includes('office')) {
+      return "Grade-A commercial spaces in NCR currently offer 8% to 9.5% gross rental yields with multi-year institutional leases, while prime retail in high-density corridors can reach up to 10%.";
+    }
+    return "Prime residential properties in Gurugram typically deliver 3% to 4.2% gross rental yields alongside strong 12% to 18% annual capital appreciation.";
+  }
+
+  if (lower.includes('golf course') && lower.includes('dwarka')) {
+    return "Golf Course Road is an established trophy belt focused on wealth preservation, while Dwarka Expressway is delivering higher capital appreciation velocity with upcoming institutional handovers.";
+  }
+
+  if (lower.includes('golf course')) {
+    return "Golf Course Road remains Gurugram's premier luxury corridor, commanding ₹65,000 to ₹1,20,000+ per sq. ft. for marquee assets like DLF Camellias.";
+  }
+
+  if (lower.includes('dwarka expressway') || lower.includes('dwarka')) {
+    return "Dwarka Expressway (NH-248BB) is the fastest-growing corridor in Delhi NCR, offering high capital growth potential with direct 15-minute connectivity to Delhi Airport T3.";
+  }
+
+  if (lower.includes('rera') || lower.includes('safe') || lower.includes('legal') || lower.includes('risk')) {
+    return "Every project curated by Aurex Estates is strictly 100% RERA verified with clear land titles, transparent developer escrows, and zero litigation.";
+  }
+
+  if (lower.includes('dlf') || lower.includes('camellias') || lower.includes('aralias') || lower.includes('magnolias')) {
+    return "DLF's Golf Drive properties represent India's most prestigious residences, trading on scarcity value with world-class amenities and global community standards.";
+  }
+
+  if (lower.includes('commercial') && (lower.includes('residential') || lower.includes('better') || lower.includes('vs'))) {
+    return "Commercial real estate excels for immediate passive quarterly cash flow, whereas luxury residential historically outpaces in total capital multiplication.";
+  }
+
+  if (lower.includes('plot') || lower.includes('land') || lower.includes('sco')) {
+    return "Freehold plots and SCO arcades provide 100% land ownership rights with complete architectural freedom and zero condo maintenance overheads.";
+  }
+
+  if (lower.includes('who are you') || lower.includes('what can you do') || lower.includes('help')) {
+    return "I am Aura, your real estate advisory assistant at Aurex Estates. I can assist you with market intelligence, pricing trends, and curated luxury properties across India.";
+  }
+
+  // 3. Conversational Progression (if user is replying to structured discovery)
   const allUserText = history
     .filter((m) => m.role === 'user')
     .map((m) => m.text.toLowerCase())
@@ -52,6 +94,11 @@ function getIntelligentLocalReply(history: ChatMessage[]): string {
   const hasPurpose = allUserText.includes('invest') || allUserText.includes('end-use') || allUserText.includes('end use') || allUserText.includes('self-use') || allUserText.includes('self use') || allUserText.includes('living');
   const hasBudget = allUserText.includes('cr') || allUserText.includes('lakh') || allUserText.includes('budget') || allUserText.includes('under') || allUserText.includes('above');
   const hasTimeline = allUserText.includes('month') || allUserText.includes('soon') || allUserText.includes('immediate') || allUserText.includes('ready') || allUserText.includes('exploring') || allUserText.includes('year');
+
+  // If general question asked:
+  if (lower.includes('?') || lower.startsWith('what') || lower.startsWith('how') || lower.startsWith('why') || lower.startsWith('which') || lower.startsWith('can you') || lower.startsWith('tell me')) {
+    return "Our senior advisory team actively monitors inventory and pricing across these corridors. Which specific location or project would you like more details on?";
+  }
 
   // Progressive Question 1: Purpose (Investment vs End-Use)
   if ((hasResidential || hasCommercial || hasPlots) && !hasPurpose) {
@@ -69,7 +116,7 @@ function getIntelligentLocalReply(history: ChatMessage[]): string {
   }
 
   // Final Step: Contact request
-  return "Please share your contact details below so our advisor can assist you directly.";
+  return "Please share your contact details below so our senior advisor can share curated property options with you directly.";
 }
 
 export async function sendChatMessageToGemini(history: ChatMessage[]): Promise<string> {

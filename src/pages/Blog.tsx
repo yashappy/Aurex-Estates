@@ -200,7 +200,7 @@ export const Blog: React.FC<BlogProps> = ({ onOpenConsultation, onNavigate: _onN
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-950 tracking-tight leading-[1.2] mb-5">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-950 tracking-tight leading-snug mb-4">
               {readingPost.title}
             </h1>
 
@@ -212,19 +212,19 @@ export const Blog: React.FC<BlogProps> = ({ onOpenConsultation, onNavigate: _onN
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-gray-900">{readingPost.author.name}</span>
+                    <span className="text-sm font-bold text-gray-900">{readingPost.author?.name || 'Yash'}</span>
                     {/* LinkedIn icon beside writer name */}
                     <a
-                      href={readingPost.author.linkedin || 'https://www.linkedin.com/company/aurex-estates'}
+                      href={readingPost.author?.linkedin || 'https://www.linkedin.com/in/yashappy'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title={`Connect with ${readingPost.author.name} on LinkedIn`}
+                      title={`Connect with ${readingPost.author?.name || 'Yash'} on LinkedIn`}
                       className="inline-flex items-center justify-center w-5 h-5 rounded-sm text-[#0077b5] hover:opacity-80 transition-opacity ml-0.5"
                     >
                       <LinkedinIcon className="w-4 h-4 fill-[#0077b5]" />
                     </a>
                   </div>
-                  <p className="text-xs text-gray-500">{readingPost.author.role} • {readingPost.date}</p>
+                  <p className="text-xs text-gray-500">{readingPost.author?.role || 'Head Editor'} • {readingPost.date}</p>
                 </div>
               </div>
 

@@ -26,7 +26,7 @@ interface GeminiChatbotProps {
 const INITIAL_GREETING: UiMessage = {
   id: 'msg-init',
   role: 'model',
-  text: "Hello! I'm Aura, your real estate AI assistant.",
+  text: "Hello! I'm Aura, your real estate AI assistant.\nWhat real estate category are you planning to invest in?",
   timestamp: 'Just now',
   chips: ['Residential', 'Commercial', 'Plots'],
 };
@@ -110,30 +110,41 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
     let nextChips: string[] | undefined = undefined;
     let triggerContactForm = false;
 
-    // Detect Category
-    if (!collectedCategory && (lower.includes('commercial') || lower.includes('residential') || lower.includes('plot') || lower.includes('land'))) {
-      const cat = lower.includes('commercial') ? 'Commercial' : lower.includes('residential') ? 'Residential' : 'Plots';
-      setCollectedCategory(cat);
-      nextChips = ['Investment', 'End-Use'];
-    } 
-    // Detect Goal / Purpose
-    else if (!collectedGoal && (lower.includes('investment') || lower.includes('end-use') || lower.includes('end use') || lower.includes('self-use') || lower.includes('self use') || lower.includes('living'))) {
-      const goal = lower.includes('investment') ? 'Investment' : 'End-Use';
-      setCollectedGoal(goal);
-      nextChips = ['Under ₹1.5 Cr', '₹1.5 - 5 Cr', '₹5 - 15 Cr', 'Above ₹15 Cr'];
+    // Check if the user is asking a general real estate question
+    const isQuestion =
+      lower.includes('?') ||
+      lower.startsWith('what') ||
+      lower.startsWith('how') ||
+      lower.startsWith('why') ||
+      lower.startsWith('which') ||
+      lower.startsWith('where') ||
+      lower.startsWith('is ') ||
+      lower.startsWith('can ') ||
+      lower.startsWith('tell me') ||
+      lower.includes('yield') ||
+      lower.includes('rera') ||
+      lower.includes('developer');
+
+    // Track structured selections when not asking an open question
+    if (!isQuestion) {
+      if (!collectedCategory && (lower.includes('commercial') || lower.includes('residential') || lower.includes('plot') || lower.includes('land'))) {
+        const cat = lower.includes('commercial') ? 'Commercial' : lower.includes('residential') ? 'Residential' : 'Plots';
+        setCollectedCategory(cat);
+        nextChips = ['Investment', 'End-Use'];
+      } else if (!collectedGoal && (lower.includes('investment') || lower.includes('end-use') || lower.includes('end use') || lower.includes('self-use') || lower.includes('self use') || lower.includes('living'))) {
+        const goal = lower.includes('investment') ? 'Investment' : 'End-Use';
+        setCollectedGoal(goal);
+        nextChips = ['Under ₹1.5 Cr', '₹1.5 - 5 Cr', '₹5 - 15 Cr', 'Above ₹15 Cr'];
+      } else if (!collectedBudget && (lower.includes('cr') || lower.includes('lakh') || lower.includes('under') || lower.includes('above') || lower.includes('budget'))) {
+        setCollectedBudget(text);
+        nextChips = ['Immediate / Ready to Move', '1 - 3 Months', '3 - 6 Months', 'Just Exploring'];
+      } else if (!collectedTimeline && (lower.includes('immediate') || lower.includes('ready') || lower.includes('month') || lower.includes('exploring') || lower.includes('soon'))) {
+        setCollectedTimeline(text);
+        triggerContactForm = true;
+      }
     }
-    // Detect Budget
-    else if (!collectedBudget && (lower.includes('cr') || lower.includes('lakh') || lower.includes('under') || lower.includes('above') || lower.includes('budget'))) {
-      setCollectedBudget(text);
-      nextChips = ['Immediate / Ready to Move', '1 - 3 Months', '3 - 6 Months', 'Just Exploring'];
-    }
-    // Detect Timeline
-    else if (!collectedTimeline && (lower.includes('immediate') || lower.includes('ready') || lower.includes('month') || lower.includes('exploring') || lower.includes('soon'))) {
-      setCollectedTimeline(text);
-      triggerContactForm = true;
-    } else if (collectedCategory && collectedGoal && (collectedBudget || lower.includes('cr'))) {
-      triggerContactForm = true;
-    }
+
+    const alreadyHasForm = messages.some((m) => m.showContactForm);
 
     try {
       // Build API history for Gemini
@@ -152,7 +163,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
           text: reply,
           timestamp: 'Just now',
           chips: nextChips,
-          showContactForm: triggerContactForm && !isLeadSubmitted,
+          showContactForm: triggerContactForm && !alreadyHasForm && !isLeadSubmitted,
         },
       ]);
     } catch {
