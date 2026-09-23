@@ -29,7 +29,6 @@ const VULGAR_REGEX = /\b(fuck|shit|bitch|bastard|asshole|idiot|stupid|chutiya|ha
 function getIntelligentLocalReply(history: ChatMessage[]): string {
   const userMessages = history.filter((m) => m.role === 'user');
   const lastUserMsg = userMessages[userMessages.length - 1]?.text || '';
-  const secondLastUserMsg = userMessages[userMessages.length - 2]?.text || '';
   const lower = lastUserMsg.toLowerCase().trim();
 
   // 1. Guard against abusive language or vulgarity
@@ -40,10 +39,7 @@ function getIntelligentLocalReply(history: ChatMessage[]): string {
   // 2. Greetings and Pleasantries (Personalized & Human)
   const isGreeting = /^(hi|hello|hey|hiya|greetings|namaste|good\s*(morning|afternoon|evening|day)|wassup|yo)(\s|!|\.|$)/i.test(lower);
   if (isGreeting) {
-    if (secondLastUserMsg && /^(hi|hello|hey)/i.test(secondLastUserMsg.toLowerCase().trim())) {
-      return "Hello again! How can I assist you with your property plans today? Feel free to ask any question or tell me what you're looking for.";
-    }
-    return "Hello! Wonderful to connect with you. I'm here to assist with genuine property advisory, market pricing, and investment trends across India. Which category are you planning to explore today?";
+    return "Hello! How may I help you today?";
   }
 
   // 3. Identity & Introduction ("tell me about you", "who are you", etc.)
@@ -253,6 +249,16 @@ function getIntelligentLocalReply(history: ChatMessage[]): string {
  * 3. Seamlessly falls back to rich, non-looping local conversational engine.
  */
 export async function sendChatMessageToGemini(history: ChatMessage[]): Promise<string> {
+  const userMessages = history.filter((m) => m.role === 'user');
+  const lastUserMsg = userMessages[userMessages.length - 1]?.text || '';
+  const lower = lastUserMsg.toLowerCase().trim();
+
+  // Instant response for greetings
+  const isGreeting = /^(hi|hello|hey|hiya|greetings|namaste|good\s*(morning|afternoon|evening|day)|wassup|yo)(\s|!|\.|$)/i.test(lower);
+  if (isGreeting) {
+    return "Hello! How may I help you today?";
+  }
+
   // 1. Try Live Pollinations AI (Instant multi-turn real human AI)
   try {
     const controller = new AbortController();

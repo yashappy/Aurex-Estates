@@ -125,8 +125,16 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
       lower.includes('rera') ||
       lower.includes('developer');
 
-    // Track structured selections when not asking an open question
-    if (!isQuestion) {
+    // Check if the user is greeting (e.g. "hi", "hello", "hey")
+    const isGreeting = /^(hi|hello|hey|hiya|greetings|namaste|good\s*(morning|afternoon|evening|day)|wassup|yo)(\s|!|\.|$)/i.test(lower);
+
+    if (isGreeting) {
+      setCollectedCategory('');
+      setCollectedGoal('');
+      setCollectedBudget('');
+      setCollectedTimeline('');
+      nextChips = ['Residential', 'Commercial', 'Plots'];
+    } else if (!isQuestion) {
       if (!collectedCategory && (lower.includes('commercial') || lower.includes('residential') || lower.includes('plot') || lower.includes('land'))) {
         const cat = lower.includes('commercial') ? 'Commercial' : lower.includes('residential') ? 'Residential' : 'Plots';
         setCollectedCategory(cat);
