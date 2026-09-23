@@ -7,7 +7,7 @@ export interface GlobalLeadPayload {
   email: string;
   projectName?: string;
   brochureName?: string;
-  type?: 'brochure-download' | 'consultation' | 'site-visit' | 'general' | 'chatbot';
+  type?: 'brochure-download' | 'consultation' | 'site-visit' | 'general' | 'chatbot' | 'career';
   message?: string;
   source?: string;
 }
@@ -26,22 +26,53 @@ export async function submitLeadGlobally(payload: GlobalLeadPayload): Promise<bo
   const cleanBrochure = (payload.brochureName || '').trim();
   const leadType = payload.type || 'general';
 
-  // 1. Submit to Google Apps Script Webhook (Google Sheets + Email)
+  // 1. Submit to Google Apps Script Webhook (Single Google Sheet for Entire Website)
   try {
-    const postData = {
+    const istTimestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://aurexestates.co.in';
+
+    const postData: Record<string, string> = {
+      // Primary keys expected by google-apps-script.js
+      timestamp: istTimestamp,
       fullName: cleanName,
+      name: cleanName,
       phoneNumber: cleanPhone,
+      phone: cleanPhone,
+      mobile: cleanPhone,
       emailAddress: cleanEmail,
+      email: cleanEmail,
+      category: cleanProject,
       projectName: cleanProject,
+      project: cleanProject,
       brochureName: cleanBrochure,
+      brochure: cleanBrochure,
       leadType: leadType,
+      type: leadType,
       message: payload.message || `Lead submitted from ${payload.source || 'Website'}`,
+      notes: payload.message || `Lead submitted from ${payload.source || 'Website'}`,
+      pageUrl: currentUrl,
       source: payload.source || 'Aurex Estates Website',
-      timestamp: new Date().toISOString(),
+      status: 'New',
     };
 
-    if (FORMS_CONFIG.googleScriptUrl) {
-      await fetch(FORMS_CONFIG.googleScriptUrl, {
+    const webhookUrl =
+      (typeof cmsStore !== 'undefined' && cmsStore.getPageContent?.()?.contact?.googleSheetsWebhook) ||
+      FORMS_CONFIG.googleScriptUrl;
+
+    if (webhookUrl) {
+      // Build URL with query parameters so both e.parameter and e.postData.contents in Apps Script receive all fields
+      let targetUrl = webhookUrl;
+      try {
+        const urlObj = new URL(webhookUrl);
+        Object.entries(postData).forEach(([k, v]) => {
+          if (v) urlObj.searchParams.set(k, v);
+        });
+        targetUrl = urlObj.toString();
+      } catch {
+        targetUrl = webhookUrl;
+      }
+
+      await fetch(targetUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',

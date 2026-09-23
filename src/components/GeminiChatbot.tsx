@@ -38,7 +38,10 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
 
-  // Collected Lead State
+  // Prebuilt inquiry hierarchy state
+  const [inquiryStep, setInquiryStep] = useState<
+    'category' | 'goal' | 'budget' | 'timeline' | 'form' | 'submitted'
+  >('category');
   const [collectedCategory, setCollectedCategory] = useState<string>('');
   const [collectedGoal, setCollectedGoal] = useState<string>('');
   const [collectedBudget, setCollectedBudget] = useState<string>('');
@@ -75,6 +78,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
 
   const handleClearChat = () => {
     setMessages([INITIAL_GREETING]);
+    setInquiryStep('category');
     setCollectedCategory('');
     setCollectedGoal('');
     setCollectedBudget('');
@@ -103,65 +107,216 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
 
     setMessages(newMessages);
     setInputText('');
-    setIsLoading(true);
 
-    // Track structured selections
     const lower = text.toLowerCase();
-    let nextChips: string[] | undefined = undefined;
-    let triggerContactForm = false;
 
-    // Check if the user is asking a general real estate question
-    const isQuestion =
-      lower.includes('?') ||
-      lower.startsWith('what') ||
-      lower.startsWith('how') ||
-      lower.startsWith('why') ||
-      lower.startsWith('which') ||
-      lower.startsWith('where') ||
-      lower.startsWith('is ') ||
-      lower.startsWith('can ') ||
-      lower.startsWith('tell me') ||
-      lower.includes('yield') ||
-      lower.includes('rera') ||
-      lower.includes('developer');
+    // 1. Restart
+    if (lower === 'restart' || lower === 'start over' || lower === 'reset') {
+      handleClearChat();
+      return;
+    }
 
-    // Check if the user is greeting (e.g. "hi", "hello", "hey")
+    // 2. Greetings ("hi", "hello", "hey")
     const isGreeting = /^(hi|hello|hey|hiya|greetings|namaste|good\s*(morning|afternoon|evening|day)|wassup|yo)(\s|!|\.|$)/i.test(lower);
-
     if (isGreeting) {
+      setInquiryStep('category');
       setCollectedCategory('');
       setCollectedGoal('');
       setCollectedBudget('');
       setCollectedTimeline('');
-      nextChips = ['Residential', 'Commercial', 'Plots'];
-    } else if (!isQuestion) {
-      if (!collectedCategory && (lower.includes('commercial') || lower.includes('residential') || lower.includes('plot') || lower.includes('land'))) {
-        const cat = lower.includes('commercial') ? 'Commercial' : lower.includes('residential') ? 'Residential' : 'Plots';
-        setCollectedCategory(cat);
-        nextChips = ['Investment', 'End-Use'];
-      } else if (!collectedGoal && (lower.includes('investment') || lower.includes('end-use') || lower.includes('end use') || lower.includes('self-use') || lower.includes('self use') || lower.includes('living'))) {
-        const goal = lower.includes('investment') ? 'Investment' : 'End-Use';
-        setCollectedGoal(goal);
-        nextChips = ['Under ₹1.5 Cr', '₹1.5 - 5 Cr', '₹5 - 15 Cr', 'Above ₹15 Cr'];
-      } else if (!collectedBudget && (lower.includes('cr') || lower.includes('lakh') || lower.includes('under') || lower.includes('above') || lower.includes('budget'))) {
-        setCollectedBudget(text);
-        nextChips = ['Immediate / Ready to Move', '1 - 3 Months', '3 - 6 Months', 'Just Exploring'];
-      } else if (!collectedTimeline && (lower.includes('immediate') || lower.includes('ready') || lower.includes('month') || lower.includes('exploring') || lower.includes('soon'))) {
-        setCollectedTimeline(text);
-        triggerContactForm = true;
-      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'model-' + Date.now(),
+          role: 'model',
+          text: 'Hello! How may I help you today?',
+          timestamp: 'Just now',
+          chips: ['Residential', 'Commercial', 'Plots'],
+        },
+      ]);
+      return;
     }
 
-    const alreadyHasForm = messages.some((m) => m.showContactForm);
+    // 3. User clicks "Ask a Question" chip
+    if (lower === 'ask a question' || lower === 'ask question') {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'model-' + Date.now(),
+          role: 'model',
+          text: "Feel free to ask any question about Gurgaon real estate, prices, developers, or areas, and I'll be glad to help.",
+          timestamp: 'Just now',
+        },
+      ]);
+      return;
+    }
 
+    // 4. Prebuilt Question Hierarchy State Machine
+    // Step A: Category Selection
+    const isCategoryInput =
+      lower === 'residential' ||
+      lower === 'commercial' ||
+      lower === 'plots' ||
+      lower === 'plot' ||
+      lower.includes('residential') ||
+      lower.includes('commercial') ||
+      lower.includes('plot') ||
+      lower.includes('apartment') ||
+      lower.includes('flat') ||
+      lower.includes('villa') ||
+      lower.includes('office') ||
+      lower.includes('retail') ||
+      lower.includes('sco') ||
+      lower.includes('land');
+
+    if (inquiryStep === 'category' && isCategoryInput) {
+      const cat = lower.includes('commercial')
+        ? 'Commercial'
+        : (lower.includes('plot') || lower.includes('land'))
+        ? 'Plots'
+        : 'Residential';
+      setCollectedCategory(cat);
+      setInquiryStep('goal');
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'model-' + Date.now(),
+          role: 'model',
+          text: 'Is your purchase intended primarily for capital investment or personal end-use?',
+          timestamp: 'Just now',
+          chips: ['Investment', 'End-Use'],
+        },
+      ]);
+      return;
+    }
+
+    // Step B: Purpose / Goal Selection
+    const isGoalInput =
+      lower === 'investment' ||
+      lower === 'end-use' ||
+      lower === 'end use' ||
+      lower === 'self-use' ||
+      lower === 'self use' ||
+      lower.includes('invest') ||
+      lower.includes('end-use') ||
+      lower.includes('end use') ||
+      lower.includes('living') ||
+      lower.includes('family') ||
+      lower.includes('rental yield') ||
+      lower.includes('rental income');
+
+    if (inquiryStep === 'goal' && isGoalInput) {
+      const goal = (lower.includes('invest') || lower.includes('yield') || lower.includes('rental'))
+        ? 'Investment'
+        : 'End-Use';
+      setCollectedGoal(goal);
+      setInquiryStep('budget');
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'model-' + Date.now(),
+          role: 'model',
+          text: 'What approximate budget range are you comfortable with?',
+          timestamp: 'Just now',
+          chips: ['Under ₹1.5 Cr', '₹1.5 - 5 Cr', '₹5 - 15 Cr', 'Above ₹15 Cr'],
+        },
+      ]);
+      return;
+    }
+
+    // Step C: Budget Selection
+    const isBudgetChip =
+      text === 'Under ₹1.5 Cr' ||
+      text === '₹1.5 - 5 Cr' ||
+      text === '₹5 - 15 Cr' ||
+      text === 'Above ₹15 Cr';
+    const isBudgetPattern =
+      isBudgetChip ||
+      lower.includes('cr') ||
+      lower.includes('crore') ||
+      lower.includes('lakh') ||
+      lower.includes('lac') ||
+      lower.includes('under') ||
+      lower.includes('above') ||
+      lower.includes('budget') ||
+      /\d+/.test(lower);
+
+    if (inquiryStep === 'budget' && isBudgetPattern) {
+      setCollectedBudget(text);
+      setInquiryStep('timeline');
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'model-' + Date.now(),
+          role: 'model',
+          text: 'How soon are you planning to invest?',
+          timestamp: 'Just now',
+          chips: ['Immediate / Ready to Move', '1 - 3 Months', '3 - 6 Months', 'Just Exploring'],
+        },
+      ]);
+      return;
+    }
+
+    // Step D: Timeline Selection
+    const isTimelineChip =
+      text === 'Immediate / Ready to Move' ||
+      text === '1 - 3 Months' ||
+      text === '3 - 6 Months' ||
+      text === 'Just Exploring';
+    const isTimelinePattern =
+      isTimelineChip ||
+      lower.includes('immediate') ||
+      lower.includes('ready') ||
+      lower.includes('month') ||
+      lower.includes('year') ||
+      lower.includes('exploring') ||
+      lower.includes('soon') ||
+      lower.includes('asap');
+
+    if (inquiryStep === 'timeline' && isTimelinePattern) {
+      setCollectedTimeline(text);
+      setInquiryStep('form');
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'model-' + Date.now(),
+          role: 'model',
+          text: 'Please share your contact details below so our senior advisor can share verified inventory brochures with you directly.',
+          timestamp: 'Just now',
+          showContactForm: !isLeadSubmitted,
+        },
+      ]);
+      return;
+    }
+
+    // Step E: General User Question or Out-of-Sequence Input
+    // Use the concise, respectful real estate conversational advisor (STRICTLY 1-2 sentences)
+    setIsLoading(true);
     try {
-      // Build API history for Gemini
       const geminiHistory: ChatMessage[] = newMessages.map((m) => ({
         role: m.role,
         text: m.text,
       }));
 
       const reply = await sendChatMessageToGemini(geminiHistory);
+
+      // Offer relevant chips so user can continue seamlessly
+      let fallbackChips: string[] | undefined = undefined;
+      if (inquiryStep === 'category') {
+        fallbackChips = ['Residential', 'Commercial', 'Plots'];
+      } else if (inquiryStep === 'goal') {
+        fallbackChips = ['Investment', 'End-Use'];
+      } else if (inquiryStep === 'budget') {
+        fallbackChips = ['Under ₹1.5 Cr', '₹1.5 - 5 Cr', '₹5 - 15 Cr', 'Above ₹15 Cr'];
+      } else if (inquiryStep === 'timeline') {
+        fallbackChips = ['Immediate / Ready to Move', '1 - 3 Months', '3 - 6 Months', 'Just Exploring'];
+      } else if (isLeadSubmitted) {
+        fallbackChips = ['Ask a Question', 'Restart'];
+      }
 
       setMessages((prev) => [
         ...prev,
@@ -170,8 +325,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
           role: 'model',
           text: reply,
           timestamp: 'Just now',
-          chips: nextChips,
-          showContactForm: triggerContactForm && !alreadyHasForm && !isLeadSubmitted,
+          chips: fallbackChips,
         },
       ]);
     } catch {
@@ -180,10 +334,9 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
         {
           id: 'model-' + Date.now(),
           role: 'model',
-          text: 'Thank you for sharing your preferences. Please provide your contact details below so our senior advisor can share tailored unit options with you.',
+          text: 'Feel free to ask any question about Gurgaon real estate, or select a category below to explore verified inventory.',
           timestamp: 'Just now',
-          chips: nextChips,
-          showContactForm: !isLeadSubmitted,
+          chips: ['Residential', 'Commercial', 'Plots'],
         },
       ]);
     } finally {
@@ -209,6 +362,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
 
     setLeadFormError('');
     setIsLeadSubmitted(true);
+    setInquiryStep('submitted');
 
     // Submit lead globally to Google Sheets / Excel, email alert & CMS store
     submitLeadGlobally({
@@ -218,7 +372,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
       projectName: collectedCategory ? `${collectedCategory} Advisory` : 'AI Advisory Inquiry',
       type: 'chatbot',
       source: 'AI Luxury Advisory Chatbot',
-      message: `Goal: ${collectedGoal || 'Advisory'} | Budget: ${collectedBudget || 'Not specified'} | Timeline: ${collectedTimeline || 'Immediate'}`,
+      message: `Category: ${collectedCategory || 'General'} | Purpose: ${collectedGoal || 'Advisory'} | Budget: ${collectedBudget || 'Not specified'} | Timeline: ${collectedTimeline || 'Immediate'}`,
     });
 
     // Save lead to localStorage for consultation integration
@@ -246,8 +400,9 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
         {
           id: 'model-lead-confirmed-' + Date.now(),
           role: 'model',
-          text: `Thank you, ${clientName.trim()}. A senior advisor will connect with you at ${clientPhone.trim()} shortly with project details.`,
+          text: `Thank you, ${clientName.trim()}! A senior advisor will connect with you at ${clientPhone.trim()} shortly with project details.`,
           timestamp: 'Just now',
+          chips: ['Ask a Question', 'Restart'],
         },
       ]);
     }, 300);
