@@ -26,9 +26,9 @@ interface GeminiChatbotProps {
 const INITIAL_GREETING: UiMessage = {
   id: 'msg-init',
   role: 'model',
-  text: 'Hello! I am Aura, your Aurex Estates property advisor. We advise clients across prime markets in India including Delhi NCR, Gurugram, Mumbai, Noida, Goa, Ayodhya, and more. Which city or property type are you exploring today?',
+  text: "Hello! I'm Aura, your real estate AI assistant.",
   timestamp: 'Just now',
-  chips: ['Gurugram', 'Delhi NCR', 'Mumbai', 'Goa', 'Residential', 'Commercial', 'Plots'],
+  chips: ['Residential', 'Commercial', 'Plots'],
 };
 
 export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
@@ -41,7 +41,8 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
   // Collected Lead State
   const [collectedCategory, setCollectedCategory] = useState<string>('');
   const [collectedGoal, setCollectedGoal] = useState<string>('');
-  const [collectedLocation, setCollectedLocation] = useState<string>('');
+  const [collectedBudget, setCollectedBudget] = useState<string>('');
+  const [collectedTimeline, setCollectedTimeline] = useState<string>('');
   const [clientName, setClientName] = useState<string>('');
   const [clientPhone, setClientPhone] = useState<string>('');
   const [clientEmail, setClientEmail] = useState<string>('');
@@ -76,7 +77,8 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
     setMessages([INITIAL_GREETING]);
     setCollectedCategory('');
     setCollectedGoal('');
-    setCollectedLocation('');
+    setCollectedBudget('');
+    setCollectedTimeline('');
     setClientName('');
     setClientPhone('');
     setClientEmail('');
@@ -108,39 +110,28 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
     let nextChips: string[] | undefined = undefined;
     let triggerContactForm = false;
 
-    // Detect City / Location
-    const knownCities = ['gurugram', 'mumbai', 'delhi', 'noida', 'goa', 'ayodhya', 'vrindavan', 'bangalore', 'pune', 'hyderabad'];
-    const matchedCity = knownCities.find((c) => lower.includes(c));
-    if (matchedCity) {
-      setCollectedLocation(matchedCity.charAt(0).toUpperCase() + matchedCity.slice(1));
-      if (!collectedCategory) {
-        nextChips = ['Residential', 'Commercial', 'Plots'];
-      }
-    } else if (lower.includes('sector') || lower.includes('road') || lower.includes('expressway')) {
-      setCollectedLocation(text);
-    }
-
     // Detect Category
     if (!collectedCategory && (lower.includes('commercial') || lower.includes('residential') || lower.includes('plot') || lower.includes('land'))) {
-      if (lower.includes('commercial')) setCollectedCategory('Commercial');
-      else if (lower.includes('residential')) setCollectedCategory('Residential');
-      else setCollectedCategory('Plots');
-
-      if (!collectedGoal) {
-        nextChips = ['Investment', 'Self-Use'];
-      }
+      const cat = lower.includes('commercial') ? 'Commercial' : lower.includes('residential') ? 'Residential' : 'Plots';
+      setCollectedCategory(cat);
+      nextChips = ['Investment', 'End-Use'];
     } 
-    
-    // Detect Goal
-    if (!collectedGoal && (lower.includes('investment') || lower.includes('self-use') || lower.includes('self use') || lower.includes('end-use') || lower.includes('living'))) {
-      if (lower.includes('investment')) setCollectedGoal('Investment');
-      else setCollectedGoal('Self-Use');
-
-      nextChips = ['Within ₹1.5 Cr', '₹1.5 Cr - ₹6 Cr', '₹6 Cr - ₹15 Cr', '₹15 Cr+'];
+    // Detect Goal / Purpose
+    else if (!collectedGoal && (lower.includes('investment') || lower.includes('end-use') || lower.includes('end use') || lower.includes('self-use') || lower.includes('self use') || lower.includes('living'))) {
+      const goal = lower.includes('investment') ? 'Investment' : 'End-Use';
+      setCollectedGoal(goal);
+      nextChips = ['Under ₹1.5 Cr', '₹1.5 - 5 Cr', '₹5 - 15 Cr', 'Above ₹15 Cr'];
     }
-
-    // Detect Budget or Specific Sector
-    if (lower.includes('cr') || lower.includes('lakh') || lower.includes('budget') || lower.includes('sector') || (collectedCategory && collectedGoal)) {
+    // Detect Budget
+    else if (!collectedBudget && (lower.includes('cr') || lower.includes('lakh') || lower.includes('under') || lower.includes('above') || lower.includes('budget'))) {
+      setCollectedBudget(text);
+      nextChips = ['Immediate / Ready to Move', '1 - 3 Months', '3 - 6 Months', 'Just Exploring'];
+    }
+    // Detect Timeline
+    else if (!collectedTimeline && (lower.includes('immediate') || lower.includes('ready') || lower.includes('month') || lower.includes('exploring') || lower.includes('soon'))) {
+      setCollectedTimeline(text);
+      triggerContactForm = true;
+    } else if (collectedCategory && collectedGoal && (collectedBudget || lower.includes('cr'))) {
       triggerContactForm = true;
     }
 
@@ -170,8 +161,9 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
         {
           id: 'model-' + Date.now(),
           role: 'model',
-          text: 'I can share available project options, floor plans, and pricing for your preferences. Please share your details below.',
+          text: 'Thank you for sharing your preferences. Please provide your contact details below so our senior advisor can share tailored unit options with you.',
           timestamp: 'Just now',
+          chips: nextChips,
           showContactForm: !isLeadSubmitted,
         },
       ]);
@@ -207,7 +199,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
       projectName: collectedCategory ? `${collectedCategory} Advisory` : 'AI Advisory Inquiry',
       type: 'chatbot',
       source: 'AI Luxury Advisory Chatbot',
-      message: `Goal: ${collectedGoal || 'Advisory'} | Location: ${collectedLocation || 'Gurugram'}`,
+      message: `Goal: ${collectedGoal || 'Advisory'} | Budget: ${collectedBudget || 'Not specified'} | Timeline: ${collectedTimeline || 'Immediate'}`,
     });
 
     // Save lead to localStorage for consultation integration
@@ -219,7 +211,8 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
         email: clientEmail.trim() || undefined,
         category: collectedCategory || 'General Inquiry',
         goal: collectedGoal || 'Advisory',
-        location: collectedLocation || 'Gurugram',
+        budget: collectedBudget || 'Not specified',
+        timeline: collectedTimeline || 'Immediate',
         createdAt: new Date().toISOString(),
       });
       localStorage.setItem('aurex_chatbot_leads', JSON.stringify(existingLeads));
@@ -246,16 +239,19 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
       {/* =========================================================================
           FLOATING TRIGGER BUTTON: Bottom-Right with Pulsing Badge
       ========================================================================= */}
+      {/* =========================================================================
+          FLOATING TRIGGER BUTTON: Bottom-Right with Pulsing Badge
+      ========================================================================= */}
       <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 flex items-center gap-3">
         {!isOpen && hasUnread && (
           <motion.div
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.8 }}
-            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#253d30] text-white text-xs font-semibold shadow-lg border border-[#8B2BE2]/40 cursor-pointer"
+            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-brand-purple to-purple-600 text-white text-xs font-semibold shadow-lg shadow-brand-purple/30 border border-brand-purpleLight/40 cursor-pointer"
             onClick={() => setIsOpen(true)}
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#A64DF0]" />
+            <Sparkles className="w-3.5 h-3.5 text-white" />
             <span>Chat with Aura</span>
           </motion.div>
         )}
@@ -266,7 +262,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
           className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 active:scale-95 border-2 overflow-hidden ${
             isOpen
               ? 'bg-gray-900 text-white border-gray-700'
-              : 'bg-[#253d30] text-white hover:bg-[#1b2d23] border-[#8B2BE2] shadow-[#8B2BE2]/25 hover:shadow-[#8B2BE2]/40'
+              : 'bg-gradient-to-tr from-brand-purple to-purple-600 text-white hover:from-purple-600 hover:to-brand-purpleLight border-brand-purpleLight shadow-brand-purple/35 hover:shadow-brand-purple/50'
           }`}
         >
           {isOpen ? (
@@ -278,8 +274,8 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                 alt="Aura Real Estate Advisor"
                 className="w-full h-full object-cover object-top scale-105"
               />
-              <span className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-[#8B2BE2] border-2 border-[#253d30] rounded-full shadow-xs">
-                <span className="absolute inset-0 rounded-full bg-[#8B2BE2] animate-ping opacity-75" />
+              <span className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-brand-purple border-2 border-white rounded-full shadow-xs">
+                <span className="absolute inset-0 rounded-full bg-brand-purple animate-ping opacity-75" />
               </span>
             </>
           )}
@@ -298,22 +294,22 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="fixed bottom-20 md:bottom-24 right-3 sm:right-6 z-50 w-[calc(100vw-24px)] sm:w-[400px] h-[540px] sm:h-[590px] max-h-[84vh] bg-white rounded-3xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden"
           >
-            {/* Clean Header: Aura with Online Indicator & Mascot Avatar */}
-            <div className="bg-[#253d30] text-white px-4 py-3.5 sm:px-5 sm:py-4 flex items-center justify-between border-b border-white/10 shrink-0">
+            {/* Clean Header: Aura with Online Indicator & Mascot Avatar in Brand Purple */}
+            <div className="bg-gradient-to-r from-brand-purple to-purple-700 text-white px-4 py-3.5 sm:px-5 sm:py-4 flex items-center justify-between border-b border-white/10 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="relative w-10 h-10 rounded-full border-2 border-[#8B2BE2] overflow-hidden shrink-0 shadow-sm bg-black/20">
+                <div className="relative w-10 h-10 rounded-full border-2 border-white/60 overflow-hidden shrink-0 shadow-sm bg-black/20">
                   <img
                     src="/images/aura-mascot.png"
                     alt="Aura Mascot"
                     className="w-full h-full object-cover object-top scale-110"
                   />
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#8B2BE2] border-2 border-[#253d30] rounded-full" />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-purple-800 rounded-full" />
                 </div>
                 <div>
                   <h3 className="text-sm sm:text-base font-bold tracking-tight">Aura</h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[11px] text-gray-300 font-medium">Online</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                    <span className="text-[11px] text-purple-100 font-medium">Online</span>
                   </div>
                 </div>
               </div>
@@ -323,7 +319,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                   onClick={handleClearChat}
                   title="Clear chat"
                   aria-label="Clear chat"
-                  className="w-8 h-8 rounded-full hover:bg-white/15 text-gray-300 hover:text-white flex items-center justify-center transition-colors active:scale-90"
+                  className="w-8 h-8 rounded-full hover:bg-white/15 text-purple-100 hover:text-white flex items-center justify-center transition-colors active:scale-90"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
@@ -331,7 +327,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                   onClick={() => setIsOpen(false)}
                   title="Close"
                   aria-label="Close"
-                  className="w-8 h-8 rounded-full hover:bg-white/15 text-gray-300 hover:text-white flex items-center justify-center transition-colors active:scale-90"
+                  className="w-8 h-8 rounded-full hover:bg-white/15 text-purple-100 hover:text-white flex items-center justify-center transition-colors active:scale-90"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -347,7 +343,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                 >
                   <div className={`flex items-start gap-2 max-w-[90%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                     {msg.role === 'model' && (
-                      <div className="w-7 h-7 rounded-full overflow-hidden border border-[#8B2BE2] shrink-0 mt-0.5 shadow-2xs bg-[#253d30]">
+                      <div className="w-7 h-7 rounded-full overflow-hidden border border-brand-purple shrink-0 mt-0.5 shadow-2xs bg-purple-100">
                         <img
                           src="/images/aura-mascot.png"
                           alt="Aura"
@@ -361,7 +357,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                       <div
                         className={`rounded-2xl px-4 py-3 leading-relaxed ${
                           msg.role === 'user'
-                            ? 'bg-[#253d30] text-white rounded-br-xs shadow-xs'
+                            ? 'bg-brand-purple text-white rounded-br-xs shadow-xs'
                             : 'bg-white text-gray-900 border border-gray-200/90 rounded-bl-xs shadow-2xs'
                         }`}
                       >
@@ -375,7 +371,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                             <button
                               key={idx}
                               onClick={() => handleChipClick(chip)}
-                              className="px-3.5 py-1.5 rounded-full bg-white hover:bg-emerald-50 text-gray-800 hover:text-[#253d30] border border-gray-200 hover:border-emerald-300 text-xs font-medium shadow-2xs transition-all active:scale-95"
+                              className="px-3.5 py-1.5 rounded-full bg-white hover:bg-purple-50 text-gray-800 hover:text-brand-purple border border-gray-200 hover:border-brand-purple/40 text-xs font-medium shadow-2xs transition-all active:scale-95"
                             >
                               {chip}
                             </button>
@@ -388,12 +384,12 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="w-full max-w-[95%] mt-3 p-4 rounded-2xl bg-white border border-gray-200 shadow-sm"
+                      className="w-full max-w-[95%] mt-3 p-4 rounded-2xl bg-white border border-brand-purple/20 shadow-sm"
                     >
-                      <div className="flex items-center gap-2 mb-3 text-[#253d30]">
-                        <UserCheck className="w-4 h-4 text-emerald-600" />
+                      <div className="flex items-center gap-2 mb-3 text-brand-purple">
+                        <UserCheck className="w-4 h-4 text-brand-purple" />
                         <span className="text-xs font-bold uppercase tracking-wider">
-                          Request a Consultation
+                          Request Project Details
                         </span>
                       </div>
 
@@ -404,7 +400,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                             placeholder="Name *"
                             value={clientName}
                             onChange={(e) => setClientName(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:bg-white focus:border-[#253d30] focus:ring-1 focus:ring-[#253d30] outline-none transition-all"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:bg-white focus:border-brand-purple focus:ring-1 focus:ring-brand-purple outline-none transition-all"
                           />
                         </div>
 
@@ -414,7 +410,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                             placeholder="Mobile Number *"
                             value={clientPhone}
                             onChange={(e) => setClientPhone(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:bg-white focus:border-[#253d30] focus:ring-1 focus:ring-[#253d30] outline-none transition-all"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:bg-white focus:border-brand-purple focus:ring-1 focus:ring-brand-purple outline-none transition-all"
                           />
                         </div>
 
@@ -424,7 +420,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                             placeholder="Email Address"
                             value={clientEmail}
                             onChange={(e) => setClientEmail(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:bg-white focus:border-[#253d30] focus:ring-1 focus:ring-[#253d30] outline-none transition-all"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:bg-white focus:border-brand-purple focus:ring-1 focus:ring-brand-purple outline-none transition-all"
                           />
                         </div>
 
@@ -436,12 +432,11 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
 
                         <button
                           type="submit"
-                          className="w-full py-2.5 rounded-xl bg-[#253d30] hover:bg-[#1b2d23] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95"
+                          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-brand-purple to-purple-600 hover:from-purple-600 hover:to-brand-purpleDark text-white text-xs font-bold uppercase tracking-wider shadow-md shadow-brand-purple/25 transition-all active:scale-95"
                         >
                           Submit
                         </button>
 
-                        {/* Explicit User Requirement: Only "we don't spam" in small text at the end */}
                         <p className="text-center text-[11px] text-gray-400 pt-0.5">
                           We don't spam.
                         </p>
@@ -457,9 +452,9 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
               {isLoading && (
                 <div className="flex items-center gap-2 text-gray-400 text-xs pl-1">
                   <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.2s]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.4s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-purple animate-bounce" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-purple animate-bounce [animation-delay:0.2s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-purple animate-bounce [animation-delay:0.4s]" />
                   </div>
                   <span>Aura is typing...</span>
                 </div>
@@ -468,7 +463,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Clean Footer Input Area: Input and Send button only (No spam text here) */}
+            {/* Clean Footer Input Area: Input and Send button only */}
             <div className="p-3 sm:p-3.5 bg-white border-t border-gray-200 shrink-0">
               <form
                 onSubmit={(e) => {
@@ -484,14 +479,14 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Type your message..."
                   disabled={isLoading}
-                  className="flex-1 px-4 py-2.5 rounded-full bg-gray-100 border border-gray-200 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-[#253d30] focus:ring-1 focus:ring-[#253d30] outline-none transition-all disabled:opacity-60"
+                  className="flex-1 px-4 py-2.5 rounded-full bg-gray-100 border border-gray-200 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-brand-purple focus:ring-1 focus:ring-brand-purple outline-none transition-all disabled:opacity-60"
                 />
 
                 <button
                   type="submit"
                   disabled={!inputText.trim() || isLoading}
                   aria-label="Send message"
-                  className="w-10 h-10 rounded-full bg-[#253d30] hover:bg-[#1b2d23] text-white flex items-center justify-center shadow-sm transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none shrink-0"
+                  className="w-10 h-10 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white flex items-center justify-center shadow-md shadow-brand-purple/25 transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none shrink-0"
                 >
                   <Send className="w-4 h-4 ml-0.5" />
                 </button>

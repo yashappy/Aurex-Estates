@@ -2,12 +2,13 @@ export interface BlogPost {
   id: string;
   slug: string;
   title: string;
-  category: 'Market Intelligence' | 'Investment Advisory' | 'Luxury Living' | 'Micro-Market Analysis';
+  category: 'Market Intelligence' | 'Investment Advisory' | 'Luxury Living' | 'Micro-Market Analysis' | string;
   date: string;
   readTime: string;
   author: {
     name: string;
     role: string;
+    linkedin?: string;
   };
   image: string;
   excerpt: string;
@@ -27,6 +28,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: {
       name: 'Aurex Advisory Desk',
       role: 'Head of Capital Markets & Research',
+      linkedin: 'https://linkedin.com',
     },
     image: '/images/camellias.jpg',
     excerpt: 'An analytical dissection of rental yields, capital appreciation trajectories, and liquidity horizons comparing Gurugram’s established billionaire belt against its premier growth artery.',

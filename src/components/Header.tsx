@@ -12,7 +12,6 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentPage,
   onNavigate,
-  onOpenConsultation,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [headerConfig, setHeaderConfig] = useState(() => cmsStore.getPageContent().header);
@@ -45,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Residential', id: 'residential' },
     { label: 'Commercial', id: 'commercial' },
     { label: 'Plots', id: 'plots' },
+    { label: 'Market Trends', id: 'blog' },
     { label: 'Tools', id: 'tools' },
   ];
 
@@ -102,16 +102,8 @@ export const Header: React.FC<HeaderProps> = ({
           ))}
         </nav>
 
-        {/* Actions: Consultation CTA Button + WhatsApp */}
+        {/* Actions: WhatsApp */}
         <div className="flex items-center gap-3">
-          {headerConfig?.showCtaButton !== false && (
-            <button
-              onClick={() => onOpenConsultation?.()}
-              className="hidden lg:inline-flex items-center justify-center px-4 py-2 rounded-full bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-semibold tracking-wide transition-all duration-300 shadow-sm shadow-brand-purple/20 active:scale-95"
-            >
-              {headerConfig?.ctaButtonText || 'Book a Consultation'}
-            </button>
-          )}
 
           {(headerConfig?.whatsAppPlacement === 'top-header' ||
             headerConfig?.whatsAppPlacement === 'both' ||

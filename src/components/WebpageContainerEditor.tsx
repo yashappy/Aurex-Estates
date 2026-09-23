@@ -5,6 +5,14 @@ import {
   ExternalLink,
   Trash2,
   Check,
+  Home,
+  BookOpen,
+  Building2,
+  Briefcase,
+  Phone,
+  Compass,
+  Globe,
+  MapPin,
 } from 'lucide-react';
 import type { PageContent } from '../services/cmsStore';
 
@@ -17,7 +25,8 @@ export type PageKey =
   | 'career'
   | 'contact'
   | 'header'
-  | 'footer';
+  | 'footer'
+  | string;
 
 interface WebpageContainerEditorProps {
   pageKey: PageKey;
@@ -67,19 +76,19 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const pageTitles: Record<PageKey, { name: string; route: string; icon: string }> = {
-    home: { name: 'Home Page', route: '/', icon: '🏠' },
-    about: { name: 'About Us', route: '/about', icon: '📖' },
-    residential: { name: 'Residential Portfolios', route: '/residential', icon: '🏙️' },
-    commercial: { name: 'Commercial Assets', route: '/commercial', icon: '🏢' },
-    plots: { name: 'Plots & Plotted Lands', route: '/plots', icon: '🌳' },
-    career: { name: 'Careers & Culture', route: '/career', icon: '💼' },
-    contact: { name: 'Contact & Advisory Desk', route: '/contact', icon: '📞' },
-    header: { name: 'Header & Navigation Bar', route: 'Global Layout', icon: '🧭' },
-    footer: { name: 'Footer & Global Brand', route: 'Global Layout', icon: '⚓' },
+  const pageTitles: Record<PageKey, { name: string; route: string; iconType: string }> = {
+    home: { name: 'Home Page', route: '/', iconType: 'home' },
+    about: { name: 'About Us', route: '/about', iconType: 'about' },
+    residential: { name: 'Residential Portfolios', route: '/residential', iconType: 'residential' },
+    commercial: { name: 'Commercial Assets', route: '/commercial', iconType: 'commercial' },
+    plots: { name: 'Plots & Plotted Lands', route: '/plots', iconType: 'plots' },
+    career: { name: 'Careers & Culture', route: '/career', iconType: 'career' },
+    contact: { name: 'Contact & Advisory Desk', route: '/contact', iconType: 'contact' },
+    header: { name: 'Header & Navigation Bar', route: 'Global Layout', iconType: 'header' },
+    footer: { name: 'Footer & Global Brand', route: 'Global Layout', iconType: 'footer' },
   };
 
-  const currentMeta = pageTitles[pageKey];
+  const currentMeta = pageTitles[pageKey] || { name: 'Webpage', route: '/', iconType: 'home' };
 
   return (
     <div className="space-y-6">
@@ -92,7 +101,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
       />
 
       {/* Sticky Top Action Bar */}
-      <div className="p-4 rounded-2xl bg-[#111118] border border-white/10 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-10 shadow-xl backdrop-blur-md">
+      <div className="p-4 rounded-2xl bg-[#282C35] border border-white/10 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-10 shadow-xl backdrop-blur-md">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
@@ -103,7 +112,17 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
           </button>
           <div>
             <h2 className="text-sm font-bold text-white capitalize flex items-center gap-2">
-              <span>{currentMeta.icon}</span>
+              <span className="p-1 rounded bg-brand-purple/20 text-brand-purpleLight">
+                {currentMeta.iconType === 'home' && <Home className="w-4 h-4" />}
+                {currentMeta.iconType === 'about' && <BookOpen className="w-4 h-4" />}
+                {currentMeta.iconType === 'residential' && <Building2 className="w-4 h-4" />}
+                {currentMeta.iconType === 'commercial' && <Building2 className="w-4 h-4 text-indigo-400" />}
+                {currentMeta.iconType === 'plots' && <MapPin className="w-4 h-4 text-emerald-400" />}
+                {currentMeta.iconType === 'career' && <Briefcase className="w-4 h-4 text-amber-400" />}
+                {currentMeta.iconType === 'contact' && <Phone className="w-4 h-4 text-blue-400" />}
+                {currentMeta.iconType === 'header' && <Compass className="w-4 h-4 text-pink-400" />}
+                {currentMeta.iconType === 'footer' && <Globe className="w-4 h-4 text-teal-400" />}
+              </span>
               <span>{currentMeta.name} Containers</span>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-brand-purple/20 text-brand-purpleLight border border-brand-purple/40">
                 {currentMeta.route}
@@ -143,7 +162,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
       {pageKey === 'home' && (
         <div className="space-y-6">
           {/* SEO & Meta Container */}
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
@@ -234,7 +253,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
           </div>
 
           {/* Container 1: Hero Banner */}
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 1: Hero Banner & Tagline
@@ -308,7 +327,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
           </div>
 
           {/* Container 2: Key Stats Counters */}
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div>
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
@@ -392,7 +411,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
           </div>
 
           {/* Container 3: Advisory Process & Portfolio Titles */}
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 3: Advisory Methodology & Categories Showcase
@@ -461,7 +480,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
       {/* 2. ABOUT US PAGE */}
       {pageKey === 'about' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider">Page Metadata & SEO</h4>
               <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded">
@@ -500,7 +519,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 1: About Hero & Fiduciary Statement
@@ -539,7 +558,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 2: Mission & Vision Pillars
@@ -610,7 +629,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
       {/* 3. RESIDENTIAL, COMMERCIAL, PLOTS PAGES */}
       {(pageKey === 'residential' || pageKey === 'commercial' || pageKey === 'plots') && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider">Page Metadata & SEO</h4>
               <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded">
@@ -649,7 +668,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400 capitalize">
                 Container 1: {pageKey} Hero & Tagline
@@ -709,7 +728,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
       {/* 4. CAREERS & CULTURE */}
       {pageKey === 'career' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 1: Careers Culture Hero
@@ -748,7 +767,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 2: Job Openings ({pageContent.career.openings?.length || 0})
@@ -850,7 +869,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
       {/* 5. CONTACT & EXCEL WEBHOOK */}
       {pageKey === 'contact' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 1: Direct Corporate Contact Details
@@ -935,7 +954,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
           </div>
 
           {/* Excel Webhook Container */}
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
@@ -969,7 +988,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
       {/* 6. HEADER & NAVIGATION (GLOBAL LAYOUT) */}
       {pageKey === 'header' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 1: Brand Logo & Identity
@@ -1018,7 +1037,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 2: Consultation CTA Button Placement
@@ -1078,7 +1097,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 3: WhatsApp Action Icon & Placement
@@ -1125,7 +1144,7 @@ export const WebpageContainerEditor: React.FC<WebpageContainerEditorProps> = ({
       {/* 7. FOOTER & GLOBAL BRAND */}
       {pageKey === 'footer' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-[#101016] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider text-purple-400">
                 Container 1: Footer Legal Notices & Compliance Disclaimers

@@ -3,7 +3,6 @@ import {
   Building2,
   FileText,
   Edit3,
-  Image as ImageIcon,
   Users,
   Download,
   Upload,
@@ -13,8 +12,6 @@ import {
   Search,
   ArrowLeft,
   FileDown,
-  Lock,
-  Copy,
   Eye,
   EyeOff,
   LogOut,
@@ -27,6 +24,20 @@ import {
   Link2,
   RefreshCw,
   FileCheck,
+  Bold,
+  Italic,
+  Link,
+  List,
+  Quote,
+  Layers,
+  Home,
+  BookOpen,
+  Briefcase,
+  Phone,
+  Compass,
+  MapPin,
+  X,
+  Tag,
 } from 'lucide-react';
 import {
   cmsStore,
@@ -36,7 +47,7 @@ import {
   type MediaItem,
   type LeadSubmission,
 } from '../services/cmsStore';
-import { generateLSIKeywords, analyzeSEO, type LSIKeywordResult } from '../utils/seoHelper';
+import { analyzeSEO } from '../utils/seoHelper';
 import { FORMS_CONFIG } from '../config/forms';
 import { WebpageContainerEditor } from '../components/WebpageContainerEditor';
 import type { Page } from '../App';
@@ -46,8 +57,8 @@ interface AdminCMSProps {
   onSelectProject?: (projectId: string) => void;
 }
 
-type CMSTab = 'projects' | 'posts' | 'pages' | 'media' | 'leads' | 'seo';
-type PageKey = 'home' | 'about' | 'residential' | 'commercial' | 'plots' | 'career' | 'contact' | 'header' | 'footer';
+type CMSTab = 'projects' | 'posts' | 'pages' | 'leads';
+type PageKey = 'home' | 'about' | 'residential' | 'commercial' | 'plots' | 'career' | 'contact' | 'header' | 'footer' | string;
 type ViewMode = 'list' | 'edit-project' | 'edit-post' | 'preview-project' | 'preview-post' | 'edit-page';
 
 // Location formatter: displays only sector and city name (e.g. Sector 106, Gurugram)
@@ -65,7 +76,7 @@ const formatLocationShort = (location: string, city: string = 'Gurugram') => {
   return `${firstPart}, ${city}`;
 };
 
-export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject }) => {
+export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate: _onNavigate, onSelectProject }) => {
   // Navigation & View Modes
   const [activeTab, setActiveTab] = useState<CMSTab>('projects');
   const [selectedPageKey, setSelectedPageKey] = useState<PageKey>('home');
@@ -75,7 +86,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
   const [projects, setProjects] = useState<CMSProject[]>([]);
   const [posts, setPosts] = useState<CMSBlogPost[]>([]);
   const [pageContent, setPageContent] = useState<PageContent>(cmsStore.getPageContent());
-  const [mediaLibrary, setMediaLibrary] = useState<MediaItem[]>([]);
+  const [_mediaLibrary, setMediaLibrary] = useState<MediaItem[]>([]);
   const [leads, setLeads] = useState<LeadSubmission[]>([]);
 
   // Toast feedback
@@ -105,11 +116,6 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
   const [editingProject, setEditingProject] = useState<CMSProject | null>(null);
   const [editingPost, setEditingPost] = useState<CMSBlogPost | null>(null);
 
-  // Project Editor Sub-section Tab
-  const [projectEditorSection, setProjectEditorSection] = useState<
-    'basic' | 'pricing' | 'media' | 'brochure' | 'content' | 'floorplans' | 'seo'
-  >('basic');
-
   // Internal Link Generator State
   const [linkAnchorText, setLinkAnchorText] = useState('');
   const [linkTargetUrl, setLinkTargetUrl] = useState('/residential');
@@ -117,15 +123,84 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
   // Gallery Add Image Input
   const [newGalleryImageUrl, setNewGalleryImageUrl] = useState('');
 
-  // SEO Global Desk State
-  const [globalSeedKeyword, setGlobalSeedKeyword] = useState('luxury apartments dwarka expressway gurugram');
-  const [globalLsiCategory, setGlobalLsiCategory] = useState<'residential' | 'commercial' | 'plots'>('residential');
+  // Custom Pages State
+  interface CustomPageItem {
+    id: string;
+    key: string;
+    title: string;
+    route: string;
+    desc: string;
+    containers: string;
+    tags: string;
+    meta: string;
+  }
+
+  const [customPages, setCustomPages] = useState<CustomPageItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('aurex_custom_pages');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isAddPageOpen, setIsAddPageOpen] = useState(false);
+  const [newPageTitle, setNewPageTitle] = useState('');
+  const [newPageRoute, setNewPageRoute] = useState('');
+  const [newPageDesc, setNewPageDesc] = useState('');
+  const [newPageMetaTitle] = useState('');
+
+  // Blog Body Ref and Rich Formatting Toolbar Handler
+  const blogBodyRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleFormatBlogBody = (format: 'bold' | 'italic' | 'link' | 'h1' | 'h2' | 'h3' | 'p' | 'quote' | 'list') => {
+    if (!editingPost) return;
+    const textarea = blogBodyRef.current;
+    const rawContent = Array.isArray(editingPost.content) ? editingPost.content.join('\n\n') : (editingPost.content || '');
+    
+    let start = 0;
+    let end = 0;
+    if (textarea) {
+      start = textarea.selectionStart;
+      end = textarea.selectionEnd;
+    }
+
+    const selected = rawContent.substring(start, end);
+    let formatted = '';
+
+    if (format === 'bold') {
+      formatted = `**${selected || 'bold text'}**`;
+    } else if (format === 'italic') {
+      formatted = `*${selected || 'italic text'}*`;
+    } else if (format === 'link') {
+      const url = prompt('Enter hyperlink URL (e.g. /residential or https://...):', '/residential');
+      if (!url) return;
+      formatted = `[${selected || 'link text'}](${url})`;
+    } else if (format === 'h1') {
+      formatted = `\n\n# ${selected || 'Main Heading'}\n\n`;
+    } else if (format === 'h2') {
+      formatted = `\n\n## ${selected || 'Subheading'}\n\n`;
+    } else if (format === 'h3') {
+      formatted = `\n\n### ${selected || 'Section Heading'}\n\n`;
+    } else if (format === 'p') {
+      formatted = `\n\n${selected || 'New paragraph text...'}\n\n`;
+    } else if (format === 'quote') {
+      formatted = `\n\n> ${selected || 'Executive quote...'}\n\n`;
+    } else if (format === 'list') {
+      formatted = `\n- ${selected || 'Key point'}\n`;
+    }
+
+    const newContent = rawContent.substring(0, start) + formatted + rawContent.substring(end);
+    setEditingPost({
+      ...editingPost,
+      content: newContent.split('\n\n').filter(Boolean),
+    });
+    setToastMessage(`Applied ${format} formatting`);
+  };
 
   // Hidden File Inputs
   const galleryImageUploadRef = useRef<HTMLInputElement>(null);
   const brochureUploadRef = useRef<HTMLInputElement>(null);
   const blogImageUploadRef = useRef<HTMLInputElement>(null);
-  const mediaLibraryUploadRef = useRef<HTMLInputElement>(null);
   const jsonImportRef = useRef<HTMLInputElement>(null);
 
   // File to Base64 utility
@@ -220,7 +295,6 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
       metaDescription: '',
     };
     setEditingProject(newProj);
-    setProjectEditorSection('basic');
     setViewMode('edit-project');
   };
 
@@ -233,7 +307,6 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
       metaTitle: proj.metaTitle || `${proj.name} | Luxury Property in ${proj.location}`,
       metaDescription: proj.metaDescription || proj.description?.slice(0, 155),
     });
-    setProjectEditorSection('basic');
     setViewMode('edit-project');
   };
 
@@ -480,26 +553,6 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
     showToast('Page texts & elements updated successfully across the website!');
   };
 
-  // ==================== MEDIA LIBRARY ====================
-  const handleGeneralMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const isPdf = file.name.toLowerCase().endsWith('.pdf');
-        const dataUrl = await readFileAsDataUrl(file);
-        cmsStore.addMediaItem({
-          name: file.name,
-          type: isPdf ? 'pdf' : 'image',
-          url: dataUrl,
-          size: isPdf ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : `${Math.round(file.size / 1024)} KB`,
-        });
-        showToast(`Uploaded ${file.name} to media library!`);
-      } catch {
-        showToast('Error uploading file.');
-      }
-    }
-  };
-
   // ==================== LEADS EXPORT TO CSV ====================
   const handleExportLeadsCSV = () => {
     if (leads.length === 0) {
@@ -608,42 +661,14 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
       })
     : null;
 
-  // 10 LSI Keywords for editing project
-  const projectLsiKeywords: LSIKeywordResult[] = editingProject
-    ? generateLSIKeywords(editingProject.focusKeyword || editingProject.name, editingProject.category)
-    : [];
-
-  // 10 LSI Keywords for editing blog post
-  const blogLsiKeywords: LSIKeywordResult[] = editingPost
-    ? generateLSIKeywords(editingPost.focusKeyword || editingPost.title, 'residential')
-    : [];
-
   // ==================== AUTHENTICATION SCREEN ====================
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#07070A] text-white flex items-center justify-center px-4 py-20 relative overflow-hidden font-sans">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-purple/20 rounded-full blur-[140px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
-
+      <div className="min-h-screen bg-[#20232A] text-[#E5E7EB] flex items-center justify-center px-4 py-20 relative overflow-hidden font-sans">
         <div className="max-w-md w-full relative z-10">
-          <div className="text-center mb-8">
-            <button
-              onClick={() => onNavigate('home')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-400 hover:text-white transition-colors mb-6 border border-white/10"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Aurex Estates</span>
-            </button>
+          <div className="bg-[#282C35] border border-[#3E4452] rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <h1 className="text-2xl font-bold tracking-tight text-white text-center mb-6">Login</h1>
 
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-brand-purple to-purple-500 flex items-center justify-center shadow-xl shadow-brand-purple/30 mb-4 border border-brand-purple/40">
-              <Lock className="w-8 h-8 text-white" />
-            </div>
-
-            <h1 className="text-2xl font-bold tracking-tight text-white">Aurex Admin Portal</h1>
-            <p className="text-xs text-gray-400 mt-1">Sign in with authorized administrator credentials</p>
-          </div>
-
-          <div className="bg-[#101016] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
             {authError && (
               <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
@@ -662,7 +687,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
                   placeholder="admin"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#1E2227] border border-[#3E4452] text-white placeholder-gray-400 text-sm focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all"
                 />
               </div>
 
@@ -677,7 +702,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all pr-11"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#1E2227] border border-[#3E4452] text-white placeholder-gray-400 text-sm focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all pr-11"
                   />
                   <button
                     type="button"
@@ -693,15 +718,9 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                 type="submit"
                 className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-brand-purple to-purple-600 hover:from-brand-purpleLight hover:to-purple-500 text-white font-semibold text-sm shadow-lg shadow-brand-purple/25 transition-all active:scale-[0.98]"
               >
-                Sign In to Dashboard
+                Login
               </button>
             </form>
-
-            <div className="mt-6 pt-5 border-t border-white/10 text-center">
-              <span className="text-[11px] text-gray-500 font-mono">
-                Aurex Estates Administrative Panel • Secured HTTPS
-              </span>
-            </div>
           </div>
         </div>
       </div>
@@ -710,7 +729,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
 
   // ==================== DASHBOARD MAIN LAYOUT ====================
   return (
-    <div className="min-h-screen bg-[#09090D] text-gray-200 flex font-sans antialiased overflow-x-hidden">
+    <div className="h-screen bg-[#20232A] text-[#E5E7EB] flex font-sans antialiased overflow-hidden">
       {/* Toast Notification Banner */}
       {toastMessage && (
         <div className="fixed top-5 right-5 z-50 px-4 py-3 rounded-xl bg-brand-purple text-white text-xs sm:text-sm font-semibold shadow-2xl flex items-center gap-2 border border-white/20 animate-in slide-in-from-top-4">
@@ -720,12 +739,12 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
       )}
 
       {/* =========================================================================
-          LEFT SIDEBAR: WORDPRESS-STYLE NAVIGATION
+          LEFT SIDEBAR: STATIC, FIXED FULL HEIGHT, EYE-FRIENDLY CHARCOAL PALETTE
       ========================================================================= */}
-      <aside className="w-64 bg-[#0D0D14] border-r border-white/10 flex flex-col justify-between shrink-0 min-h-screen select-none z-30 sticky top-0 h-screen">
+      <aside className="w-64 bg-[#282C35] border-r border-[#3E4452] flex flex-col justify-between shrink-0 h-screen select-none z-30">
         {/* Top Header / Branding */}
         <div>
-          <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          <div className="p-4 border-b border-[#3E4452] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-purple to-purple-500 flex items-center justify-center font-bold text-white shadow-md shadow-brand-purple/30 text-sm">
                 A
@@ -740,7 +759,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Links (Clean: Projects, Blogs, Pages & Elements, Leads) */}
           <nav className="p-3 space-y-1">
             {/* 1. Projects */}
             <button
@@ -763,7 +782,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
               </span>
             </button>
 
-            {/* 2. Blogs (Renamed strictly as Blogs) */}
+            {/* 2. Blogs */}
             <button
               onClick={() => {
                 setActiveTab('posts');
@@ -797,34 +816,13 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
               }`}
             >
               <div className="flex items-center gap-3">
-                <Edit3 className="w-4 h-4 text-blue-400" />
-                <span>Pages & Elements</span>
+                <Layers className="w-4 h-4 text-blue-400" />
+                <span>Pages &amp; Elements</span>
               </div>
-              <span className="text-[10px] text-gray-400 font-mono">7 Pages</span>
+              <span className="text-[10px] text-gray-400 font-mono">9+ Pages</span>
             </button>
 
-            {/* 4. Media & PDF Library */}
-            <button
-              onClick={() => {
-                setActiveTab('media');
-                setViewMode('list');
-              }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                activeTab === 'media' && viewMode === 'list'
-                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/25'
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <ImageIcon className="w-4 h-4 text-amber-400" />
-                <span>Media & Brochures</span>
-              </div>
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-white font-mono">
-                {mediaLibrary.length}
-              </span>
-            </button>
-
-            {/* 5. Leads & Inquiries */}
+            {/* 4. Leads & Inquiries */}
             <button
               onClick={() => {
                 setActiveTab('leads');
@@ -838,7 +836,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
             >
               <div className="flex items-center gap-3">
                 <Users className="w-4 h-4 text-emerald-400" />
-                <span>Leads & Inquiries</span>
+                <span>Leads &amp; Inquiries</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" title="Connected to Google Sheet & Email" />
@@ -847,32 +845,11 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                 </span>
               </div>
             </button>
-
-            {/* 6. SEO & LSI Engine */}
-            <button
-              onClick={() => {
-                setActiveTab('seo');
-                setViewMode('list');
-              }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                activeTab === 'seo' && viewMode === 'list'
-                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/25'
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-4 h-4 text-pink-400" />
-                <span>SEO & 10 LSI Desk</span>
-              </div>
-              <span className="px-1.5 py-0.5 rounded text-[9px] bg-pink-500/20 text-pink-300 font-semibold uppercase">
-                AI LSI
-              </span>
-            </button>
           </nav>
         </div>
 
         {/* Sidebar Footer: View Live Site & Sign Out */}
-        <div className="p-3 border-t border-white/10 space-y-2">
+        <div className="p-3 border-t border-[#3E4452] space-y-2">
           <a
             href="https://aurexestates.co.in"
             target="_blank"
@@ -909,11 +886,11 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
       </aside>
 
       {/* =========================================================================
-          MAIN WORKSPACE
+          MAIN WORKSPACE: INDEPENDENT SCROLL CONTAINER (SIDEBAR STAYS STATIC)
       ========================================================================= */}
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-        {/* Top Header Bar (WordPress-style, clean breadcrumbs & quick actions, NO old banner text) */}
-        <header className="h-16 px-6 bg-[#0B0B11]/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between sticky top-0 z-20">
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#20232A]">
+        {/* Top Header Bar */}
+        <header className="h-16 px-6 bg-[#282C35]/90 backdrop-blur-md border-b border-[#3E4452] flex items-center justify-between sticky top-0 z-20">
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Aurex CMS</span>
             <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
@@ -927,14 +904,10 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                 : activeTab === 'projects'
                 ? 'All Property Projects'
                 : activeTab === 'posts'
-                ? 'Blogs & Market Intelligence'
+                ? 'Blogs & Market Trends'
                 : activeTab === 'pages'
                 ? 'Pages & Content Elements'
-                : activeTab === 'media'
-                ? 'Media & Brochure Library'
-                : activeTab === 'leads'
-                ? 'Captured Leads & Inquiries'
-                : 'SEO & Real Estate LSI Engine'}
+                : 'Captured Leads & Inquiries'}
             </span>
           </div>
 
@@ -975,7 +948,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
           {viewMode === 'edit-project' && editingProject && (
             <div className="space-y-6">
               {/* Sticky Top Action Bar */}
-              <div className="p-4 rounded-2xl bg-[#111118] border border-white/10 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-10 shadow-xl backdrop-blur-md">
+              <div className="p-4 rounded-2xl bg-[#2E333E] border border-white/10 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-10 shadow-xl backdrop-blur-md">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setViewMode('list')}
@@ -1055,72 +1028,64 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                 </div>
               </div>
 
-              {/* Editor Sub-Navigation Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/10 scrollbar-none">
+              {/* Single Scrollable Webpage Section Jump Anchors */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-[#3E4452] scrollbar-none sticky top-20 z-10 bg-[#20232A]/95 backdrop-blur-md py-2">
                 <button
-                  onClick={() => setProjectEditorSection('basic')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    projectEditorSection === 'basic' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
+                  type="button"
+                  onClick={() => document.getElementById('project-sec-basic')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-all whitespace-nowrap"
                 >
-                  1. Identification & Classification
+                  1. Identification
                 </button>
                 <button
-                  onClick={() => setProjectEditorSection('pricing')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    projectEditorSection === 'pricing' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
+                  type="button"
+                  onClick={() => document.getElementById('project-sec-pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-all whitespace-nowrap"
                 >
-                  2. Pricing & Financials
+                  2. Pricing &amp; Financials
                 </button>
                 <button
-                  onClick={() => setProjectEditorSection('media')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    projectEditorSection === 'media' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
+                  type="button"
+                  onClick={() => document.getElementById('project-sec-media')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-all whitespace-nowrap"
                 >
-                  3. Media & Multi-Image Gallery
+                  3. Media Gallery
                 </button>
                 <button
-                  onClick={() => setProjectEditorSection('brochure')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    projectEditorSection === 'brochure' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
+                  type="button"
+                  onClick={() => document.getElementById('project-sec-brochure')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-all whitespace-nowrap"
                 >
-                  4. Official PDF Brochure
+                  4. PDF Brochure
                 </button>
                 <button
-                  onClick={() => setProjectEditorSection('content')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    projectEditorSection === 'content' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
+                  type="button"
+                  onClick={() => document.getElementById('project-sec-content')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-all whitespace-nowrap"
                 >
-                  5. Content & Internal Linking
+                  5. Content &amp; Linking
                 </button>
                 <button
-                  onClick={() => setProjectEditorSection('floorplans')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    projectEditorSection === 'floorplans' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
+                  type="button"
+                  onClick={() => document.getElementById('project-sec-floorplans')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-all whitespace-nowrap"
                 >
-                  6. Floor Plans & Landmarks
+                  6. Floor Plans &amp; Landmarks
                 </button>
                 <button
-                  onClick={() => setProjectEditorSection('seo')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    projectEditorSection === 'seo' ? 'bg-pink-500/20 text-pink-300 border border-pink-500/30' : 'text-gray-400 hover:text-white'
-                  }`}
+                  type="button"
+                  onClick={() => document.getElementById('project-sec-seo')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all whitespace-nowrap"
                 >
-                  ⚡ 7. SEO Structure & 10 LSI
+                  7. SEO &amp; Metadata
                 </button>
               </div>
 
               {/* ================= CONTAINER 1: BASIC IDENTIFICATION ================= */}
-              {projectEditorSection === 'basic' && (
-                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                    Container 1: Core Property Identification & Corridor Classification
-                  </h3>
+              <div id="project-sec-basic" className="p-6 rounded-2xl bg-[#282C35] border border-[#3E4452] space-y-5">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                  Container 1: Core Property Identification &amp; Corridor Classification
+                </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div className="md:col-span-2">
@@ -1144,7 +1109,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                             category: e.target.value as 'residential' | 'commercial' | 'plots',
                           })
                         }
-                        className="w-full px-4 py-2.5 rounded-xl bg-[#181822] border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#20232A] border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
                       >
                         <option value="residential">Residential Luxury</option>
                         <option value="commercial">Commercial Grade-A</option>
@@ -1162,7 +1127,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                             segment: e.target.value as any,
                           })
                         }
-                        className="w-full px-4 py-2.5 rounded-xl bg-[#181822] border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#20232A] border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple"
                       >
                         <option value="Affordable">Affordable (Within 1.5 Cr)</option>
                         <option value="Luxury">Luxury (1.5 Cr - 6 Cr)</option>
@@ -1250,14 +1215,12 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     </div>
                   </div>
                 </div>
-              )}
 
               {/* ================= CONTAINER 2: PRICING & FINANCIALS ================= */}
-              {projectEditorSection === 'pricing' && (
-                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                    Container 2: Investment Financials & Price Display
-                  </h3>
+              <div id="project-sec-pricing" className="p-6 rounded-2xl bg-[#282C35] border border-[#3E4452] space-y-5">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                  Container 2: Investment Financials &amp; Price Display
+                </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div className="md:col-span-2">
@@ -1331,16 +1294,14 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     </div>
                   </div>
                 </div>
-              )}
 
               {/* ================= CONTAINER 3: MEDIA & MULTI-IMAGE GALLERY ================= */}
-              {projectEditorSection === 'media' && (
-                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-6">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                    <div>
-                      <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                        Container 3: Media & Multi-Image Gallery Manager
-                      </h3>
+              <div id="project-sec-media" className="p-6 rounded-2xl bg-[#282C35] border border-[#3E4452] space-y-6">
+                <div className="flex items-center justify-between border-b border-[#3E4452] pb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
+                      Container 3: Media &amp; Multi-Image Gallery Manager
+                    </h3>
                       <p className="text-xs text-gray-400 mt-0.5">
                         Add, replace, or delete images. Every image can be previewed or designated as the primary hero thumbnail.
                       </p>
@@ -1431,11 +1392,9 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     })}
                   </div>
                 </div>
-              )}
 
               {/* ================= CONTAINER 4: OFFICIAL PDF BROCHURE ================= */}
-              {projectEditorSection === 'brochure' && (
-                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-6">
+              <div id="project-sec-brochure" className="p-6 rounded-2xl bg-[#282C35] border border-[#3E4452] space-y-6">
                   <div>
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
                       Container 4: Official Verified PDF Brochure
@@ -1562,11 +1521,9 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     </label>
                   </div>
                 </div>
-              )}
 
               {/* ================= CONTAINER 5: CONTENT & INTERNAL LINKING ================= */}
-              {projectEditorSection === 'content' && (
-                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-6">
+              <div id="project-sec-content" className="p-6 rounded-2xl bg-[#282C35] border border-[#3E4452] space-y-6">
                   <div>
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
                       Container 5: Comprehensive Project Description & Internal Hyperlinking
@@ -1635,7 +1592,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                       <select
                         value={linkTargetUrl}
                         onChange={(e) => setLinkTargetUrl(e.target.value)}
-                        className="px-3 py-1.5 rounded-lg bg-[#181822] border border-white/15 text-white text-xs"
+                        className="px-3 py-1.5 rounded-lg bg-[#20232A] border border-white/15 text-white text-xs"
                       >
                         <option value="/residential">/residential (Prime Residential)</option>
                         <option value="/commercial">/commercial (Commercial Assets)</option>
@@ -1715,11 +1672,9 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     />
                   </div>
                 </div>
-              )}
 
               {/* ================= CONTAINER 6: FLOOR PLANS & CONNECTIVITY ================= */}
-              {projectEditorSection === 'floorplans' && (
-                <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-6">
+              <div id="project-sec-floorplans" className="p-6 rounded-2xl bg-[#282C35] border border-[#3E4452] space-y-6">
                   <div>
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
                       Container 6: Floor Plans & Strategic Travel Radii
@@ -1769,214 +1724,150 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     </div>
                   </div>
                 </div>
-              )}
 
-              {/* ================= CONTAINER 7: SEO STRUCTURE & 10 LSI SUGGESTIONS ================= */}
-              {projectEditorSection === 'seo' && (
-                <div className="p-6 rounded-2xl bg-[#111118] border border-pink-500/20 space-y-6">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                    <div>
-                      <h3 className="text-sm font-bold text-white uppercase tracking-wider text-pink-400 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        <span>Container 7: Real-Time SEO Structure & 10 LSI Keyword Intelligence</span>
-                      </h3>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        Inspect heading hierarchy (H1, H2s), word count, SERP snippet, and automatically suggested real estate LSI keywords.
-                      </p>
-                    </div>
-
-                    {projectSeoAnalysis && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
-                        <span className="text-xs text-gray-400">SEO Health Score:</span>
-                        <span
-                          className={`text-sm font-bold font-mono ${
-                            projectSeoAnalysis.score >= 80
-                              ? 'text-emerald-400'
-                              : projectSeoAnalysis.score >= 60
-                              ? 'text-amber-400'
-                              : 'text-rose-400'
-                          }`}
-                        >
-                          {projectSeoAnalysis.score}/100
-                        </span>
-                      </div>
-                    )}
+              {/* ================= CONTAINER 7: SEO STRUCTURE & DIRECT METADATA ================= */}
+              <div id="project-sec-seo" className="p-6 rounded-2xl bg-[#282C35] border border-[#3E4452] space-y-6">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
+                      <span>Container 7: On-Page Real-Time SEO Structure & Metadata</span>
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Inspect heading hierarchy (H1, H2s), word count, SERP snippet, and configure search engine metadata.
+                    </p>
                   </div>
 
-                  {/* Seed Keyword Input */}
-                  <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
-                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                      Seed Focus Keyword (Used to auto-generate 10 LSI variations)
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={editingProject.focusKeyword || ''}
-                        onChange={(e) => setEditingProject({ ...editingProject, focusKeyword: e.target.value })}
-                        placeholder={`e.g. ${editingProject.name} Dwarka Expressway`}
-                        className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-pink-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* 10 Automatically Suggested LSI Keywords */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white uppercase tracking-wider">
-                        10 Recommended Real Estate LSI Keywords
-                      </span>
-                      <span className="text-[11px] text-gray-400">
-                        Click "+ Insert" to add directly to content narrative
+                  {projectSeoAnalysis && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+                      <span className="text-xs text-gray-400">SEO Health Score:</span>
+                      <span
+                        className={`text-sm font-bold font-mono ${
+                          projectSeoAnalysis.score >= 80
+                            ? 'text-emerald-400'
+                            : projectSeoAnalysis.score >= 60
+                            ? 'text-amber-400'
+                            : 'text-rose-400'
+                        }`}
+                      >
+                        {projectSeoAnalysis.score}/100
                       </span>
                     </div>
+                  )}
+                </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                      {projectLsiKeywords.map((lsi, idx) => {
-                        const isIncluded =
-                          editingProject.description?.toLowerCase().includes(lsi.keyword.toLowerCase()) || false;
-                        return (
-                          <div
-                            key={idx}
-                            className={`p-3 rounded-xl border flex items-center justify-between gap-2 transition-all ${
-                              isIncluded
-                                ? 'bg-emerald-950/20 border-emerald-500/30'
-                                : 'bg-white/[0.02] border-white/10 hover:border-white/20'
-                            }`}
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-medium text-white truncate">{lsi.keyword}</span>
-                                {isIncluded && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="Included" />
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase bg-white/10 text-gray-400">
-                                  {lsi.intent}
-                                </span>
-                                <span className="text-[10px] text-gray-500">
-                                  {isIncluded ? '🟢 In content' : '⚪ Missing'}
-                                </span>
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const currentDesc = editingProject.description || '';
-                                setEditingProject({
-                                  ...editingProject,
-                                  description: `${currentDesc} ${lsi.keyword}.`,
-                                });
-                                showToast(`Added LSI: "${lsi.keyword}"`);
-                              }}
-                              className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/15 text-pink-300 text-[11px] font-semibold shrink-0"
-                            >
-                              + Insert
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                {/* Focus Keyword Input */}
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                    Target Focus Keyword
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editingProject.focusKeyword || ''}
+                      onChange={(e) => setEditingProject({ ...editingProject, focusKeyword: e.target.value })}
+                      placeholder={`e.g. ${editingProject.name} Dwarka Expressway`}
+                      className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                    />
                   </div>
+                </div>
 
-                  {/* Heading Hierarchy Preview (H1, H2s, H3s) */}
-                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
-                    <span className="text-xs font-bold text-white uppercase tracking-wider block">
-                      Heading & Structural Hierarchy (H-Tags & P-Tags)
-                    </span>
+                {/* Heading Hierarchy Preview (H1, H2s, H3s) */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
+                  <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                    Heading & Structural Hierarchy (H-Tags & P-Tags)
+                  </span>
 
-                    <div className="space-y-2 text-xs font-mono">
-                      <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 text-brand-purpleLight flex items-center gap-2">
-                        <span className="px-1.5 py-0.5 rounded bg-brand-purple/30 text-[10px] font-bold">H1</span>
-                        <span>{editingProject.name || 'Untitled Property'}</span>
-                      </div>
-
-                      <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 text-gray-300 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
-                            H2
-                          </span>
-                          <span>Property Overview & Strategic Connectivity</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
-                            H2
-                          </span>
-                          <span>Pricing & Investment Typologies</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
-                            H2
-                          </span>
-                          <span>Architectural Highlights & Verified Brochure</span>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 text-gray-400 flex items-center justify-between">
-                        <span>Paragraph Count (&lt;p&gt; tags): {editingProject.description ? '3 Containers' : '0'}</span>
-                        <span>Word Count: {projectSeoAnalysis?.wordCount || 0} words</span>
-                      </div>
+                  <div className="space-y-2 text-xs font-mono">
+                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 text-brand-purpleLight flex items-center gap-2">
+                      <span className="px-1.5 py-0.5 rounded bg-brand-purple/30 text-[10px] font-bold">H1</span>
+                      <span>{editingProject.name || 'Untitled Property'}</span>
                     </div>
-                  </div>
 
-                  {/* Meta Title & Meta Description with Google SERP Simulation */}
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-xs font-semibold text-gray-300">
-                          Meta Title Tag (Google Search Result Title)
-                        </label>
-                        <span className="text-[11px] text-gray-400">
-                          {(editingProject.metaTitle || '').length}/60 chars
+                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 text-gray-300 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
+                          H2
                         </span>
+                        <span>Property Overview & Strategic Connectivity</span>
                       </div>
-                      <input
-                        type="text"
-                        value={editingProject.metaTitle || ''}
-                        onChange={(e) => setEditingProject({ ...editingProject, metaTitle: e.target.value })}
-                        placeholder={`${editingProject.name} | Luxury Property in ${editingProject.location}`}
-                        className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-xs font-semibold text-gray-300">
-                          Meta Description Tag (Google Snippet)
-                        </label>
-                        <span className="text-[11px] text-gray-400">
-                          {(editingProject.metaDescription || '').length}/160 chars
+                      <div className="flex items-center gap-2">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
+                          H2
                         </span>
+                        <span>Pricing & Investment Typologies</span>
                       </div>
-                      <textarea
-                        rows={2}
-                        value={editingProject.metaDescription || ''}
-                        onChange={(e) => setEditingProject({ ...editingProject, metaDescription: e.target.value })}
-                        placeholder="Explore verified pricing, floor plans, and official brochure download..."
-                        className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
-                      />
+                      <div className="flex items-center gap-2">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
+                          H2
+                        </span>
+                        <span>Architectural Highlights & Verified Brochure</span>
+                      </div>
                     </div>
 
-                    {/* Google SERP Snippet Preview */}
-                    <div className="p-4 rounded-xl bg-[#1e1f24] border border-gray-700/50 space-y-1 font-sans">
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <span>https://aurexestates.co.in</span>
-                        <span>›</span>
-                        <span>{editingProject.category}</span>
-                      </div>
-                      <h4 className="text-sm font-semibold text-[#8ab4f8] hover:underline cursor-pointer">
-                        {editingProject.metaTitle || `${editingProject.name} | Luxury Property`}
-                      </h4>
-                      <p className="text-xs text-[#bdc1c6] line-clamp-2">
-                        {editingProject.metaDescription ||
-                          editingProject.description?.slice(0, 155) ||
-                          'Official project specifications, floor plans, and verified brochure.'}
-                      </p>
+                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 text-gray-400 flex items-center justify-between">
+                      <span>Paragraph Count (&lt;p&gt; tags): {editingProject.description ? '3 Containers' : '0'}</span>
+                      <span>Word Count: {projectSeoAnalysis?.wordCount || 0} words</span>
                     </div>
                   </div>
                 </div>
-              )}
+
+                {/* Meta Title & Meta Description with Google SERP Simulation */}
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-gray-300">
+                        Meta Title Tag (Google Search Result Title)
+                      </label>
+                      <span className="text-[11px] text-gray-400">
+                        {(editingProject.metaTitle || '').length}/60 chars
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      value={editingProject.metaTitle || ''}
+                      onChange={(e) => setEditingProject({ ...editingProject, metaTitle: e.target.value })}
+                      placeholder={`${editingProject.name} | Luxury Property in ${editingProject.location}`}
+                      className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-gray-300">
+                        Meta Description Tag (Google Snippet)
+                      </label>
+                      <span className="text-[11px] text-gray-400">
+                        {(editingProject.metaDescription || '').length}/160 chars
+                      </span>
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={editingProject.metaDescription || ''}
+                      onChange={(e) => setEditingProject({ ...editingProject, metaDescription: e.target.value })}
+                      placeholder="Explore verified pricing, floor plans, and official brochure download..."
+                      className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                    />
+                  </div>
+
+                  {/* Google SERP Snippet Preview */}
+                  <div className="p-4 rounded-xl bg-[#20232A] border border-gray-700/50 space-y-1 font-sans">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span>https://aurexestates.co.in</span>
+                      <span>›</span>
+                      <span>{editingProject.category}</span>
+                    </div>
+                    <h4 className="text-sm font-semibold text-[#8ab4f8] hover:underline cursor-pointer">
+                      {editingProject.metaTitle || `${editingProject.name} | Luxury Property`}
+                    </h4>
+                    <p className="text-xs text-[#bdc1c6] line-clamp-2">
+                      {editingProject.metaDescription ||
+                        editingProject.description?.slice(0, 155) ||
+                        'Official project specifications, floor plans, and verified brochure.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1986,7 +1877,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
           {viewMode === 'edit-post' && editingPost && (
             <div className="space-y-6">
               {/* Sticky Top Action Bar */}
-              <div className="p-4 rounded-2xl bg-[#111118] border border-white/10 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-10 shadow-xl backdrop-blur-md">
+              <div className="p-4 rounded-2xl bg-[#2E333E] border border-white/10 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-10 shadow-xl backdrop-blur-md">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setViewMode('list')}
@@ -2047,7 +1938,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
               </div>
 
               {/* Blog Metadata Form */}
-              <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
+              <div className="p-6 rounded-2xl bg-[#2E333E] border border-white/10 space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="md:col-span-2">
                     <label className="block text-xs font-semibold text-gray-300 mb-1.5">Article Title *</label>
@@ -2157,47 +2048,198 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     </div>
                   </div>
 
-                  {/* Blog Body Paragraphs */}
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                      Full Article Body Content (Paragraphs)
-                    </label>
+                  {/* Blog Body Paragraphs with Rich Formatting Toolbar */}
+                  <div className="md:col-span-2 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <label className="block text-xs font-semibold text-gray-300">
+                        Full Article Body Content (Markdown Supported)
+                      </label>
+                      <span className="text-[11px] text-gray-400">
+                        Select text and click toolbar buttons to format
+                      </span>
+                    </div>
+
+                    {/* Rich Formatting Toolbar */}
+                    <div className="flex flex-wrap items-center gap-1.5 p-2 bg-[#20232A] border border-white/10 rounded-xl">
+                      {/* Headings */}
+                      <div className="flex items-center gap-1 pr-2 border-r border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => handleFormatBlogBody('h1')}
+                          className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/15 text-white text-xs font-bold transition-all"
+                          title="Format as H1 Heading"
+                        >
+                          H1
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFormatBlogBody('h2')}
+                          className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/15 text-white text-xs font-bold transition-all"
+                          title="Format as H2 Heading"
+                        >
+                          H2
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFormatBlogBody('h3')}
+                          className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/15 text-white text-xs font-bold transition-all"
+                          title="Format as H3 Heading"
+                        >
+                          H3
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFormatBlogBody('p')}
+                          className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/15 text-gray-300 text-xs font-medium transition-all"
+                          title="Regular Paragraph"
+                        >
+                          P
+                        </button>
+                      </div>
+
+                      {/* Inline formatting */}
+                      <div className="flex items-center gap-1 px-2 border-r border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => handleFormatBlogBody('bold')}
+                          className="p-1.5 rounded-md bg-white/5 hover:bg-white/15 text-white transition-all"
+                          title="Bold (**text**)"
+                        >
+                          <Bold className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFormatBlogBody('italic')}
+                          className="p-1.5 rounded-md bg-white/5 hover:bg-white/15 text-white transition-all"
+                          title="Italic (*text*)"
+                        >
+                          <Italic className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFormatBlogBody('link')}
+                          className="p-1.5 rounded-md bg-white/5 hover:bg-white/15 text-white transition-all"
+                          title="Insert Hyperlink ([text](url))"
+                        >
+                          <Link className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Block formatting */}
+                      <div className="flex items-center gap-1 pl-1">
+                        <button
+                          type="button"
+                          onClick={() => handleFormatBlogBody('quote')}
+                          className="p-1.5 rounded-md bg-white/5 hover:bg-white/15 text-white transition-all"
+                          title="Blockquote (> text)"
+                        >
+                          <Quote className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFormatBlogBody('list')}
+                          className="p-1.5 rounded-md bg-white/5 hover:bg-white/15 text-white transition-all"
+                          title="Bullet List (- item)"
+                        >
+                          <List className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
                     <textarea
-                      rows={12}
-                      value={Array.isArray(editingPost.content) ? editingPost.content.join('\n\n') : editingPost.content}
+                      ref={blogBodyRef}
+                      rows={14}
+                      value={Array.isArray(editingPost.content) ? editingPost.content.join('\n\n') : (editingPost.content || '')}
                       onChange={(e) =>
                         setEditingPost({
                           ...editingPost,
                           content: e.target.value.split('\n\n').filter(Boolean),
                         })
                       }
-                      placeholder="Write blog paragraphs separated by empty lines..."
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple font-mono"
+                      placeholder="Write blog paragraphs, select text to format with H tags, bold, italics, or hyperlinks..."
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-brand-purple font-mono leading-relaxed"
                     />
                   </div>
                 </div>
 
-                {/* 10 LSI Auto-Suggestions for Blog */}
-                <div className="pt-4 border-t border-white/10 space-y-3">
-                  <span className="text-xs font-bold text-white uppercase tracking-wider block">
-                    10 Suggested LSI Keywords for Market Insights
-                  </span>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {blogLsiKeywords.map((lsi, idx) => (
-                      <div
-                        key={idx}
-                        className="p-2.5 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between text-xs"
-                      >
-                        <span className="text-gray-300">{lsi.keyword}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleInsertBlogInternalLink(lsi.keyword, '/residential')}
-                          className="px-2 py-0.5 rounded bg-brand-purple/40 text-brand-purpleLight text-[10px] font-semibold hover:bg-brand-purple/60"
-                        >
-                          + Insert
-                        </button>
+                {/* Direct On-Page SEO Settings for Blog */}
+                <div className="pt-6 border-t border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-purple-400" />
+                        <span>Blog SEO & SERP Metadata</span>
+                      </h4>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Manage search engine snippet, meta title, meta description, and primary focus keyword.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                        Focus Keyword
+                      </label>
+                      <input
+                        type="text"
+                        value={editingPost.focusKeyword || ''}
+                        onChange={(e) => setEditingPost({ ...editingPost, focusKeyword: e.target.value })}
+                        placeholder="e.g. Golf Course Road real estate investment"
+                        className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-gray-300">
+                          Meta Title Tag
+                        </label>
+                        <span className="text-[11px] text-gray-400">
+                          {(editingPost.metaTitle || editingPost.title || '').length}/60 chars
+                        </span>
                       </div>
-                    ))}
+                      <input
+                        type="text"
+                        value={editingPost.metaTitle || ''}
+                        onChange={(e) => setEditingPost({ ...editingPost, metaTitle: e.target.value })}
+                        placeholder={`${editingPost.title || 'Article Title'} | Aurex Estates`}
+                        className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-gray-300">
+                          Meta Description Tag
+                        </label>
+                        <span className="text-[11px] text-gray-400">
+                          {(editingPost.metaDescription || editingPost.excerpt || '').length}/160 chars
+                        </span>
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={editingPost.metaDescription || ''}
+                        onChange={(e) => setEditingPost({ ...editingPost, metaDescription: e.target.value })}
+                        placeholder={editingPost.excerpt || 'Market analysis and investment advisory for NCR high-net-worth real estate...'}
+                        className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                      />
+                    </div>
+
+                    {/* Google SERP Snippet Preview */}
+                    <div className="p-4 rounded-xl bg-[#20232A] border border-gray-700/50 space-y-1 font-sans">
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <span>https://aurexestates.co.in</span>
+                        <span>›</span>
+                        <span>blog</span>
+                      </div>
+                      <h4 className="text-sm font-semibold text-[#8ab4f8] hover:underline cursor-pointer">
+                        {editingPost.metaTitle || editingPost.title || 'Article Title | Aurex Estates'}
+                      </h4>
+                      <p className="text-xs text-[#bdc1c6] line-clamp-2">
+                        {editingPost.metaDescription || editingPost.excerpt || 'Unbiased market trends and investment insights from Aurex Estates.'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2268,7 +2310,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
               </div>
 
               {/* Projects Table */}
-              <div className="bg-[#101016] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="bg-[#2E333E] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-white/5 border-b border-white/10 uppercase tracking-wider text-[11px] text-gray-400">
@@ -2345,9 +2387,9 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                                     : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                                 }`}
                               >
-                                <option value="published" className="bg-[#101016] text-emerald-400">Publish</option>
-                                <option value="draft" className="bg-[#101016] text-amber-400">Draft</option>
-                                <option value="unpublish" className="bg-[#101016] text-gray-400">Unpublish</option>
+                                <option value="published" className="bg-[#2E333E] text-emerald-400">Publish</option>
+                                <option value="draft" className="bg-[#2E333E] text-amber-400">Draft</option>
+                                <option value="unpublish" className="bg-[#2E333E] text-gray-400">Unpublish</option>
                               </select>
                             </td>
                             <td className="py-3.5 px-4 text-right">
@@ -2428,7 +2470,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                   return (
                     <div
                       key={post.id}
-                      className="rounded-2xl bg-[#111118] border border-white/10 overflow-hidden flex flex-col justify-between hover:border-brand-purple/40 transition-all group shadow-xl"
+                      className="rounded-2xl bg-[#2E333E] border border-white/10 overflow-hidden flex flex-col justify-between hover:border-brand-purple/40 transition-all group shadow-xl"
                     >
                       <div>
                         <div className="relative h-44 overflow-hidden">
@@ -2495,16 +2537,25 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     Select any webpage or global layout to inspect and edit its containers, tags, images, PDFs, and metadata.
                   </p>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAddPageOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30 transition-all active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Add New Page</span>
+                </button>
               </div>
 
-              {/* Grid of Pages & Global Layouts */}
+              {/* Grid of Built-in Pages & Custom Pages */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
                   {
                     key: 'home' as PageKey,
                     title: 'Home Page',
                     route: '/',
-                    icon: '🏠',
+                    iconNode: <Home className="w-5 h-5 text-purple-400" />,
                     desc: 'Hero banner, stats counters, advisory methodology, portfolio showcase, consultation banner',
                     containers: '5 Containers',
                     tags: 'H1, H2, <p>, Images, Stats',
@@ -2514,7 +2565,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     key: 'about' as PageKey,
                     title: 'About Us',
                     route: '/about',
-                    icon: '📖',
+                    iconNode: <BookOpen className="w-5 h-5 text-indigo-400" />,
                     desc: 'Corporate fiduciary narrative, mission statement, vision, institutional standards',
                     containers: '3 Containers',
                     tags: 'H1, H2, <p>, Mission, Vision',
@@ -2524,7 +2575,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     key: 'residential' as PageKey,
                     title: 'Residential Portfolios',
                     route: '/residential',
-                    icon: '🏙️',
+                    iconNode: <Building2 className="w-5 h-5 text-blue-400" />,
                     desc: 'Luxury apartments, penthouses, villas, Golf Course Road, Dwarka Expressway inventory',
                     containers: '2 Containers',
                     tags: 'H1, H2, <p>, Tagline',
@@ -2534,7 +2585,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     key: 'commercial' as PageKey,
                     title: 'Commercial Assets',
                     route: '/commercial',
-                    icon: '🏢',
+                    iconNode: <Briefcase className="w-5 h-5 text-amber-400" />,
                     desc: 'Institutional grade-A corporate offices, pre-leased retail shops, multiplexes & SCOs',
                     containers: '2 Containers',
                     tags: 'H1, H2, <p>, Tagline',
@@ -2544,7 +2595,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     key: 'plots' as PageKey,
                     title: 'Plots & Plotted Lands',
                     route: '/plots',
-                    icon: '🌳',
+                    iconNode: <MapPin className="w-5 h-5 text-emerald-400" />,
                     desc: 'Freehold residential & commercial plots, land parcels, title and zoning disclosures',
                     containers: '2 Containers',
                     tags: 'H1, H2, <p>, Tagline',
@@ -2554,7 +2605,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     key: 'career' as PageKey,
                     title: 'Careers & Culture',
                     route: '/career',
-                    icon: '💼',
+                    iconNode: <Users className="w-5 h-5 text-pink-400" />,
                     desc: 'Talent hiring banner, company culture, dynamic job openings listings & requirements',
                     containers: '2 Containers',
                     tags: `H1, <p>, ${pageContent.career?.openings?.length || 0} Openings`,
@@ -2564,7 +2615,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     key: 'contact' as PageKey,
                     title: 'Contact & Advisory Desk',
                     route: '/contact',
-                    icon: '📞',
+                    iconNode: <Phone className="w-5 h-5 text-teal-400" />,
                     desc: 'Official phone, email, registered office address, RERA certificate, Excel webhook',
                     containers: '2 Containers',
                     tags: 'Direct Phone, Email, Address, Webhook',
@@ -2574,7 +2625,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     key: 'header' as PageKey,
                     title: 'Header & Navigation Bar',
                     route: 'Global Layout',
-                    icon: '🧭',
+                    iconNode: <Compass className="w-5 h-5 text-violet-400" />,
                     desc: 'Brand logo asset, navigation menu links, Consultation CTA button, WhatsApp icon placement',
                     containers: '3 Containers',
                     tags: 'Logo [Image], CTA [Btn], WhatsApp [Icon]',
@@ -2584,7 +2635,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     key: 'footer' as PageKey,
                     title: 'Footer & Global Brand',
                     route: 'Global Layout',
-                    icon: '⚓',
+                    iconNode: <Layers className="w-5 h-5 text-cyan-400" />,
                     desc: 'Brand narrative, social media channels, RERA compliance statements, copyright notice',
                     containers: '2 Containers',
                     tags: 'Copyright [<p>], RERA [<p>], Social Links',
@@ -2593,12 +2644,14 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                 ].map((card) => (
                   <div
                     key={card.key}
-                    className="p-5 rounded-2xl bg-[#101016] border border-white/10 hover:border-brand-purple/40 transition-all flex flex-col justify-between group shadow-xl hover:shadow-brand-purple/10"
+                    className="p-5 rounded-2xl bg-[#2E333E] border border-white/10 hover:border-brand-purple/40 transition-all flex flex-col justify-between group shadow-xl hover:shadow-brand-purple/10"
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                          <span className="text-2xl">{card.icon}</span>
+                          <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                            {card.iconNode}
+                          </div>
                           <div>
                             <h4 className="font-bold text-white text-sm group-hover:text-brand-purpleLight transition-colors">
                               {card.title}
@@ -2618,8 +2671,9 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                       </p>
 
                       <div className="pt-2 border-t border-white/5 text-[11px] text-gray-500 flex items-center justify-between">
-                        <span className="truncate max-w-[200px]" title={card.meta}>
-                          🏷️ {card.tags}
+                        <span className="truncate max-w-[200px] flex items-center gap-1" title={card.meta}>
+                          <Tag className="w-3 h-3 text-gray-500" />
+                          <span>{card.tags}</span>
                         </span>
                       </div>
                     </div>
@@ -2642,7 +2696,167 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                     </div>
                   </div>
                 ))}
+
+                {/* Custom Pages */}
+                {customPages.map((page) => (
+                  <div
+                    key={page.id}
+                    className="p-5 rounded-2xl bg-[#2E333E] border border-white/10 hover:border-brand-purple/40 transition-all flex flex-col justify-between group shadow-xl hover:shadow-brand-purple/10"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-purple-400" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-white text-sm group-hover:text-brand-purpleLight transition-colors">
+                              {page.title}
+                            </h4>
+                            <span className="text-[10px] font-mono text-purple-400">
+                              {page.route}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-white/5 text-gray-400 border border-white/5">
+                          {page.containers || '1 Container'}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                        {page.desc || 'Custom page container configuration.'}
+                      </p>
+
+                      <div className="pt-2 border-t border-white/5 text-[11px] text-gray-500 flex items-center justify-between">
+                        <span className="truncate max-w-[200px] flex items-center gap-1" title={page.meta}>
+                          <Tag className="w-3 h-3 text-gray-500" />
+                          <span>{page.tags || 'Custom Layout'}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 mt-3 border-t border-white/5 flex items-center justify-between">
+                      <button
+                        onClick={() => {
+                          const updated = customPages.filter((p) => p.id !== page.id);
+                          setCustomPages(updated);
+                          localStorage.setItem('aurex_custom_pages', JSON.stringify(updated));
+                          showToast(`Deleted custom page "${page.title}"`);
+                        }}
+                        className="text-gray-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors"
+                        title="Delete custom page"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedPageKey(page.key);
+                          setViewMode('edit-page');
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold transition-all shadow-md shadow-brand-purple/20 flex items-center gap-1.5 active:scale-95"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              {/* Add New Page Modal */}
+              {isAddPageOpen && (
+                <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
+                  <div className="w-full max-w-md bg-[#282C35] border border-[#3E4452] rounded-2xl p-6 shadow-2xl space-y-4">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                      <h3 className="text-sm font-bold text-white">Add New Webpage</h3>
+                      <button
+                        onClick={() => setIsAddPageOpen(false)}
+                        className="text-gray-400 hover:text-white p-1"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1">Page Title *</label>
+                        <input
+                          type="text"
+                          value={newPageTitle}
+                          onChange={(e) => {
+                            setNewPageTitle(e.target.value);
+                            if (!newPageRoute) {
+                              setNewPageRoute(`/${e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+                            }
+                          }}
+                          placeholder="e.g. NRI Investment Desk"
+                          className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1">Route / URL Slug *</label>
+                        <input
+                          type="text"
+                          value={newPageRoute}
+                          onChange={(e) => setNewPageRoute(e.target.value)}
+                          placeholder="/nri-desk"
+                          className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1">Page Description</label>
+                        <textarea
+                          rows={2}
+                          value={newPageDesc}
+                          onChange={(e) => setNewPageDesc(e.target.value)}
+                          placeholder="Summary of page containers, purpose, and audience..."
+                          className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-brand-purple"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setIsAddPageOpen(false)}
+                        className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newPageTitle.trim()) return alert('Please enter a page title');
+                          const key = newPageTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                          const newPage: CustomPageItem = {
+                            id: `custom-page-${Date.now()}`,
+                            key,
+                            title: newPageTitle,
+                            route: newPageRoute || `/${key}`,
+                            desc: newPageDesc || 'Custom webpage container',
+                            containers: '1 Container',
+                            tags: 'Custom Elements',
+                            meta: newPageMetaTitle || newPageTitle,
+                          };
+                          const updated = [...customPages, newPage];
+                          setCustomPages(updated);
+                          localStorage.setItem('aurex_custom_pages', JSON.stringify(updated));
+                          setIsAddPageOpen(false);
+                          setNewPageTitle('');
+                          setNewPageRoute('');
+                          setNewPageDesc('');
+                          showToast(`New page "${newPage.title}" created!`);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30"
+                      >
+                        Create Page
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -2660,92 +2874,6 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
             />
           )}
 
-          {/* =========================================================================
-              VIEW 6: MEDIA & PDF BROCHURES LIBRARY TAB
-          ========================================================================= */}
-          {viewMode === 'list' && activeTab === 'media' && (
-            <div className="space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                    Centralized Media & Brochure Repository ({mediaLibrary.length} Items)
-                  </h3>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Browse all uploaded property photos, architectural renders, and official PDF brochures.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => mediaLibraryUploadRef.current?.click()}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload New File</span>
-                  </button>
-                  <input
-                    type="file"
-                    ref={mediaLibraryUploadRef}
-                    onChange={handleGeneralMediaUpload}
-                    accept="image/*,application/pdf"
-                    className="hidden"
-                  />
-                </div>
-              </div>
-
-              {/* Media Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {mediaLibrary.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl bg-[#111118] border border-white/10 overflow-hidden flex flex-col justify-between group hover:border-brand-purple/40 transition-all shadow-lg"
-                  >
-                    {item.type === 'pdf' ? (
-                      <div className="h-32 bg-red-950/20 flex flex-col items-center justify-center p-3 text-red-400">
-                        <FileDown className="w-10 h-10 mb-1" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-300">PDF Brochure</span>
-                      </div>
-                    ) : (
-                      <img src={item.url} alt={item.name} className="h-32 w-full object-cover bg-black/40" />
-                    )}
-
-                    <div className="p-3 border-t border-white/5 space-y-1">
-                      <p className="text-xs font-semibold text-white truncate" title={item.name}>
-                        {item.name}
-                      </p>
-                      <div className="flex items-center justify-between text-[10px] text-gray-500">
-                        <span>{item.size || 'Attached'}</span>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(item.url);
-                              showToast('Asset link copied to clipboard!');
-                            }}
-                            className="text-gray-400 hover:text-white"
-                            title="Copy link"
-                          >
-                            <Copy className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`Delete "${item.name}" from library?`)) {
-                                cmsStore.deleteMediaItem(item.id);
-                                showToast('File deleted.');
-                              }
-                            }}
-                            className="text-gray-500 hover:text-rose-400"
-                            title="Delete file"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* =========================================================================
               VIEW 7: LEADS & INQUIRIES TAB (Connected to Google Sheets & Email)
@@ -2827,7 +2955,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
               </div>
 
               {/* Leads Table */}
-              <div className="bg-[#101016] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="bg-[#2E333E] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
                 {filteredLeads.length === 0 ? (
                   <div className="py-16 text-center space-y-2">
                     <Users className="w-10 h-10 text-gray-600 mx-auto" />
@@ -2911,105 +3039,6 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
             </div>
           )}
 
-          {/* =========================================================================
-              VIEW 8: GLOBAL SEO & 10 LSI DESK
-          ========================================================================= */}
-          {viewMode === 'list' && activeTab === 'seo' && (
-            <div className="space-y-6">
-              <div className="p-6 rounded-2xl bg-[#111118] border border-pink-500/20 space-y-5">
-                <div>
-                  <h3 className="text-base font-bold text-white uppercase tracking-wider text-pink-400 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5" />
-                    <span>Real Estate SEO & 10 LSI Keyword Generator</span>
-                  </h3>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Generate 10 high-intent Latent Semantic Indexing keywords tailored to NCR luxury corridors, commercial yields, and plotted enclaves.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                      Seed Focus Keyword
-                    </label>
-                    <input
-                      type="text"
-                      value={globalSeedKeyword}
-                      onChange={(e) => setGlobalSeedKeyword(e.target.value)}
-                      placeholder="e.g. Godrej Meridien Sector 106 or DLF Privana"
-                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-pink-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">Property Sector</label>
-                    <select
-                      value={globalLsiCategory}
-                      onChange={(e) => setGlobalLsiCategory(e.target.value as any)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#181822] border border-white/15 text-white text-xs focus:outline-none focus:border-pink-500"
-                    >
-                      <option value="residential">Residential Luxury</option>
-                      <option value="commercial">Grade-A Commercial</option>
-                      <option value="plots">Freehold Plots & Land</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* 10 LSI Generated Results */}
-                <div className="pt-4 border-t border-white/10 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">
-                      10 Generated LSI Keywords for "{globalSeedKeyword}"
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const lsiList = generateLSIKeywords(globalSeedKeyword, globalLsiCategory)
-                          .map((l) => l.keyword)
-                          .join('\n');
-                        navigator.clipboard.writeText(lsiList);
-                        showToast('All 10 LSI keywords copied to clipboard!');
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy All 10 Keywords</span>
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {generateLSIKeywords(globalSeedKeyword, globalLsiCategory).map((lsi, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-pink-500/40 transition-all flex items-center justify-between gap-3"
-                      >
-                        <div>
-                          <p className="text-xs font-semibold text-white">{lsi.keyword}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono uppercase bg-pink-500/20 text-pink-300">
-                              {lsi.intent} Intent
-                            </span>
-                            <span className="text-[10px] text-gray-500 capitalize">{lsi.relevance} Relevance</span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(lsi.keyword);
-                            showToast(`Copied: "${lsi.keyword}"`);
-                          }}
-                          className="p-2 rounded-lg bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white"
-                          title="Copy keyword"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </main>
     </div>
