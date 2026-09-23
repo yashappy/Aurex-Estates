@@ -22,7 +22,24 @@ export interface CMSBlogPost extends BlogPost {
 }
 
 export interface PageContent {
+  header: {
+    logoUrl: string;
+    brandName: string;
+    ctaButtonText: string;
+    ctaButtonLink: string;
+    showCtaButton: boolean;
+    showWhatsAppButton: boolean;
+    whatsAppPlacement: 'floating-bottom-right' | 'top-header' | 'both' | 'hidden';
+  };
+  footer: {
+    copyrightText: string;
+    disclaimerText: string;
+    showSocialLinks: boolean;
+  };
   home: {
+    metaTitle?: string;
+    metaDescription?: string;
+    heroImage?: string;
     heroTag: string;
     heroTitle: string;
     heroSubtitle: string;
@@ -32,6 +49,9 @@ export interface PageContent {
     stats: { value: string; label: string; sublabel?: string }[];
   };
   about: {
+    metaTitle?: string;
+    metaDescription?: string;
+    heroImage?: string;
     heroTitle: string;
     heroSubtitle: string;
     missionTitle: string;
@@ -40,26 +60,36 @@ export interface PageContent {
     visionText: string;
   };
   residential: {
+    metaTitle?: string;
+    metaDescription?: string;
     heroTitle: string;
     heroSubtitle: string;
     tagline: string;
   };
   commercial: {
+    metaTitle?: string;
+    metaDescription?: string;
     heroTitle: string;
     heroSubtitle: string;
     tagline: string;
   };
   plots: {
+    metaTitle?: string;
+    metaDescription?: string;
     heroTitle: string;
     heroSubtitle: string;
     tagline: string;
   };
   career: {
+    metaTitle?: string;
+    metaDescription?: string;
     heroTitle: string;
     heroSubtitle: string;
     openings: { id: string; title: string; department: string; location: string; type: string; description?: string }[];
   };
   contact: {
+    metaTitle?: string;
+    metaDescription?: string;
     phone: string;
     email: string;
     address: string;
@@ -98,7 +128,24 @@ const STORAGE_KEYS = {
 };
 
 export const DEFAULT_PAGE_CONTENT: PageContent = {
+  header: {
+    logoUrl: '/aurex-logo-dark-trimmed.png',
+    brandName: 'AUREX ESTATES',
+    ctaButtonText: 'Book a Consultation',
+    ctaButtonLink: '#contact',
+    showCtaButton: true,
+    showWhatsAppButton: true,
+    whatsAppPlacement: 'floating-bottom-right',
+  },
+  footer: {
+    copyrightText: '© 2026 Aurex Estates. All Rights Reserved. Strategic Real Estate Advisory.',
+    disclaimerText: 'RERA Compliance & Fiduciary Transparency Guaranteed. Prices and availability subject to change.',
+    showSocialLinks: true,
+  },
   home: {
+    metaTitle: 'Aurex Estates | Strategic Real Estate Advisory Delhi NCR',
+    metaDescription: 'Institutional discipline, corridor intelligence, and bespoke acquisition advisory for high-net-worth property investors across Delhi NCR.',
+    heroImage: '/camellias.jpg',
     heroTag: 'STRATEGIC REAL ESTATE ADVISORY',
     heroTitle: 'Not Your Average Broker. Your Growth Partner.',
     heroSubtitle: 'Institutional discipline, corridor intelligence, and bespoke acquisition advisory for high-net-worth investors across Delhi NCR.',

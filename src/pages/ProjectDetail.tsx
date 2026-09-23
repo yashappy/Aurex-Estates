@@ -111,13 +111,18 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 }) => {
   // Find project by id or fallback from cmsStore
   const allCmsProjects = cmsStore.getProjects();
+  const cleanId = decodeURIComponent(projectId || '')
+    .toLowerCase()
+    .replace(/[_\s]+/g, '-');
   const project: CMSProject =
     allCmsProjects.find(
       (p) =>
-        p.id === projectId ||
-        (projectId === 'westin' && p.id === 'whiteland-westin-residences') ||
-        (projectId === 'westin-residences-gurugram' && p.id === 'whiteland-westin-residences') ||
-        (projectId === 'the-westin-residences-gurugram' && p.id === 'whiteland-westin-residences')
+        p.id.toLowerCase() === cleanId ||
+        p.id.replace(/[_\s]+/g, '-') === cleanId ||
+        p.name.toLowerCase().replace(/[_\s]+/g, '-') === cleanId ||
+        (cleanId.includes('westin') && p.id === 'whiteland-westin-residences') ||
+        (cleanId.includes('jewel') && p.id === 'm3m-jewel') ||
+        (cleanId.includes('meridien') && p.id === 'godrej-meridien')
     ) || allCmsProjects[0] || PROJECTS[0];
 
   const floorPlans: FloorPlan[] = getProjectFloorPlans(project);
@@ -460,6 +465,9 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
             <img
               src={project.image}
               alt={`${project.name} Architecture`}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/camellias.jpg';
+              }}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
             {/* Subtle luxury gradient */}

@@ -38,6 +38,7 @@ import {
 } from '../services/cmsStore';
 import { generateLSIKeywords, analyzeSEO, type LSIKeywordResult } from '../utils/seoHelper';
 import { FORMS_CONFIG } from '../config/forms';
+import { WebpageContainerEditor } from '../components/WebpageContainerEditor';
 import type { Page } from '../App';
 
 interface AdminCMSProps {
@@ -46,13 +47,28 @@ interface AdminCMSProps {
 }
 
 type CMSTab = 'projects' | 'posts' | 'pages' | 'media' | 'leads' | 'seo';
-type PageSubTab = 'home' | 'about' | 'residential' | 'commercial' | 'plots' | 'career' | 'contact';
-type ViewMode = 'list' | 'edit-project' | 'edit-post' | 'preview-project' | 'preview-post';
+type PageKey = 'home' | 'about' | 'residential' | 'commercial' | 'plots' | 'career' | 'contact' | 'header' | 'footer';
+type ViewMode = 'list' | 'edit-project' | 'edit-post' | 'preview-project' | 'preview-post' | 'edit-page';
+
+// Location formatter: displays only sector and city name (e.g. Sector 106, Gurugram)
+const formatLocationShort = (location: string, city: string = 'Gurugram') => {
+  if (!location) return city;
+  const sectorMatch = location.match(/Sector[s]?\s*[\d\w\s&,]+/i);
+  if (sectorMatch) {
+    const sectorPart = sectorMatch[0].split(',')[0].trim();
+    return `${sectorPart}, ${city}`;
+  }
+  const firstPart = location.split(',')[0].trim();
+  if (firstPart.toLowerCase().includes(city.toLowerCase())) {
+    return firstPart;
+  }
+  return `${firstPart}, ${city}`;
+};
 
 export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject }) => {
   // Navigation & View Modes
   const [activeTab, setActiveTab] = useState<CMSTab>('projects');
-  const [activePageSubTab, setActivePageSubTab] = useState<PageSubTab>('home');
+  const [selectedPageKey, setSelectedPageKey] = useState<PageKey>('home');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Core CMS Data
@@ -458,68 +474,10 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
   };
 
   // ==================== PAGE CONTENT SAVE ====================
-  const handleSavePageContent = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSavePageContent = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     cmsStore.savePageContent(pageContent);
     showToast('Page texts & elements updated successfully across the website!');
-  };
-
-  // Add Job Opening to Careers
-  const handleAddJobOpening = () => {
-    const newJob = {
-      id: `job-${Date.now()}`,
-      title: 'New Position',
-      department: 'Advisory',
-      location: 'Gurugram',
-      type: 'Full-time',
-      description: 'Role overview and requirements.',
-    };
-    setPageContent({
-      ...pageContent,
-      career: {
-        ...pageContent.career,
-        openings: [newJob, ...(pageContent.career.openings || [])],
-      },
-    });
-    showToast('New job opening added. Edit details below and click Save.');
-  };
-
-  // Delete Job Opening
-  const handleDeleteJobOpening = (id: string) => {
-    setPageContent({
-      ...pageContent,
-      career: {
-        ...pageContent.career,
-        openings: (pageContent.career.openings || []).filter((j) => j.id !== id),
-      },
-    });
-    showToast('Job opening removed.');
-  };
-
-  // Add Home Stat Counter
-  const handleAddHomeStat = () => {
-    const newStat = { value: '100+', label: 'Stat Metric', sublabel: 'Prime NCR' };
-    setPageContent({
-      ...pageContent,
-      home: {
-        ...pageContent.home,
-        stats: [...(pageContent.home.stats || []), newStat],
-      },
-    });
-    showToast('New stat metric added.');
-  };
-
-  // Delete Home Stat Counter
-  const handleDeleteHomeStat = (idx: number) => {
-    const updated = (pageContent.home.stats || []).filter((_, i) => i !== idx);
-    setPageContent({
-      ...pageContent,
-      home: {
-        ...pageContent.home,
-        stats: updated,
-      },
-    });
-    showToast('Stat metric removed.');
   };
 
   // ==================== MEDIA LIBRARY ====================
@@ -773,16 +731,13 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                 A
               </div>
               <div>
-                <h2 className="text-sm font-bold text-white tracking-wide">Aurex Admin</h2>
+                <h2 className="text-sm font-bold text-white tracking-wide">Admin</h2>
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-[10px] text-gray-400 font-medium">v2.5 Live Sync</span>
                 </div>
               </div>
             </div>
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-brand-purple/20 text-brand-purpleLight border border-brand-purple/40">
-              CMS
-            </span>
           </div>
 
           {/* Navigation Links */}
@@ -967,6 +922,8 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                 ? `Edit Project: ${editingProject?.name || 'New Project'}`
                 : viewMode === 'edit-post'
                 ? `Edit Blog: ${editingPost?.title || 'New Blog'}`
+                : viewMode === 'edit-page'
+                ? `Edit Webpage Containers: ${selectedPageKey.toUpperCase()}`
                 : activeTab === 'projects'
                 ? 'All Property Projects'
                 : activeTab === 'posts'
@@ -1007,27 +964,6 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
               accept=".json"
               className="hidden"
             />
-
-            {/* Quick Context Action Button */}
-            {viewMode === 'list' && activeTab === 'projects' && (
-              <button
-                onClick={handleOpenNewProject}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-md shadow-brand-purple/30 transition-all"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Add Project</span>
-              </button>
-            )}
-
-            {viewMode === 'list' && activeTab === 'posts' && (
-              <button
-                onClick={handleOpenNewPost}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-md shadow-brand-purple/30 transition-all"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Add Blog</span>
-              </button>
-            )}
           </div>
         </header>
 
@@ -2341,7 +2277,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                         <th className="py-3 px-4">Category & Segment</th>
                         <th className="py-3 px-4">Location</th>
                         <th className="py-3 px-4">Price Range</th>
-                        <th className="py-3 px-4">Brochure Status</th>
+                        <th className="py-3 px-4">Brochure</th>
                         <th className="py-3 px-4">Status</th>
                         <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
@@ -2357,7 +2293,10 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                                 <img
                                   src={p.image}
                                   alt={p.name}
-                                  className="w-10 h-10 rounded-lg object-cover border border-white/10"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src = '/camellias.jpg';
+                                  }}
+                                  className="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0"
                                 />
                                 <div>
                                   <p className="font-bold text-white text-xs">{p.name}</p>
@@ -2372,45 +2311,54 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                               </span>
                             </td>
                             <td className="py-3.5 px-4">
-                              <p className="text-gray-300 font-medium truncate max-w-[180px]">{p.location}</p>
-                              <p className="text-[11px] text-gray-500">{p.city}</p>
+                              <p className="text-gray-200 font-semibold truncate max-w-[200px]">
+                                {formatLocationShort(p.location, p.city)}
+                              </p>
                             </td>
                             <td className="py-3.5 px-4">
                               <p className="font-semibold text-emerald-400">{p.priceDisplay}</p>
-                              <p className="text-[11px] text-gray-500">{p.sizeDisplay || '1,500 - 3,500 sq ft'}</p>
                             </td>
                             <td className="py-3.5 px-4">
                               {hasBrochure ? (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                                   <Check className="w-3 h-3" />
-                                  <span>Attached & Ready</span>
+                                  <span>Attached</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-gray-500 bg-white/5">
-                                  No Brochure
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/5 text-gray-400 border border-white/10">
+                                  Unattached
                                 </span>
                               )}
                             </td>
                             <td className="py-3.5 px-4">
-                              <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              <select
+                                value={isPublished ? 'published' : 'draft'}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const newStatus = val === 'published' ? 'published' : 'draft';
+                                  cmsStore.toggleProjectStatus(p.id, newStatus);
+                                  showToast(`Project status set to ${newStatus === 'published' ? 'Published' : 'Draft'}`);
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border cursor-pointer focus:outline-none transition-colors ${
                                   isPublished
-                                    ? 'bg-emerald-500/20 text-emerald-400'
-                                    : 'bg-amber-500/20 text-amber-400'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                    : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                                 }`}
                               >
-                                {isPublished ? 'Published' : 'Draft'}
-                              </span>
+                                <option value="published" className="bg-[#101016] text-emerald-400">Publish</option>
+                                <option value="draft" className="bg-[#101016] text-amber-400">Draft</option>
+                                <option value="unpublish" className="bg-[#101016] text-gray-400">Unpublish</option>
+                              </select>
                             </td>
                             <td className="py-3.5 px-4 text-right">
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
                                   onClick={() => handleEditProject(p)}
-                                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-all font-semibold flex items-center gap-1"
-                                  title="Edit full project container"
+                                  className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-all font-semibold flex items-center gap-1.5"
+                                  title="Edit project"
                                 >
                                   <Edit3 className="w-3.5 h-3.5 text-purple-400" />
-                                  <span>Edit Full Page</span>
+                                  <span>Edit</span>
                                 </button>
                                 <button
                                   onClick={() => handleDeleteProject(p)}
@@ -2515,7 +2463,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
                             className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1"
                           >
                             <Edit3 className="w-3 h-3 text-purple-400" />
-                            <span>Edit Full Page</span>
+                            <span>Edit</span>
                           </button>
                           <button
                             onClick={() => handleDeletePost(post)}
@@ -2534,744 +2482,182 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({ onNavigate, onSelectProject 
           )}
 
           {/* =========================================================================
-              VIEW 5: PAGES & ELEMENTS GRANULAR EDITOR
+              VIEW 5: PAGES & ELEMENTS DIRECTORY (Cards with Edit button for each container)
           ========================================================================= */}
           {viewMode === 'list' && activeTab === 'pages' && (
             <div className="space-y-6">
-              {/* Sub-Tabs for Every Single Page on the Website */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/10 scrollbar-none">
-                <button
-                  onClick={() => setActivePageSubTab('home')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    activePageSubTab === 'home' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  🏠 Home Page Elements
-                </button>
-                <button
-                  onClick={() => setActivePageSubTab('about')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    activePageSubTab === 'about' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  📖 About Us Elements
-                </button>
-                <button
-                  onClick={() => setActivePageSubTab('residential')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    activePageSubTab === 'residential' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  🏙️ Residential Page
-                </button>
-                <button
-                  onClick={() => setActivePageSubTab('commercial')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    activePageSubTab === 'commercial' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  🏢 Commercial Page
-                </button>
-                <button
-                  onClick={() => setActivePageSubTab('plots')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    activePageSubTab === 'plots' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  🌳 Plots & Land Page
-                </button>
-                <button
-                  onClick={() => setActivePageSubTab('career')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    activePageSubTab === 'career' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  💼 Careers & Job Openings
-                </button>
-                <button
-                  onClick={() => setActivePageSubTab('contact')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
-                    activePageSubTab === 'contact' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  📞 Contact Info & Excel Webhook
-                </button>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-wide">
+                    Webpage &amp; Container Management
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Select any webpage or global layout to inspect and edit its containers, tags, images, PDFs, and metadata.
+                  </p>
+                </div>
               </div>
 
-              <form onSubmit={handleSavePageContent} className="space-y-6">
-                {/* 1. Home Page Sub-Tab */}
-                {activePageSubTab === 'home' && (
-                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                      Home Page: Hero, Advisory Process & Stats Counters
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Eyebrow Tag</label>
-                        <input
-                          type="text"
-                          value={pageContent.home.heroTag}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              home: { ...pageContent.home, heroTag: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Main Title</label>
-                        <input
-                          type="text"
-                          value={pageContent.home.heroTitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              home: { ...pageContent.home, heroTitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
-                        <textarea
-                          rows={2}
-                          value={pageContent.home.heroSubtitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              home: { ...pageContent.home, heroSubtitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Advisory Process Heading</label>
-                        <input
-                          type="text"
-                          value={pageContent.home.advisoryHeading}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              home: { ...pageContent.home, advisoryHeading: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Categories Title</label>
-                        <input
-                          type="text"
-                          value={pageContent.home.categoriesTitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              home: { ...pageContent.home, categoriesTitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Stats Counters Manager */}
-                    <div className="pt-4 border-t border-white/10 space-y-3">
+              {/* Grid of Pages & Global Layouts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  {
+                    key: 'home' as PageKey,
+                    title: 'Home Page',
+                    route: '/',
+                    icon: '🏠',
+                    desc: 'Hero banner, stats counters, advisory methodology, portfolio showcase, consultation banner',
+                    containers: '5 Containers',
+                    tags: 'H1, H2, <p>, Images, Stats',
+                    meta: pageContent.home?.metaTitle || 'Home Page',
+                  },
+                  {
+                    key: 'about' as PageKey,
+                    title: 'About Us',
+                    route: '/about',
+                    icon: '📖',
+                    desc: 'Corporate fiduciary narrative, mission statement, vision, institutional standards',
+                    containers: '3 Containers',
+                    tags: 'H1, H2, <p>, Mission, Vision',
+                    meta: pageContent.about?.metaTitle || 'About Us',
+                  },
+                  {
+                    key: 'residential' as PageKey,
+                    title: 'Residential Portfolios',
+                    route: '/residential',
+                    icon: '🏙️',
+                    desc: 'Luxury apartments, penthouses, villas, Golf Course Road, Dwarka Expressway inventory',
+                    containers: '2 Containers',
+                    tags: 'H1, H2, <p>, Tagline',
+                    meta: pageContent.residential?.metaTitle || 'Residential Portfolios',
+                  },
+                  {
+                    key: 'commercial' as PageKey,
+                    title: 'Commercial Assets',
+                    route: '/commercial',
+                    icon: '🏢',
+                    desc: 'Institutional grade-A corporate offices, pre-leased retail shops, multiplexes & SCOs',
+                    containers: '2 Containers',
+                    tags: 'H1, H2, <p>, Tagline',
+                    meta: pageContent.commercial?.metaTitle || 'Commercial Assets',
+                  },
+                  {
+                    key: 'plots' as PageKey,
+                    title: 'Plots & Plotted Lands',
+                    route: '/plots',
+                    icon: '🌳',
+                    desc: 'Freehold residential & commercial plots, land parcels, title and zoning disclosures',
+                    containers: '2 Containers',
+                    tags: 'H1, H2, <p>, Tagline',
+                    meta: pageContent.plots?.metaTitle || 'Plots & Land',
+                  },
+                  {
+                    key: 'career' as PageKey,
+                    title: 'Careers & Culture',
+                    route: '/career',
+                    icon: '💼',
+                    desc: 'Talent hiring banner, company culture, dynamic job openings listings & requirements',
+                    containers: '2 Containers',
+                    tags: `H1, <p>, ${pageContent.career?.openings?.length || 0} Openings`,
+                    meta: pageContent.career?.metaTitle || 'Careers at Aurex',
+                  },
+                  {
+                    key: 'contact' as PageKey,
+                    title: 'Contact & Advisory Desk',
+                    route: '/contact',
+                    icon: '📞',
+                    desc: 'Official phone, email, registered office address, RERA certificate, Excel webhook',
+                    containers: '2 Containers',
+                    tags: 'Direct Phone, Email, Address, Webhook',
+                    meta: pageContent.contact?.metaTitle || 'Contact Aurex Estates',
+                  },
+                  {
+                    key: 'header' as PageKey,
+                    title: 'Header & Navigation Bar',
+                    route: 'Global Layout',
+                    icon: '🧭',
+                    desc: 'Brand logo asset, navigation menu links, Consultation CTA button, WhatsApp icon placement',
+                    containers: '3 Containers',
+                    tags: 'Logo [Image], CTA [Btn], WhatsApp [Icon]',
+                    meta: 'Global Desktop & Mobile Header',
+                  },
+                  {
+                    key: 'footer' as PageKey,
+                    title: 'Footer & Global Brand',
+                    route: 'Global Layout',
+                    icon: '⚓',
+                    desc: 'Brand narrative, social media channels, RERA compliance statements, copyright notice',
+                    containers: '2 Containers',
+                    tags: 'Copyright [<p>], RERA [<p>], Social Links',
+                    meta: 'Global Footer & Disclaimers',
+                  },
+                ].map((card) => (
+                  <div
+                    key={card.key}
+                    className="p-5 rounded-2xl bg-[#101016] border border-white/10 hover:border-brand-purple/40 transition-all flex flex-col justify-between group shadow-xl hover:shadow-brand-purple/10"
+                  >
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white uppercase tracking-wider">
-                          Key Stats Counters ({pageContent.home.stats?.length || 0})
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleAddHomeStat}
-                          className="px-3 py-1 rounded-lg bg-brand-purple text-white text-xs font-semibold"
-                        >
-                          + Add Stat
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                        {(pageContent.home.stats || []).map((stat, idx) => (
-                          <div key={idx} className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2 relative">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteHomeStat(idx)}
-                              className="absolute top-2 right-2 text-gray-500 hover:text-rose-400"
-                              title="Delete stat"
-                            >
-                              ✕
-                            </button>
-                            <input
-                              type="text"
-                              value={stat.value}
-                              onChange={(e) => {
-                                const updated = [...pageContent.home.stats];
-                                updated[idx] = { ...stat, value: e.target.value };
-                                setPageContent({
-                                  ...pageContent,
-                                  home: { ...pageContent.home, stats: updated },
-                                });
-                              }}
-                              placeholder="e.g. ₹5,000+ Cr"
-                              className="w-full px-2 py-1 rounded bg-black/40 border border-white/15 text-white text-xs font-bold"
-                            />
-                            <input
-                              type="text"
-                              value={stat.label}
-                              onChange={(e) => {
-                                const updated = [...pageContent.home.stats];
-                                updated[idx] = { ...stat, label: e.target.value };
-                                setPageContent({
-                                  ...pageContent,
-                                  home: { ...pageContent.home, stats: updated },
-                                });
-                              }}
-                              placeholder="Transaction Advisory"
-                              className="w-full px-2 py-1 rounded bg-black/40 border border-white/15 text-white text-xs"
-                            />
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-2xl">{card.icon}</span>
+                          <div>
+                            <h4 className="font-bold text-white text-sm group-hover:text-brand-purpleLight transition-colors">
+                              {card.title}
+                            </h4>
+                            <span className="text-[10px] font-mono text-purple-400">
+                              {card.route}
+                            </span>
                           </div>
-                        ))}
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-white/5 text-gray-400 border border-white/5">
+                          {card.containers}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                        {card.desc}
+                      </p>
+
+                      <div className="pt-2 border-t border-white/5 text-[11px] text-gray-500 flex items-center justify-between">
+                        <span className="truncate max-w-[200px]" title={card.meta}>
+                          🏷️ {card.tags}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                )}
 
-                {/* 2. About Us Sub-Tab */}
-                {activePageSubTab === 'about' && (
-                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                      About Us: Fiduciary Principles & Corporate Mission
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
-                        <input
-                          type="text"
-                          value={pageContent.about.heroTitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              about: { ...pageContent.about, heroTitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Mission Title</label>
-                        <input
-                          type="text"
-                          value={pageContent.about.missionTitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              about: { ...pageContent.about, missionTitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
-                        <textarea
-                          rows={2}
-                          value={pageContent.about.heroSubtitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              about: { ...pageContent.about, heroSubtitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Mission Statement</label>
-                        <textarea
-                          rows={3}
-                          value={pageContent.about.missionText}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              about: { ...pageContent.about, missionText: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Vision Title</label>
-                        <input
-                          type="text"
-                          value={pageContent.about.visionTitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              about: { ...pageContent.about, visionTitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Vision Statement</label>
-                        <textarea
-                          rows={3}
-                          value={pageContent.about.visionText}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              about: { ...pageContent.about, visionText: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. Commercial Sub-Tab */}
-                {activePageSubTab === 'commercial' && (
-                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                      Commercial Page: Hero & High-Yield Narrative
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
-                        <input
-                          type="text"
-                          value={pageContent.commercial.heroTitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              commercial: { ...pageContent.commercial, heroTitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Tagline</label>
-                        <input
-                          type="text"
-                          value={pageContent.commercial.tagline}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              commercial: { ...pageContent.commercial, tagline: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
-                        <textarea
-                          rows={3}
-                          value={pageContent.commercial.heroSubtitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              commercial: { ...pageContent.commercial, heroSubtitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 4. Residential Sub-Tab */}
-                {activePageSubTab === 'residential' && (
-                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                      Residential Page: Hero & Luxury Corridors
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
-                        <input
-                          type="text"
-                          value={pageContent.residential.heroTitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              residential: { ...pageContent.residential, heroTitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Tagline</label>
-                        <input
-                          type="text"
-                          value={pageContent.residential.tagline}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              residential: { ...pageContent.residential, tagline: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
-                        <textarea
-                          rows={3}
-                          value={pageContent.residential.heroSubtitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              residential: { ...pageContent.residential, heroSubtitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 5. Plots Sub-Tab */}
-                {activePageSubTab === 'plots' && (
-                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                      Plots Page: Sovereignty & Freehold Registry
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
-                        <input
-                          type="text"
-                          value={pageContent.plots.heroTitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              plots: { ...pageContent.plots, heroTitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Tagline</label>
-                        <input
-                          type="text"
-                          value={pageContent.plots.tagline}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              plots: { ...pageContent.plots, tagline: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
-                        <textarea
-                          rows={3}
-                          value={pageContent.plots.heroSubtitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              plots: { ...pageContent.plots, heroSubtitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 6. Careers Sub-Tab */}
-                {activePageSubTab === 'career' && (
-                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                        Careers: Job Openings Manager
-                      </h3>
+                    <div className="pt-4 mt-3 border-t border-white/5 flex items-center justify-between">
+                      <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Live Sync
+                      </span>
                       <button
-                        type="button"
-                        onClick={handleAddJobOpening}
-                        className="px-3.5 py-1.5 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold"
+                        onClick={() => {
+                          setSelectedPageKey(card.key);
+                          setViewMode('edit-page');
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold transition-all shadow-md shadow-brand-purple/20 flex items-center gap-1.5 active:scale-95"
                       >
-                        + Add Job Opening
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
                       </button>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Title</label>
-                        <input
-                          type="text"
-                          value={pageContent.career.heroTitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              career: { ...pageContent.career, heroTitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Hero Subtitle</label>
-                        <input
-                          type="text"
-                          value={pageContent.career.heroSubtitle}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              career: { ...pageContent.career, heroSubtitle: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 pt-3 border-t border-white/10">
-                      <span className="text-xs font-bold text-white uppercase tracking-wider block">
-                        Active Job Positions ({(pageContent.career.openings || []).length})
-                      </span>
-
-                      <div className="space-y-3">
-                        {(pageContent.career.openings || []).map((job, idx) => (
-                          <div
-                            key={job.id}
-                            className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3 relative"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteJobOpening(job.id)}
-                              className="absolute top-3 right-3 text-gray-400 hover:text-rose-400 p-1"
-                              title="Delete position"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pr-8">
-                              <div>
-                                <label className="block text-[11px] text-gray-400 mb-1">Job Title</label>
-                                <input
-                                  type="text"
-                                  value={job.title}
-                                  onChange={(e) => {
-                                    const updated = [...pageContent.career.openings];
-                                    updated[idx] = { ...job, title: e.target.value };
-                                    setPageContent({
-                                      ...pageContent,
-                                      career: { ...pageContent.career, openings: updated },
-                                    });
-                                  }}
-                                  className="w-full px-3 py-1.5 rounded-lg bg-black/40 border border-white/15 text-white text-xs font-bold"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-[11px] text-gray-400 mb-1">Department</label>
-                                <input
-                                  type="text"
-                                  value={job.department}
-                                  onChange={(e) => {
-                                    const updated = [...pageContent.career.openings];
-                                    updated[idx] = { ...job, department: e.target.value };
-                                    setPageContent({
-                                      ...pageContent,
-                                      career: { ...pageContent.career, openings: updated },
-                                    });
-                                  }}
-                                  className="w-full px-3 py-1.5 rounded-lg bg-black/40 border border-white/15 text-white text-xs"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-[11px] text-gray-400 mb-1">Location & Type</label>
-                                <input
-                                  type="text"
-                                  value={job.location}
-                                  onChange={(e) => {
-                                    const updated = [...pageContent.career.openings];
-                                    updated[idx] = { ...job, location: e.target.value };
-                                    setPageContent({
-                                      ...pageContent,
-                                      career: { ...pageContent.career, openings: updated },
-                                    });
-                                  }}
-                                  className="w-full px-3 py-1.5 rounded-lg bg-black/40 border border-white/15 text-white text-xs"
-                                />
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-[11px] text-gray-400 mb-1">Brief Description</label>
-                              <input
-                                type="text"
-                                value={job.description || ''}
-                                onChange={(e) => {
-                                  const updated = [...pageContent.career.openings];
-                                  updated[idx] = { ...job, description: e.target.value };
-                                  setPageContent({
-                                    ...pageContent,
-                                    career: { ...pageContent.career, openings: updated },
-                                  });
-                                }}
-                                className="w-full px-3 py-1.5 rounded-lg bg-black/40 border border-white/15 text-white text-xs"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   </div>
-                )}
-
-                {/* 7. Contact & Webhook Sub-Tab */}
-                {activePageSubTab === 'contact' && (
-                  <div className="p-6 rounded-2xl bg-[#111118] border border-white/10 space-y-5">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider text-brand-purpleLight">
-                      Contact Information & Live Google Sheets / Excel Webhook
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Official Phone</label>
-                        <input
-                          type="text"
-                          value={pageContent.contact.phone}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              contact: { ...pageContent.contact, phone: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Official Email</label>
-                        <input
-                          type="text"
-                          value={pageContent.contact.email}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              contact: { ...pageContent.contact, email: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">WhatsApp Mobile No</label>
-                        <input
-                          type="text"
-                          value={pageContent.contact.whatsappNumber}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              contact: { ...pageContent.contact, whatsappNumber: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">HARERA Registration No</label>
-                        <input
-                          type="text"
-                          value={pageContent.contact.reraNumber}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              contact: { ...pageContent.contact, reraNumber: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Corporate Office Address</label>
-                        <input
-                          type="text"
-                          value={pageContent.contact.address}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              contact: { ...pageContent.contact, address: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
-                        />
-                      </div>
-
-                      {/* Google Sheets Webhook URL */}
-                      <div className="md:col-span-2 p-4 rounded-xl bg-white/[0.03] border border-emerald-500/30 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                            <span>Attached Google Sheets / Excel Webhook URL</span>
-                          </label>
-                          <span className="text-[10px] text-emerald-400 font-mono">
-                            Auto-Email Recipient: {FORMS_CONFIG.notificationEmail}
-                          </span>
-                        </div>
-                        <input
-                          type="url"
-                          value={pageContent.contact.googleSheetsWebhook || FORMS_CONFIG.googleScriptUrl}
-                          onChange={(e) =>
-                            setPageContent({
-                              ...pageContent,
-                              contact: { ...pageContent.contact, googleSheetsWebhook: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-2 rounded-xl bg-black/40 border border-white/15 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-500"
-                        />
-                        <p className="text-[11px] text-gray-400">
-                          Every single lead submitted anywhere on the site (Contact Form, Brochure Download, Site Visit Request, Layout View, or AI Chatbot) is instantly routed here, written to the attached spreadsheet, and dispatched as an email alert to {FORMS_CONFIG.notificationEmail}.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Save Page Elements Button */}
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-brand-purple hover:bg-brand-purpleLight text-white text-xs font-bold shadow-lg shadow-brand-purple/30 transition-all flex items-center gap-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Save All Page Changes Live</span>
-                  </button>
-                </div>
-              </form>
+                ))}
+              </div>
             </div>
+          )}
+
+          {/* =========================================================================
+              VIEW 5B: DEDICATED FULL-PAGE WEBPAGE & CONTAINER EDITOR
+          ========================================================================= */}
+          {viewMode === 'edit-page' && (
+            <WebpageContainerEditor
+              pageKey={selectedPageKey}
+              pageContent={pageContent}
+              setPageContent={setPageContent}
+              onSave={() => handleSavePageContent()}
+              onBack={() => setViewMode('list')}
+              showToast={showToast}
+            />
           )}
 
           {/* =========================================================================

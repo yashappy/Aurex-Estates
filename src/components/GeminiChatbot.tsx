@@ -26,9 +26,9 @@ interface GeminiChatbotProps {
 const INITIAL_GREETING: UiMessage = {
   id: 'msg-init',
   role: 'model',
-  text: 'Hello! I am Aura, your Aurex Estates property advisor. What type of property are you exploring today?',
+  text: 'Hello! I am Aura, your Aurex Estates property advisor. We advise clients across prime markets in India including Delhi NCR, Gurugram, Mumbai, Noida, Goa, Ayodhya, and more. Which city or property type are you exploring today?',
   timestamp: 'Just now',
-  chips: ['Residential', 'Commercial', 'Plots'],
+  chips: ['Gurugram', 'Delhi NCR', 'Mumbai', 'Goa', 'Residential', 'Commercial', 'Plots'],
 };
 
 export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
@@ -108,25 +108,39 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
     let nextChips: string[] | undefined = undefined;
     let triggerContactForm = false;
 
-    if (!collectedCategory && (lower.includes('commercial') || lower.includes('residential') || lower.includes('plot'))) {
+    // Detect City / Location
+    const knownCities = ['gurugram', 'mumbai', 'delhi', 'noida', 'goa', 'ayodhya', 'vrindavan', 'bangalore', 'pune', 'hyderabad'];
+    const matchedCity = knownCities.find((c) => lower.includes(c));
+    if (matchedCity) {
+      setCollectedLocation(matchedCity.charAt(0).toUpperCase() + matchedCity.slice(1));
+      if (!collectedCategory) {
+        nextChips = ['Residential', 'Commercial', 'Plots'];
+      }
+    } else if (lower.includes('sector') || lower.includes('road') || lower.includes('expressway')) {
+      setCollectedLocation(text);
+    }
+
+    // Detect Category
+    if (!collectedCategory && (lower.includes('commercial') || lower.includes('residential') || lower.includes('plot') || lower.includes('land'))) {
       if (lower.includes('commercial')) setCollectedCategory('Commercial');
       else if (lower.includes('residential')) setCollectedCategory('Residential');
       else setCollectedCategory('Plots');
 
-      nextChips = ['Investment', 'Self-Use'];
-    } else if (!collectedGoal && (lower.includes('investment') || lower.includes('self-use') || lower.includes('use') || lower.includes('end-use') || lower.includes('living'))) {
+      if (!collectedGoal) {
+        nextChips = ['Investment', 'Self-Use'];
+      }
+    } 
+    
+    // Detect Goal
+    if (!collectedGoal && (lower.includes('investment') || lower.includes('self-use') || lower.includes('self use') || lower.includes('end-use') || lower.includes('living'))) {
       if (lower.includes('investment')) setCollectedGoal('Investment');
       else setCollectedGoal('Self-Use');
 
-      nextChips = [
-        'Golf Course Extension Road',
-        'Dwarka Expressway',
-        'MG Road / Cyber City',
-        'Golf Course Road',
-        'Southern Peripheral Road',
-      ];
-    } else if (!collectedLocation && (lower.includes('golf course') || lower.includes('dwarka') || lower.includes('mg road') || lower.includes('cyber') || lower.includes('peripheral') || lower.includes('spr'))) {
-      setCollectedLocation(text);
+      nextChips = ['Within ₹1.5 Cr', '₹1.5 Cr - ₹6 Cr', '₹6 Cr - ₹15 Cr', '₹15 Cr+'];
+    }
+
+    // Detect Budget or Specific Sector
+    if (lower.includes('cr') || lower.includes('lakh') || lower.includes('budget') || lower.includes('sector') || (collectedCategory && collectedGoal)) {
       triggerContactForm = true;
     }
 
@@ -379,7 +393,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                       <div className="flex items-center gap-2 mb-3 text-[#253d30]">
                         <UserCheck className="w-4 h-4 text-emerald-600" />
                         <span className="text-xs font-bold uppercase tracking-wider">
-                          Share Details for Advisory
+                          Request a Consultation
                         </span>
                       </div>
 

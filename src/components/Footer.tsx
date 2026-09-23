@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Phone, Mail, MapPin, ArrowUpRight } from 'lucide-react';
+import { cmsStore } from '../services/cmsStore';
 import type { Page } from '../App';
 
 interface FooterProps {
@@ -11,6 +12,17 @@ export const Footer: React.FC<FooterProps> = ({
   onNavigate,
   onOpenTerms,
 }) => {
+  const [footerConfig, setFooterConfig] = useState(() => cmsStore.getPageContent().footer);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setFooterConfig(cmsStore.getPageContent().footer);
+    };
+    const unsubscribe = cmsStore.subscribe(handleUpdate);
+    return () => {
+      unsubscribe();
+    };
+  }, []);
   return (
     <footer className="bg-[#F8F8FA] text-brand-dark pt-12 md:pt-16 pb-12 border-t border-gray-200/90 relative overflow-hidden">
       <div className="max-w-site mx-auto px-6 md:px-12 relative z-10">
@@ -253,7 +265,12 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Bar */}
         <div className="pt-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500 font-light">
-          <p>© 2026 Aurex Estates. All rights reserved.</p>
+          <div>
+            <p>{footerConfig?.copyrightText || '© 2026 Aurex Estates. All rights reserved.'}</p>
+            {footerConfig?.disclaimerText && (
+              <p className="text-[10px] text-gray-400 mt-1 max-w-xl">{footerConfig.disclaimerText}</p>
+            )}
+          </div>
           <div className="flex items-center gap-6">
             <button
               onClick={() => {

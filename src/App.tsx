@@ -15,7 +15,7 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { GeminiChatbot } from './components/GeminiChatbot';
 import { AdminCMS } from './pages/AdminCMS';
 import { Tools } from './pages/Tools';
-import { PROJECTS } from './data/projects';
+import { cmsStore } from './services/cmsStore';
 
 export type Page =
   | 'home'
@@ -66,7 +66,9 @@ export const App: React.FC = () => {
       const route = hash || pathname;
 
       if (route.startsWith('project/')) {
-        const rawPId = (rawHash ? rawHash.slice(8) : pathname.slice(8)).split('/')[0];
+        const rawPId = decodeURIComponent((rawHash ? rawHash.slice(8) : pathname.slice(8)).split('/')[0])
+          .toLowerCase()
+          .replace(/[_\s]+/g, '-');
         const normalizedId =
           rawPId === 'westin' ||
           rawPId === 'westin-residences' ||
@@ -74,9 +76,14 @@ export const App: React.FC = () => {
           rawPId === 'the-westin-residences-gurugram' ||
           rawPId === 'westin-residences-gurugram'
             ? 'whiteland-westin-residences'
+            : rawPId === 'm3m-jewel' || rawPId.includes('jewel')
+            ? 'm3m-jewel'
             : rawPId;
         setSelectedProjectId(normalizedId);
-        const found = PROJECTS.find((p) => p.id === normalizedId);
+        const allProjects = cmsStore.getProjects();
+        const found = allProjects.find(
+          (p) => p.id === normalizedId || p.id.replace(/[_\s]+/g, '-') === normalizedId
+        );
         if (found && (found.category === 'residential' || found.category === 'commercial' || found.category === 'plots')) {
           setPreviousCategory(found.category);
         }
