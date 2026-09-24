@@ -268,7 +268,9 @@ export const Footer: React.FC<FooterProps> = ({
           <div>
             <p>{footerConfig?.copyrightText || '© 2026 Aurex Estates. All rights reserved.'}</p>
             {footerConfig?.disclaimerText && (
-              <p className="text-[10px] text-gray-400 mt-1 max-w-xl">{footerConfig.disclaimerText}</p>
+              <p className="text-[10px] text-gray-400 mt-1 max-w-xl">
+                {footerConfig.disclaimerText.replace(/\.?\s*prices and availability subject to change\.?/gi, '').trim()}
+              </p>
             )}
           </div>
           <div className="flex items-center gap-6">

@@ -139,7 +139,7 @@ export const DEFAULT_PAGE_CONTENT: PageContent = {
   },
   footer: {
     copyrightText: '© 2026 Aurex Estates. All Rights Reserved. Strategic Real Estate Advisory.',
-    disclaimerText: 'RERA Compliance & Fiduciary Transparency Guaranteed. Prices and availability subject to change.',
+    disclaimerText: 'RERA Compliance & Fiduciary Transparency Guaranteed.',
     showSocialLinks: true,
   },
   home: {
@@ -345,7 +345,13 @@ export const cmsStore = {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.PAGE_CONTENT);
       if (stored) {
-        return { ...DEFAULT_PAGE_CONTENT, ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored);
+        if (parsed.footer?.disclaimerText) {
+          parsed.footer.disclaimerText = parsed.footer.disclaimerText
+            .replace(/\.?\s*prices and availability subject to change\.?/gi, '')
+            .trim();
+        }
+        return { ...DEFAULT_PAGE_CONTENT, ...parsed };
       }
     } catch (e) {
       console.error('Error loading page content from CMS storage', e);

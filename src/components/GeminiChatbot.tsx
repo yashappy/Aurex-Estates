@@ -371,7 +371,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
       email: clientEmail.trim(),
       projectName: collectedCategory ? `${collectedCategory} Advisory` : 'AI Advisory Inquiry',
       type: 'chatbot',
-      source: 'AI Luxury Advisory Chatbot',
+      source: 'AI Chatbot',
       message: `Category: ${collectedCategory || 'General'} | Purpose: ${collectedGoal || 'Advisory'} | Budget: ${collectedBudget || 'Not specified'} | Timeline: ${collectedTimeline || 'Immediate'}`,
     });
 
