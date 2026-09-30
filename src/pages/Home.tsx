@@ -17,10 +17,11 @@ import { VALUES } from '../data/advisory';
 import { LogoTicker } from '../components/LogoTicker';
 import { StatBlock } from '../components/StatBlock';
 import { TestimonialCarousel } from '../components/TestimonialCarousel';
+import type { Page } from '../App';
 
 interface HomeProps {
   onOpenConsultation: (category?: string) => void;
-  onNavigate: (page: 'home' | 'about' | 'contact' | 'privacy') => void;
+  onNavigate: (page: Page) => void;
 }
 
 // Reusable Framer Motion Variants
@@ -52,7 +53,7 @@ const heroBackgroundVariants = {
   },
 };
 
-export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onNavigate }) => {
+export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate }) => {
   // Hero Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -756,21 +757,21 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
           SECTION 5 — GUIDING PRINCIPLES (4 Pillars Architecture)
           4 institutional value pillars with Framer Motion staggered reveal
       ========================================================================= */}
-      <section className="pt-14 md:pt-18 pb-8 md:pb-12 bg-brand-warmWhite text-brand-dark relative overflow-hidden border-t border-gray-150">
+      <section className="pt-12 md:pt-18 pb-8 md:pb-12 bg-brand-warmWhite text-brand-dark relative overflow-hidden border-t border-gray-150">
         <div className="max-w-site mx-auto px-6 md:px-12 relative z-10">
-          {/* Section Heading with Exact 2-Line Break */}
-          <motion.div {...fadeInUp} className="text-center max-w-3xl mx-auto mb-10 md:mb-14">
-            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
+          {/* Section Heading with Exact 2-Line Break on Mobile */}
+          <motion.div {...fadeInUp} className="text-center max-w-3xl mx-auto mb-8 sm:mb-10 md:mb-14">
+            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-2 sm:mb-3">
               GUIDING PRINCIPLES
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950 leading-[1.2]">
+            <h2 className="text-[25px] sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950 leading-tight">
               <span className="block">Built on Trust.</span>
-              <span className="block mt-1">Defined by How We Work.</span>
+              <span className="block mt-1 whitespace-nowrap sm:whitespace-normal">Defined by How We Work.</span>
             </h2>
           </motion.div>
 
-          {/* 4 Big Value Pillar Boxes (Full-width clean grid with zero text clipping) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+          {/* 4 Value Pillar Boxes (Compact & clean on mobile, full-width responsive grid) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {VALUES.map((val, idx) => {
               const IconComponent =
                 idx === 0
@@ -789,26 +790,26 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                   viewport={{ once: true, margin: '-40px' }}
                   transition={{ duration: 0.5, delay: idx * 0.1, ease: [0.16, 1, 0.3, 1] }}
                   whileHover={{ y: -6, transition: { duration: 0.25 } }}
-                  className="bg-white rounded-2xl p-7 sm:p-8 min-h-[220px] sm:min-h-[240px] md:min-h-[250px] flex flex-col border border-gray-200/90 shadow-sm hover:shadow-2xl hover:shadow-brand-purple/[0.06] transition-all duration-300 group"
+                  className="bg-white rounded-2xl p-5 sm:p-7 md:p-8 flex flex-col border border-gray-200/90 shadow-sm hover:shadow-xl hover:shadow-brand-purple/[0.06] transition-all duration-300 group"
                 >
                   <div>
-                    {/* Header Row: Large Icon Badge & Monospace Index */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="w-14 h-14 rounded-2xl bg-brand-purple/10 border border-brand-purple/15 text-brand-purple flex items-center justify-center group-hover:bg-brand-purple group-hover:text-white transition-all duration-300 group-hover:scale-105 shadow-sm">
-                        <IconComponent className="w-7 h-7 stroke-[1.5]" />
+                    {/* Header Row: Compact Icon Badge & Monospace Index */}
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                      <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-brand-purple/10 border border-brand-purple/15 text-brand-purple flex items-center justify-center group-hover:bg-brand-purple group-hover:text-white transition-all duration-300 group-hover:scale-105 shadow-sm">
+                        <IconComponent className="w-5.5 h-5.5 sm:w-7 sm:h-7 stroke-[1.5]" />
                       </div>
-                      <span className="text-sm font-mono font-semibold tracking-widest text-gray-400 group-hover:text-brand-purple transition-colors">
+                      <span className="text-xs sm:text-sm font-mono font-semibold tracking-widest text-gray-400 group-hover:text-brand-purple transition-colors">
                         0{idx + 1}
                       </span>
                     </div>
 
                     {/* Bold Pillar Title */}
-                    <h3 className="text-xl sm:text-2xl font-semibold text-gray-950 mb-3 tracking-tight group-hover:text-brand-purple transition-colors duration-200">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-950 mb-2 sm:mb-3 tracking-tight group-hover:text-brand-purple transition-colors duration-200">
                       {val.name}
                     </h3>
 
-                    {/* Simple, Concise Plain Language Description */}
-                    <p className="text-sm sm:text-base text-gray-600 font-light leading-relaxed">
+                    {/* Concise Description */}
+                    <p className="text-xs sm:text-sm md:text-base text-gray-600 font-light leading-relaxed">
                       {val.description}
                     </p>
                   </div>
@@ -829,16 +830,13 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
       <section className="py-12 md:py-18 bg-brand-warmWhite text-brand-dark relative">
         <div className="max-w-site mx-auto px-6 md:px-12">
           {/* Editorial Header */}
-          <motion.div {...fadeInUp} className="max-w-3xl mb-10 md:mb-14">
-            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-3">
+          <motion.div {...fadeInUp} className="max-w-3xl mb-8 md:mb-12">
+            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block mb-2 sm:mb-3">
               PROPERTY ASSET CATEGORIES
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-5 leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950 mb-0 leading-tight">
               Strategic Real Estate Asset Portfolios.
             </h2>
-            <p className="text-base md:text-lg text-gray-600 font-light leading-relaxed">
-              Tailored advisory across Delhi NCR’s core property asset classes. Click any asset below to submit your requirements directly to our senior advisory desk.
-            </p>
           </motion.div>
 
           {/* Real Property Asset Classes Grid with Framer Motion Stagger */}
@@ -849,7 +847,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              onClick={() => onOpenConsultation('High Rise Apartments')}
+              onClick={() => onNavigate('residential')}
               className="lg:col-span-8 rounded-2xl overflow-hidden shadow-xl relative group h-[380px] sm:h-[460px] img-zoom-container cursor-pointer"
             >
               <img
@@ -860,23 +858,23 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent group-hover:from-black/90 transition-all" />
 
-              <div className="absolute bottom-6 left-6 right-6 sm:bottom-8 sm:left-8 sm:right-8 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div className="max-w-md">
+              <div className="absolute bottom-5 left-5 right-5 sm:bottom-8 sm:left-8 sm:right-8 text-white flex flex-row items-end justify-between gap-3 sm:gap-4">
+                <div className="max-w-md flex-1 min-w-0 pr-2">
                   <span className="text-[10px] uppercase tracking-[0.25em] text-purple-300 font-semibold block mb-1">
                     RESIDENTIAL ASSET
                   </span>
-                  <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight">
                     High Rise Apartments
                   </h3>
                 </div>
 
-                {/* Form Button */}
+                {/* Form Button - Right Aligned on Mobile and PC */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onOpenConsultation('High Rise Apartments');
+                    onNavigate('residential');
                   }}
-                  className="w-fit self-start sm:self-auto shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-lg shadow-brand-purple/40 hover:shadow-brand-purple/60 hover:-translate-y-0.5 transition-all"
+                  className="w-fit shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-lg shadow-brand-purple/40 hover:shadow-brand-purple/60 hover:-translate-y-0.5 transition-all"
                 >
                   <span>Enquire</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -892,7 +890,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
                 transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                onClick={() => onOpenConsultation('Low Rise Floors')}
+                onClick={() => onNavigate('residential')}
                 className="rounded-2xl overflow-hidden shadow-lg relative group h-[216px] img-zoom-container cursor-pointer"
               >
                 <img
@@ -912,7 +910,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onOpenConsultation('Low Rise Floors');
+                      onNavigate('residential');
                     }}
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-brand-purple text-white text-[11px] font-semibold uppercase tracking-wider shadow-md hover:bg-brand-purpleDark transition-all"
                   >
@@ -928,7 +926,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
                 transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                onClick={() => onOpenConsultation('Plots')}
+                onClick={() => onNavigate('plots')}
                 className="rounded-2xl overflow-hidden shadow-lg relative group h-[216px] img-zoom-container cursor-pointer"
               >
                 <img
@@ -948,7 +946,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onOpenConsultation('Plots');
+                      onNavigate('plots');
                     }}
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-brand-purple text-white text-[11px] font-semibold uppercase tracking-wider shadow-md hover:bg-brand-purpleDark transition-all"
                   >
@@ -965,7 +963,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
               transition={{ duration: 0.6, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              onClick={() => onOpenConsultation('Commercial Investment')}
+              onClick={() => onNavigate('commercial')}
               className="lg:col-span-6 rounded-2xl overflow-hidden shadow-lg relative group h-[260px] sm:h-[300px] img-zoom-container cursor-pointer"
             >
               <img
@@ -985,7 +983,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onOpenConsultation('Commercial Investment');
+                    onNavigate('commercial');
                   }}
                   className="w-fit shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-md transition-all"
                 >
@@ -1001,7 +999,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
               transition={{ duration: 0.6, delay: 0.28, ease: [0.16, 1, 0.3, 1] }}
-              onClick={() => onOpenConsultation('Affordable Investment')}
+              onClick={() => onNavigate('residential')}
               className="lg:col-span-6 rounded-2xl overflow-hidden shadow-lg relative group h-[260px] sm:h-[300px] img-zoom-container cursor-pointer"
             >
               <img
@@ -1021,7 +1019,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onOpenConsultation('Affordable Investment');
+                    onNavigate('residential');
                   }}
                   className="w-fit shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs uppercase tracking-wider font-semibold shadow-md transition-all"
                 >
