@@ -15,6 +15,24 @@ exports.leadsRouter.post('/', async (req, res) => {
                 message: 'Name, phone, and email are required.',
             });
         }
+        const cleanName = name.trim();
+        if (cleanName.length < 3 || !/[aeiouAEIOU]/.test(cleanName) || /[bcdfghjklmnpqrstvwxyz]{5,}/i.test(cleanName)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide a genuine full name.',
+            });
+        }
+        const cleanPhone = phone.replace(/\D/g, '');
+        // If Indian phone number (starts with +91 or clean phone is 10 digits or 12 digits starting with 91)
+        if (phone.includes('+91') || cleanPhone.length === 10 || (cleanPhone.length === 12 && cleanPhone.startsWith('91'))) {
+            const tenDigit = cleanPhone.slice(-10);
+            if (!/^[6-9]\d{9}$/.test(tenDigit)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Indian mobile numbers must be 10 digits and start with 6, 7, 8, or 9.',
+                });
+            }
+        }
         const lead = await db_1.prisma.lead.create({
             data: {
                 name: name.trim(),
