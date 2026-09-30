@@ -15,6 +15,7 @@ import { PROJECTS, getProjectFloorPlans, type FloorPlan } from '../data/projects
 import { cmsStore, type CMSProject } from '../services/cmsStore';
 import { DeveloperLogo } from '../components/DeveloperLogo';
 import { submitLeadGlobally } from '../services/leadService';
+import { COUNTRY_CODES, validateEmail, validatePhone, validateName } from '../utils/validation';
 
 const CORPORATE_LOGO_MAP: Record<string, string> = {
   // Corporates (Route 65, Jewel, Urbana)
@@ -142,6 +143,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   // Form State (Name, Phone, Email)
   const [userName, setUserName] = useState('');
+  const [userCountryCode, setUserCountryCode] = useState('+91');
   const [userPhone, setUserPhone] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -212,18 +214,21 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   const handleLeadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userName.trim() || !userPhone.trim() || !userEmail.trim()) {
-      setFormError('Please fill in your name, phone number, and email.');
+    const nameCheck = validateName(userName);
+    if (!nameCheck.isValid) {
+      setFormError(nameCheck.error || 'Please enter a genuine full name.');
       return;
     }
 
-    if (userPhone.trim().length < 10) {
-      setFormError('Please enter a valid 10-digit mobile number.');
+    const phoneCheck = validatePhone(userPhone, userCountryCode);
+    if (!phoneCheck.isValid) {
+      setFormError(phoneCheck.error || 'Please enter a valid mobile number.');
       return;
     }
 
-    if (!userEmail.includes('@') || !userEmail.includes('.')) {
-      setFormError('Please enter a valid email address.');
+    const emailCheck = validateEmail(userEmail);
+    if (!emailCheck.isValid) {
+      setFormError(emailCheck.error || 'Please enter a valid email address.');
       return;
     }
 
@@ -234,7 +239,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     // Submit lead globally to Google Sheets / Excel, email alert & CMS store
     submitLeadGlobally({
       name: userName.trim(),
-      phone: userPhone.trim(),
+      phone: `${userCountryCode} ${userPhone.trim()}`,
       email: userEmail.trim(),
       projectName: project.name,
       brochureName: project.brochureName || `${project.name} Official Brochure.pdf`,
@@ -524,9 +529,9 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 </div>
               </div>
 
-              {/* Price & Official Brochure Download Button */}
-              <div className="flex flex-wrap items-center gap-3 pt-2 md:pt-0">
-                <div className="flex items-baseline gap-1.5">
+              {/* Price & Official Brochure Download Button - Right-aligned */}
+              <div className="flex flex-col items-start md:items-end justify-center text-left md:text-right gap-2.5 pt-2 md:pt-0 shrink-0">
+                <div className="flex items-baseline gap-1.5 md:justify-end">
                   <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-500">
                     {project.category === 'commercial' || project.category === 'plots' ? 'Investment:' : 'Price:'}
                   </span>
@@ -538,7 +543,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 {project.brochureUrl && (
                   <button
                     onClick={handleBrochureDownloadClick}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs font-bold uppercase tracking-wider shadow-md shadow-brand-purple/30 hover:shadow-brand-purple/50 transition-all active:scale-95 shrink-0"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-brand-purple hover:bg-brand-purpleDark text-white text-xs font-bold uppercase tracking-wider shadow-md shadow-brand-purple/30 hover:shadow-brand-purple/50 transition-all active:scale-95 shrink-0"
                     title={project.requireLeadForBrochure !== false ? 'Enter details to start brochure download' : 'Direct Download'}
                   >
                     <FileDown className="w-3.5 h-3.5" />
@@ -640,18 +645,26 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         ========================================================================= */}
         {walkthroughItems && walkthroughItems.length > 0 && (
           <div className="bg-white rounded-3xl p-6 sm:p-8 lg:p-10 border border-gray-200 shadow-sm mb-6 sm:mb-8">
-            <div className="mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-950 tracking-tight">
-                Project Walkthrough
-              </h2>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-6 sm:mb-8 pb-4 border-b border-gray-150">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-purple block mb-1">
+                  Visual Tour & Architecture
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-950 tracking-tight">
+                  Project Walkthrough
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                Click any image to view in high-resolution detail
+              </p>
             </div>
 
-            {/* 4-Column Feature Grid with High-Res Reference Images */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Elevated 3-Column Feature Grid on PC for larger, more immersive cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
               {walkthroughItems.map((item, idx) => (
                 <div
                   key={idx}
-                  className="rounded-2xl bg-[#FAF9F6] border border-gray-200/80 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col group"
+                  className="rounded-2xl bg-[#FAF9F6] border border-gray-200/90 overflow-hidden shadow-xs hover:shadow-xl hover:border-brand-purple/40 hover:-translate-y-1 transition-all duration-300 flex flex-col group"
                 >
                   {/* Reference Image clickable to zoom in lightbox */}
                   <div
@@ -664,24 +677,26 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-white/90 text-gray-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                        <Eye className="w-3.5 h-3.5" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-white/95 text-gray-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100 shadow-md">
+                        <Eye className="w-4 h-4 text-brand-purple" />
                       </div>
                     </div>
                   </div>
 
                   {/* Content Details */}
-                  <div className="p-4 sm:p-5 flex-grow flex flex-col">
-                    <span className="text-[11px] font-mono font-bold text-brand-purple block mb-1.5">
-                      {item.tag}
-                    </span>
-                    <h3 className="text-sm sm:text-base font-bold text-gray-950 tracking-tight mb-1.5 leading-snug">
-                      {item.title}
-                    </h3>
-                    <p className="text-xs text-gray-600 leading-relaxed font-normal">
-                      {item.description}
-                    </p>
+                  <div className="p-5 sm:p-6 flex-grow flex flex-col justify-between">
+                    <div>
+                      <span className="text-xs font-mono font-bold text-brand-purple block mb-2 tracking-wide">
+                        {item.tag}
+                      </span>
+                      <h3 className="text-base sm:text-lg font-bold text-gray-950 tracking-tight mb-2 leading-snug">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-normal">
+                        {item.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1245,18 +1260,10 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     <Check className="w-6 h-6 stroke-[3]" />
                   </div>
                   <h4 className="text-base font-bold text-gray-900">
-                    {modalMode === 'brochure'
-                      ? 'Brochure Download Started!'
-                      : modalMode === 'site-visit'
-                      ? 'Site Visit Requested!'
-                      : 'Floor Plans Unlocked!'}
+                    Enquiry Received
                   </h4>
-                  <p className="text-xs text-gray-600 font-medium">
-                    {modalMode === 'brochure'
-                      ? 'Your official PDF brochure is downloading now. Our senior advisory desk is at your service.'
-                      : modalMode === 'site-visit'
-                      ? 'Thank you! Our senior luxury advisor will contact you within 15 minutes to confirm your visit.'
-                      : 'All architectural plans are unlocked, and your official PDF brochure is downloading now!'}
+                  <p className="text-xs sm:text-sm text-gray-700 font-medium">
+                    Thank you! An Aurex Estates senior advisor will connect with you shortly.
                   </p>
                 </div>
               ) : (
@@ -1286,16 +1293,24 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       Mobile Number (WhatsApp Preferred) *
                     </label>
                     <div className="flex gap-2">
-                      <span className="px-3 py-2.5 rounded-xl bg-gray-100 border border-gray-300 text-xs sm:text-sm font-bold text-gray-700 select-none">
-                        +91
-                      </span>
+                      <select
+                        value={userCountryCode}
+                        onChange={(e) => setUserCountryCode(e.target.value)}
+                        className="px-2.5 py-2.5 rounded-xl bg-gray-100 border border-gray-300 text-xs sm:text-sm font-bold text-gray-700 focus:outline-none focus:border-[#253d30] shrink-0 cursor-pointer"
+                      >
+                        {COUNTRY_CODES.map((item) => (
+                          <option key={item.code} value={item.code}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
                       <input
                         type="tel"
                         required
                         maxLength={10}
                         placeholder="98765 43210"
                         value={userPhone}
-                        onChange={(e) => setUserPhone(e.target.value.replace(/\D/g, ''))}
+                        onChange={(e) => setUserPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-xs sm:text-sm font-medium focus:outline-none focus:border-[#253d30] focus:ring-1 focus:ring-[#253d30]"
                       />
                     </div>

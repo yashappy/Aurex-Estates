@@ -1,9 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  TrendingUp,
-  Calculator,
-  ShieldCheck,
   ArrowUpRight,
   ChevronDown,
   RefreshCw,
@@ -223,16 +220,7 @@ export const Tools: React.FC<ToolsProps> = ({
               onClick={() => handleToggleTab('roi')}
               className="p-5 sm:p-6 cursor-pointer select-none hover:bg-gray-50/60 transition-colors"
             >
-              <div className="flex items-start gap-3.5 sm:gap-4">
-                <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-colors mt-0.5 ${
-                    activeTab === 'roi'
-                      ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/20'
-                      : 'bg-brand-purple/10 text-brand-purple'
-                  }`}
-                >
-                  <TrendingUp className="w-5 h-5" />
-                </div>
+              <div className="flex items-start">
                 <div className="flex-1 min-w-0">
                   <h2 className="text-lg sm:text-xl font-bold text-gray-950">ROI Calculator</h2>
                   <p className="text-xs sm:text-sm text-gray-600 font-medium mt-1 leading-relaxed">
@@ -294,24 +282,24 @@ export const Tools: React.FC<ToolsProps> = ({
                     <div className="lg:col-span-6 space-y-6">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <label className="font-bold text-gray-800">Property Purchase Price</label>
+                          <label className="font-bold text-gray-800">Property Value</label>
                           <span className="font-extrabold text-brand-purple text-base">
                             {formatIndianCurrency(roiPurchasePrice)}
                           </span>
                         </div>
                         <input
                           type="range"
-                          min={3000000}
-                          max={200000000}
+                          min={1000000}
+                          max={1900000000}
                           step={500000}
                           value={roiPurchasePrice}
                           onChange={(e) => setRoiPurchasePrice(Number(e.target.value))}
                           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
                         />
                         <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
-                          <span>₹30 Lakh</span>
-                          <span>₹10 Cr</span>
-                          <span>₹20 Cr</span>
+                          <span>₹10 Lakh</span>
+                          <span>₹95 Cr</span>
+                          <span>₹190 Cr</span>
                         </div>
                       </div>
 
@@ -324,16 +312,16 @@ export const Tools: React.FC<ToolsProps> = ({
                         </div>
                         <input
                           type="range"
-                          min={15000}
+                          min={3000}
                           max={1000000}
-                          step={5000}
+                          step={1000}
                           value={roiMonthlyRent}
                           onChange={(e) => setRoiMonthlyRent(Number(e.target.value))}
                           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
                         />
                         <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
-                          <span>₹15,000</span>
-                          <span>₹2.5 Lakh</span>
+                          <span>₹3,000</span>
+                          <span>₹5 Lakh</span>
                           <span>₹10 Lakh</span>
                         </div>
                       </div>
@@ -347,17 +335,17 @@ export const Tools: React.FC<ToolsProps> = ({
                         </div>
                         <input
                           type="range"
-                          min={2}
-                          max={20}
+                          min={0}
+                          max={100}
                           step={0.5}
                           value={roiAppreciationRate}
                           onChange={(e) => setRoiAppreciationRate(Number(e.target.value))}
                           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                         />
                         <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
-                          <span>2%</span>
-                          <span>8.5% (Prime NCR)</span>
-                          <span>20%</span>
+                          <span>0%</span>
+                          <span>50%</span>
+                          <span>100%</span>
                         </div>
                       </div>
 
@@ -423,9 +411,9 @@ export const Tools: React.FC<ToolsProps> = ({
                       <div>
                         <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-5">
                           <h3 className="text-xs font-bold uppercase tracking-wider text-brand-purple">
-                            Projected Wealth Summary
+                            Projected Summary
                           </h3>
-                          <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                          <span className="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
                             CAGR: {roiMath.cagr.toFixed(2)}%
                           </span>
                         </div>
@@ -453,44 +441,11 @@ export const Tools: React.FC<ToolsProps> = ({
                           </div>
                           <div className="p-3.5 rounded-2xl bg-gray-50/70 border border-gray-200/80">
                             <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold block mb-0.5">
-                              Net Rental Yield
-                            </span>
-                            <span className="text-base sm:text-lg font-extrabold text-gray-950">
-                              {roiMath.netRentalYield.toFixed(2)}%
-                            </span>
-                          </div>
-                          <div className="p-3.5 rounded-2xl bg-gray-50/70 border border-gray-200/80">
-                            <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold block mb-0.5">
-                              Cumulative Net Rent
-                            </span>
-                            <span className="text-base sm:text-lg font-extrabold text-emerald-700">
-                              {formatIndianCurrency(roiMath.cumulativeRent)}
-                            </span>
-                          </div>
-                          <div className="p-3.5 rounded-2xl bg-gray-50/70 border border-gray-200/80">
-                            <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold block mb-0.5">
                               Total Projected ROI
                             </span>
                             <span className="text-base sm:text-lg font-extrabold text-brand-purple">
                               {roiMath.overallROI.toFixed(1)}%
                             </span>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 mb-6 p-3.5 rounded-2xl bg-gray-50/70 border border-gray-200/80">
-                          <div className="flex justify-between text-xs font-semibold text-gray-700">
-                            <span>Capital Gains ({Math.round((roiMath.capitalGains / (roiMath.totalGains || 1)) * 100)}%)</span>
-                            <span>Rental Cashflow ({Math.round((roiMath.cumulativeRent / (roiMath.totalGains || 1)) * 100)}%)</span>
-                          </div>
-                          <div className="w-full h-2.5 rounded-full bg-gray-200 overflow-hidden flex">
-                            <div
-                              style={{ width: `${(roiMath.capitalGains / (roiMath.totalGains || 1)) * 100}%` }}
-                              className="h-full bg-brand-purple"
-                            />
-                            <div
-                              style={{ width: `${(roiMath.cumulativeRent / (roiMath.totalGains || 1)) * 100}%` }}
-                              className="h-full bg-emerald-500"
-                            />
                           </div>
                         </div>
                       </div>
@@ -525,16 +480,7 @@ export const Tools: React.FC<ToolsProps> = ({
               onClick={() => handleToggleTab('emi')}
               className="p-5 sm:p-6 cursor-pointer select-none hover:bg-gray-50/60 transition-colors"
             >
-              <div className="flex items-start gap-3.5 sm:gap-4">
-                <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-colors mt-0.5 ${
-                    activeTab === 'emi'
-                      ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/20'
-                      : 'bg-brand-purple/10 text-brand-purple'
-                  }`}
-                >
-                  <Calculator className="w-5 h-5" />
-                </div>
+              <div className="flex items-start">
                 <div className="flex-1 min-w-0">
                   <h2 className="text-lg sm:text-xl font-bold text-gray-950">EMI Planner</h2>
                   <p className="text-xs sm:text-sm text-gray-600 font-medium mt-1 leading-relaxed">
@@ -602,16 +548,16 @@ export const Tools: React.FC<ToolsProps> = ({
                         <input
                           type="range"
                           min={2500000}
-                          max={3000000000}
-                          step={500000}
+                          max={1900000000}
+                          step={1000000}
                           value={emiPropertyValue}
                           onChange={(e) => setEmiPropertyValue(Number(e.target.value))}
                           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
                         />
                         <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
                           <span>₹25 Lakh</span>
-                          <span>₹150 Cr</span>
-                          <span>₹300 Cr</span>
+                          <span>₹95 Cr</span>
+                          <span>₹190 Cr</span>
                         </div>
                       </div>
 
@@ -797,16 +743,7 @@ export const Tools: React.FC<ToolsProps> = ({
               onClick={() => handleToggleTab('affordability')}
               className="p-5 sm:p-6 cursor-pointer select-none hover:bg-gray-50/60 transition-colors"
             >
-              <div className="flex items-start gap-3.5 sm:gap-4">
-                <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-colors mt-0.5 ${
-                    activeTab === 'affordability'
-                      ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/20'
-                      : 'bg-brand-purple/10 text-brand-purple'
-                  }`}
-                >
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
+              <div className="flex items-start">
                 <div className="flex-1 min-w-0">
                   <h2 className="text-lg sm:text-xl font-bold text-gray-950">Property Affordability</h2>
                   <p className="text-xs sm:text-sm text-gray-600 font-medium mt-1 leading-relaxed">

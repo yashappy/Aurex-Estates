@@ -371,7 +371,7 @@ export const ProjectsListing: React.FC<ProjectsListingProps> = ({
             {pageTitle}
           </h1>
           <span className="text-xs sm:text-sm font-semibold text-gray-700">
-            <strong className="text-gray-950 font-bold">{filteredProjects.length}</strong> Properties Available
+            <strong className="text-gray-950 font-bold">{filteredProjects.length}</strong> Properties
           </span>
         </div>
       </div>
@@ -767,14 +767,14 @@ export const ProjectsListing: React.FC<ProjectsListingProps> = ({
                         <button
                           key={dev.id}
                           onClick={() => toggleDeveloper(dev.name)}
-                          className={`relative h-13 p-1.5 rounded-xl border flex items-center justify-center transition-all ${
+                          className={`relative h-13 px-2.5 py-1.5 rounded-xl border flex items-center justify-center overflow-hidden transition-all ${
                             isSelected
                               ? 'bg-purple-50/80 border-brand-purple ring-2 ring-brand-purple/20 shadow-sm'
                               : 'bg-white border-gray-250 hover:border-gray-400 hover:bg-gray-50/80 shadow-xs'
                           }`}
                           title={dev.name}
                         >
-                          <DeveloperLogo id={dev.id} className="h-6 w-auto max-w-[85px] object-contain mx-auto" />
+                          <DeveloperLogo id={dev.id} className="h-6.5 md:h-7 w-full max-w-[78px] object-contain mx-auto" />
                           {isSelected && (
                             <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-brand-purple text-white flex items-center justify-center shadow-xs">
                               <Check className="w-2 h-2" />
@@ -1067,7 +1067,7 @@ export const ProjectsListing: React.FC<ProjectsListingProps> = ({
                             setSelectedStatus(project.status);
                           }}
                           className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md cursor-pointer transition-transform active:scale-95 hover:opacity-90 ${
-                            project.status === 'Resell'
+                            project.status === 'New Launch'
                               ? 'bg-amber-500 text-white'
                               : project.status === 'Ready to Move'
                               ? 'bg-emerald-600 text-white'
@@ -1574,14 +1574,14 @@ export const ProjectsListing: React.FC<ProjectsListingProps> = ({
                           <button
                             key={dev.id}
                             onClick={() => toggleDeveloper(dev.name)}
-                            className={`relative h-14 sm:h-16 p-2 rounded-2xl border flex items-center justify-center transition-all ${
+                            className={`relative h-14 sm:h-15 px-3 py-1.5 rounded-2xl border flex items-center justify-center overflow-hidden transition-all ${
                               isSelected
                                 ? 'bg-purple-50/80 border-brand-purple ring-2 ring-brand-purple/30 shadow-sm'
                                 : 'bg-white border-gray-250 hover:border-gray-400 hover:bg-gray-50/80 shadow-xs'
                             }`}
                             title={dev.name}
                           >
-                            <DeveloperLogo id={dev.id} className="h-7 sm:h-8 w-auto max-w-[105px] object-contain mx-auto" />
+                            <DeveloperLogo id={dev.id} className="h-7 sm:h-8 w-full max-w-[85px] object-contain mx-auto" />
                             {isSelected && (
                               <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-brand-purple text-white flex items-center justify-center shadow-xs">
                                 <Check className="w-2.5 h-2.5" />

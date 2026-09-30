@@ -1,6 +1,6 @@
 export type ProjectCategory = 'residential' | 'commercial' | 'plots';
 export type ProjectSegment = 'Affordable' | 'Luxury' | 'Super Luxury' | 'Ultra Luxury';
-export type ProjectStatus = 'Pre-launch' | 'Under Construction' | 'Ready to Move' | 'Resell';
+export type ProjectStatus = 'New Launch' | 'Pre-launch' | 'Under Construction' | 'Ready to Move';
 export type ProjectCity = 'Mumbai' | 'Gurugram' | 'Delhi' | 'Vrindavan' | 'Noida' | 'Neemrana';
 
 export interface FloorPlan {
@@ -95,6 +95,9 @@ export const CITIES: ProjectCity[] = [
 ];
 
 export const RESIDENTIAL_TYPOLOGIES = [
+  'Low-Rise Floors',
+  '2.5 BHK',
+  '3.5 BHK',
   'Studio / 1 RK',
   '1 BHK',
   '2 BHK',
@@ -120,7 +123,7 @@ export const PLOTS_TYPOLOGIES = [
 ];
 
 export const SEGMENTS: ProjectSegment[] = ['Affordable', 'Luxury', 'Super Luxury', 'Ultra Luxury'];
-export const STATUSES: ProjectStatus[] = ['Pre-launch', 'Under Construction', 'Ready to Move', 'Resell'];
+export const STATUSES: ProjectStatus[] = ['New Launch', 'Pre-launch', 'Under Construction', 'Ready to Move'];
 
 export interface PriceRangeOption {
   label: string;
@@ -140,6 +143,136 @@ const RAW_PROJECTS: Project[] = [
   // ==========================================
   // RESIDENTIAL - SUPER LUXURY & LUXURY
   // ==========================================
+  {
+    id: 'm3m-antalya-hills',
+    name: 'M3M Antalya Hills',
+    category: 'residential',
+    segment: 'Luxury',
+    developer: 'M3M',
+    developerId: 'm3m',
+    city: 'Gurugram',
+    location: 'Sector 79, Foothills of Aravallis',
+    typologies: ['2.5 BHK', '3.5 BHK', 'Low-Rise Floors'],
+    priceMin: 145,
+    priceMax: 255,
+    priceDisplay: '₹1.45 Cr - ₹2.55 Cr',
+    sizeMin: 1138,
+    sizeMax: 1534,
+    sizeDisplay: '1,138 - 1,534 sq ft',
+    status: 'Ready to Move',
+    image: '/images/antalya/exterior-boulevard.jpg',
+    sitePlanImage: '/images/antalya/clubhouse.jpg',
+    locationMapImage: '/images/antalya/location-map.jpg',
+    brochureName: 'M3M Antalya Hills Official Brochure.pdf',
+    brochureUrl: '/brochures/m3m-antalya-hills-brochure.pdf',
+    featured: true,
+    highlights: [
+      'Ready to Move 2.5 & 3.5 BHK Independent Low-Rise Floors (Possession Under 6 Months)',
+      'Exclusive Private Basement Area (My Zone) for Home Office or Gym',
+      'Private Rooftop Terrace (My Aer-Lounge) with Starlit Views',
+      'Unobstructed Panoramic Views of Scenic Aravalli Mountain Ranges',
+      'Ultra-Modern Multi-Level Glass Clubhouse & Temperature-Controlled Pool',
+      'Sports Arena with Tennis, Badminton, Basketball & Kids Play Zones',
+      '10,000 Buffer Forest Trees, Oxygen Parks & Theme Green Trails',
+      '2 Mins to NH-8, SPR, Cloverleaf & Golden Greens Championship Golf',
+      'Special Flexible Payment & 26 Items White Goods Package',
+    ],
+    reraNumber: 'RC/REP/HARERA/GGM/652/384/2022/127',
+    description: 'M3M Antalya Hills in Sector 79 Gurugram introduces ready-to-move 2.5 & 3.5 BHK luxury low-rise floors nestled at the foothills of the Aravallis, with possession within 6 months. Every residence offers an independent private basement space (My Zone) and a dedicated private terrace lounge (My Aer-Lounge), paired with a state-of-the-art glass clubhouse, multi-court sports arenas, and seamless connectivity to NH-8 and SPR.',
+    projectArea: '~25 Acres',
+    launchYear: '2023',
+    completionYear: 'Under 6 Months',
+    totalFloors: 'Stilt + 4 Floors',
+    totalTowers: 'Independent Low-Rise Floors',
+    keyMetrics: [
+      { value: '2.5 & 3.5 BHK', label: 'Configurations', sublabel: 'Exclusive low-rise residences with basement & terrace' },
+      { value: 'Under 6 Mo.', label: 'Possession Status', sublabel: 'Ready to move handover' },
+      { value: 'Stilt + 4', label: 'Low-Rise Stature', sublabel: 'Exclusive independent floor privacy' },
+      { value: 'Aravalli Hills', label: 'Nature Living', sublabel: 'Unobstructed scenic mountain ridgelines' },
+    ],
+    walkthroughItems: [
+      {
+        tag: 'LOW-RISE ARCHITECTURE',
+        title: 'Independent Low-Rise Luxury Floors',
+        description: 'Stilt + 4 floor boutique residences set amidst lush boulevards and landscaped central courtyards.',
+        image: '/images/antalya/exterior-boulevard.jpg',
+      },
+      {
+        tag: 'GRAND ARRIVAL',
+        title: 'Palatial Entrance & Landscaped Driveways',
+        description: 'Gated access control, smart transponder entry, and pedestrian-friendly tree-lined avenues.',
+        image: '/images/antalya/grand-entrance.jpg',
+      },
+      {
+        tag: 'WORLD-CLASS CLUBHOUSE',
+        title: 'State-of-the-Art Glass Clubhouse',
+        description: 'Featuring temperature-controlled pools, fitness center, lounge cafe, and multi-generation recreation.',
+        image: '/images/antalya/clubhouse.jpg',
+      },
+      {
+        tag: 'SPORTS ARENA',
+        title: 'Dedicated Multi-Court Sports Complex',
+        description: 'Outdoor tennis courts, badminton, basketball, and dedicated children play areas.',
+        image: '/images/antalya/sports-arena.jpg',
+      },
+      {
+        tag: 'MY ZONE BASEMENT',
+        title: 'Private Basement Area for Every Unit',
+        description: 'Customizable private basement space for home office, personal gym, cinema den, or entertainment bar.',
+        image: '/images/antalya/basement-myzone.jpg',
+      },
+      {
+        tag: 'MY AER-LOUNGE',
+        title: 'Private Terrace Rooftop Retreat',
+        description: 'Your very personal piece of sky with open-air barbecue patio, lounge seating, and starry night views.',
+        image: '/images/antalya/private-terrace-aerlounge.jpg',
+      },
+      {
+        tag: 'MODERN RESIDENCES',
+        title: 'Air-Conditioned Living & Dining Spaces',
+        description: 'Sun-drenched interiors with expansive glass balconies, premium modular kitchens, and imported stone finishes.',
+        image: '/images/antalya/living-dining.jpg',
+      },
+    ],
+    driveTimes: [
+      { time: '2 min', label: 'NH-8 & Southern Peripheral Road (SPR)' },
+      { time: '5 min', label: 'Golden Greens Golf Course & Leopard Trail' },
+      { time: '10 min', label: 'Dwarka Expressway & Cloverleaf Interchange' },
+      { time: '25 min', label: 'IGI International Airport' },
+    ],
+    floorPlans: [
+      {
+        id: 'antalya-2-5-bhk',
+        name: '2.5 BHK + 2T Luxury Floor',
+        typology: '2.5 BHK',
+        superArea: '1,350 sq ft',
+        carpetArea: '1,138 sq ft',
+        bedrooms: '2.5 Bedrooms',
+        bathrooms: '2 Bathrooms',
+        image: '/images/antalya/floorplan-2bhk-overview.jpg',
+      },
+      {
+        id: 'antalya-3-5-bhk',
+        name: '3.5 BHK + 3T Luxury Floor with My Zone & Aer-Lounge',
+        typology: '3.5 BHK',
+        superArea: '1,534 sq ft',
+        carpetArea: '1,280 sq ft',
+        bedrooms: '3.5 Bedrooms',
+        bathrooms: '3 Bathrooms',
+        image: '/images/antalya/floorplan-3bhk-overview.jpg',
+      },
+      {
+        id: 'antalya-3-5-typical',
+        name: '3.5 BHK Typical Floor Plan',
+        typology: '3.5 BHK Floor',
+        superArea: '1,534 sq ft',
+        carpetArea: '1,280 sq ft',
+        bedrooms: '3 Bedrooms + Study',
+        bathrooms: '3 Bathrooms',
+        image: '/images/antalya/floorplan-3bhk-typical.jpg',
+      },
+    ],
+  },
   {
     id: 'godrej-meridien',
     name: 'Godrej Meridien',
@@ -2712,7 +2845,7 @@ const RAW_PROJECTS: Project[] = [
     sizeMin: 2400,
     sizeMax: 6800,
     sizeDisplay: '2,400 - 6,800 sq ft',
-    status: 'Resell',
+    status: 'Ready to Move',
     image: '/images/penthouse-interior.jpg',
     featured: false,
     highlights: ['Rare Delhi NCT Clear Title Resell', '5 Minutes to Terminal 3 IGI Airport', 'Concierge & Luxury Hotel Privilege', 'High Rental Occupancy by Diplomats'],
@@ -2740,7 +2873,7 @@ const RAW_PROJECTS: Project[] = [
     sizeMin: 5800,
     sizeMax: 11000,
     sizeDisplay: '5,800 - 11,000 sq ft',
-    status: 'Resell',
+    status: 'Ready to Move',
     image: '/images/camellias.jpg',
     featured: true,
     highlights: ['Legendary DLF Golf Course Road Address', 'Only Top Industrialists & CXO Residents', 'Unobstructed 18-Hole Golf View', 'Private Club Aralias Access'],
@@ -2796,7 +2929,7 @@ const RAW_PROJECTS: Project[] = [
     sizeMin: 1650,
     sizeMax: 2350,
     sizeDisplay: '1,650 - 2,350 sq ft',
-    status: 'Resell',
+    status: 'New Launch',
     image: '/images/low-rise-floors.jpg',
     featured: false,
     highlights: ['Bespoke Low-Rise Luxury Living', 'Exclusive Private Terrace & Stilt Parking', 'Immediate Verified Resale Unit', 'High Rental Occupancy Corridor'],

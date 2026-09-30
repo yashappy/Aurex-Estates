@@ -45,8 +45,9 @@ export const IMAGES = {
     },
   ],
 
-  // Brand Philosophy (Split layout) — Golf Course Road aerial masterwork
+  // Brand Philosophy & Leadership
   philosophy: '/images/camellias.jpg',
+  founder: '/images/rohan-singh-rajavat.jpg',
 
   // About Page Architecture
   aboutHero: '/images/golf-course-ext.jpg',

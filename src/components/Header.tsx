@@ -83,10 +83,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               key={item.id}
               onClick={() => handleNavClick(item.id)}
-              className={`text-xs xl:text-sm font-medium tracking-wide transition-all duration-300 relative py-1 focus:outline-none ${
+              className={`text-xs xl:text-sm font-semibold tracking-wide transition-all duration-300 relative py-1 focus:outline-none ${
                 currentPage === item.id
-                  ? 'text-brand-purple font-semibold'
-                  : 'text-gray-700 hover:text-brand-purple'
+                  ? 'text-brand-purple'
+                  : 'text-gray-800 hover:text-brand-purple'
               }`}
             >
               {item.label}

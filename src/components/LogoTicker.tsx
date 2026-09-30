@@ -14,6 +14,8 @@ export const LogoTicker: React.FC = () => {
     { id: 'ats', name: 'ATS HomeKraft' },
     { id: 'whiteland', name: 'Whiteland Corporation' },
     { id: '4s', name: '4S Developers' },
+    { id: 'prestige', name: 'Prestige Group' },
+    { id: 'lodha', name: 'Lodha' },
   ];
 
   // ROW 2: Unique Developer Brands
@@ -27,6 +29,8 @@ export const LogoTicker: React.FC = () => {
     { id: 'mahindra', name: 'Mahindra Lifespaces' },
     { id: 'adani', name: 'Adani Realty' },
     { id: 'county', name: 'County Group' },
+    { id: 'ambience', name: 'Ambience Group' },
+    { id: 'tlc', name: 'The Land Company' },
   ];
 
   // ROW 3: Unique Developer Brands

@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { sendChatMessageToGemini, type ChatMessage } from '../services/geminiService';
 import { submitLeadGlobally } from '../services/leadService';
+import { COUNTRY_CODES, validateEmail, validatePhone, validateName } from '../utils/validation';
 
 interface UiMessage {
   id: string;
@@ -47,6 +48,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
   const [collectedBudget, setCollectedBudget] = useState<string>('');
   const [collectedTimeline, setCollectedTimeline] = useState<string>('');
   const [clientName, setClientName] = useState<string>('');
+  const [clientCountryCode, setClientCountryCode] = useState<string>('+91');
   const [clientPhone, setClientPhone] = useState<string>('');
   const [clientEmail, setClientEmail] = useState<string>('');
   const [isLeadSubmitted, setIsLeadSubmitted] = useState<boolean>(false);
@@ -350,14 +352,22 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
 
   const handleLeadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientName.trim()) {
-      setLeadFormError('Please enter your name');
+    const nameCheck = validateName(clientName);
+    if (!nameCheck.isValid) {
+      setLeadFormError(nameCheck.error || 'Please enter a genuine full name');
       return;
     }
-    const cleanPhone = clientPhone.replace(/\D/g, '');
-    if (cleanPhone.length < 10) {
-      setLeadFormError('Please enter a valid 10-digit mobile number');
+    const phoneCheck = validatePhone(clientPhone, clientCountryCode);
+    if (!phoneCheck.isValid) {
+      setLeadFormError(phoneCheck.error || 'Please enter a valid mobile number');
       return;
+    }
+    if (clientEmail.trim()) {
+      const emailCheck = validateEmail(clientEmail);
+      if (!emailCheck.isValid) {
+        setLeadFormError(emailCheck.error || 'Please enter a valid email address');
+        return;
+      }
     }
 
     setLeadFormError('');
@@ -367,7 +377,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
     // Submit lead globally to Google Sheets / Excel, email alert & CMS store
     submitLeadGlobally({
       name: clientName.trim(),
-      phone: clientPhone.trim(),
+      phone: `${clientCountryCode} ${clientPhone.trim()}`,
       email: clientEmail.trim(),
       projectName: collectedCategory ? `${collectedCategory} Advisory` : 'AI Advisory Inquiry',
       type: 'chatbot',
@@ -578,12 +588,24 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = () => {
                           />
                         </div>
 
-                        <div>
+                        <div className="flex gap-1.5">
+                          <select
+                            value={clientCountryCode}
+                            onChange={(e) => setClientCountryCode(e.target.value)}
+                            className="px-2 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:bg-white focus:border-brand-purple outline-none font-semibold shrink-0 cursor-pointer"
+                          >
+                            {COUNTRY_CODES.map((item) => (
+                              <option key={item.code} value={item.code}>
+                                {item.code}
+                              </option>
+                            ))}
+                          </select>
                           <input
                             type="tel"
+                            maxLength={10}
                             placeholder="Mobile Number *"
                             value={clientPhone}
-                            onChange={(e) => setClientPhone(e.target.value)}
+                            onChange={(e) => setClientPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                             className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:bg-white focus:border-brand-purple focus:ring-1 focus:ring-brand-purple outline-none transition-all"
                           />
                         </div>

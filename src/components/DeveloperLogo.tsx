@@ -237,11 +237,11 @@ export const DeveloperLogo: React.FC<DeveloperLogoProps> = ({ id, className = "h
 
     case 'wal':
       return (
-        <div className={`flex items-center ${className}`}>
+        <div className={`flex items-center justify-center ${className}`}>
           <img
             src="/images/developers/wal.png"
             alt="WAL Developers"
-            className="h-full w-auto max-h-9 md:max-h-10 object-contain filter hover:scale-105 transition-all duration-300"
+            className="h-full w-auto max-w-full max-h-9 md:max-h-10 object-contain filter hover:scale-105 transition-all duration-300"
           />
         </div>
       );
@@ -329,6 +329,50 @@ export const DeveloperLogo: React.FC<DeveloperLogoProps> = ({ id, className = "h
           <img
             src="/images/developers/suncity.png"
             alt="Suncity Projects"
+            className="h-full w-auto max-h-8 md:max-h-9 object-contain filter hover:scale-105 transition-all duration-300"
+          />
+        </div>
+      );
+
+    case 'lodha':
+      return (
+        <div className={`flex items-center justify-center ${className}`}>
+          <img
+            src="/images/developers/lodha.png"
+            alt="Lodha"
+            className="h-full w-auto max-w-full max-h-7 md:max-h-8 object-contain filter hover:scale-105 transition-all duration-300"
+          />
+        </div>
+      );
+
+    case 'prestige':
+      return (
+        <div className={`flex items-center justify-center ${className}`}>
+          <img
+            src="/images/developers/prestige.png"
+            alt="Prestige Group"
+            className="h-full w-auto max-w-full max-h-10 md:max-h-11 object-contain filter hover:scale-105 transition-all duration-300"
+          />
+        </div>
+      );
+
+    case 'ambience':
+      return (
+        <div className={`flex items-center justify-center ${className}`}>
+          <img
+            src="/images/developers/ambience.png"
+            alt="Ambience Group"
+            className="h-full w-auto max-w-full max-h-9 md:max-h-10 object-contain filter hover:scale-105 transition-all duration-300"
+          />
+        </div>
+      );
+
+    case 'tlc':
+      return (
+        <div className={`flex items-center ${className}`}>
+          <img
+            src="/images/developers/tlc.png"
+            alt="The Land Company"
             className="h-full w-auto max-h-8 md:max-h-9 object-contain filter hover:scale-105 transition-all duration-300"
           />
         </div>

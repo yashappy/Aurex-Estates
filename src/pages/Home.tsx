@@ -309,10 +309,105 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
       <StatBlock />
 
       {/* =========================================================================
+          LEADERSHIP BEHIND AUREX ESTATE (Founder Section)
+          Positioned above Our Advisory Process container
+      ========================================================================= */}
+      <section id="philosophy" className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 pb-16 md:pb-24 bg-brand-warmWhite text-brand-dark relative border-t border-gray-150">
+        <div className="max-w-site mx-auto px-6 md:px-12">
+          {/* Mobile-only Eyebrow (Positioned above image on phone screens) */}
+          <div className="lg:hidden mb-4">
+            <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-bold block">
+              Leadership Behind Aurex Estate
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+            {/* Left Content Side */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-6 space-y-6 order-2 lg:order-1"
+            >
+              {/* Desktop-only Eyebrow */}
+              <span className="hidden lg:block text-xs uppercase tracking-[0.28em] text-brand-purple font-bold">
+                Leadership Behind Aurex Estate
+              </span>
+
+              {/* Exact 2 lines on desktop: Client Interest / Before The Transaction. */}
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-gray-950 leading-[1.15]">
+                Client Interest<br className="hidden lg:inline" />{' '}
+                <span className="text-brand-purple">Before The Transaction.</span>
+              </h2>
+
+              {/* Founder Quote & Citation */}
+              <div className="relative pl-5 border-l-2 border-brand-purple py-1">
+                <p className="text-base sm:text-lg font-semibold text-gray-950 italic leading-relaxed">
+                  “We don't believe in selling properties. We believe in helping people make better real estate decisions.”
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="font-bold text-gray-950 text-sm">Rohan Singh Rajavat</span>
+                  <span className="text-gray-500 text-xs">•</span>
+                  <span className="text-brand-purple text-xs font-bold tracking-wider uppercase">Managing Director</span>
+                </div>
+              </div>
+
+              {/* Body Text */}
+              <div className="space-y-3.5 text-base sm:text-lg text-gray-900 font-normal leading-relaxed">
+                <p>
+                  Aurex Estates was built around a simple idea: put the client's interest before the transaction.
+                </p>
+                <p>
+                  Today, that philosophy guides every conversation, recommendation and relationship we build.
+                </p>
+              </div>
+
+              {/* Visual Accents (Single Line on all screens) */}
+              <div className="pt-2 flex items-center gap-2 sm:gap-4 md:gap-6 text-[10.5px] sm:text-xs uppercase tracking-[0.12em] sm:tracking-[0.22em] font-bold text-gray-900 whitespace-nowrap">
+                <span className="flex items-center gap-1.5 sm:gap-2 hover:text-brand-purple transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-purple shrink-0" />
+                  INTEGRITY
+                </span>
+                <span className="text-gray-400 select-none">•</span>
+                <span className="flex items-center gap-1.5 sm:gap-2 hover:text-brand-purple transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-purple shrink-0" />
+                  PERSPECTIVE
+                </span>
+                <span className="text-gray-400 select-none">•</span>
+                <span className="flex items-center gap-1.5 sm:gap-2 hover:text-brand-purple transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-purple shrink-0" />
+                  TRUST
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Right Side: Founder Portrait (Clean, no text overlay, non-clickable) */}
+            <motion.div
+              initial={{ opacity: 0, x: 30, scale: 0.96 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-6 relative flex justify-center lg:justify-end order-1 lg:order-2"
+            >
+              <div className="relative rounded-2xl shadow-xl w-full max-w-md aspect-[3/4] sm:aspect-[4/5] overflow-hidden border border-gray-150">
+                <img
+                  src={IMAGES.founder}
+                  alt="Rohan Singh Rajavat, Managing Director at Aurex Estates"
+                  className="w-full h-full object-cover object-top"
+                  loading="lazy"
+                />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
           THE ADVISORY PROCESS (Positioned below the word counter container)
           Animated process: 01 UNDERSTAND, 02 EVALUATE, 03 COMPARE, 04 EXECUTE
       ========================================================================= */}
-      <section id="advisory-process" className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 pb-16 sm:pb-20 md:pb-24 lg:pb-28 bg-brand-warmWhite text-brand-dark relative">
+      <section id="advisory-process" className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 pb-16 sm:pb-20 md:pb-24 lg:pb-28 bg-brand-warmWhite text-brand-dark relative border-t border-gray-150">
         <div className="max-w-site mx-auto px-6 md:px-12">
           {/* Header */}
           <motion.div {...fadeInUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-12 md:mb-14">
@@ -474,81 +569,7 @@ export const Home: React.FC<HomeProps> = ({ onOpenConsultation, onNavigate: _onN
         </div>
       </section>
 
-      {/* =========================================================================
-          SECTION 4 — BRAND PHILOSOPHY
-          Premium split layout with Framer Motion reveal
-      ========================================================================= */}
-      <section id="philosophy" className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 pb-16 md:pb-24 bg-brand-warmWhite text-brand-dark relative border-t border-gray-150">
-        <div className="max-w-site mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-            {/* Left Content Side */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-6 space-y-6"
-            >
-              <span className="text-xs uppercase tracking-[0.28em] text-brand-purple font-semibold block">
-                THE AUREX APPROACH
-              </span>
 
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-gray-950 leading-[1.15]">
-                “The right property is only the beginning.<br />
-                <span className="text-brand-purple">The right decision is what matters.</span>”
-              </h2>
-
-              <p className="text-base md:text-lg text-gray-600 font-light leading-relaxed pt-2">
-                Real estate decisions deserve more than a sales pitch. Aurex Estates brings perspective, transparency and genuine advisory together to help clients move forward with clarity.
-              </p>
-
-              {/* Visual Accents (Single Line on all screens) */}
-              <div className="pt-4 flex items-center gap-2 sm:gap-4 md:gap-6 text-[10.5px] sm:text-xs uppercase tracking-[0.12em] sm:tracking-[0.22em] font-semibold text-gray-800 whitespace-nowrap">
-                <span className="flex items-center gap-1.5 sm:gap-2 hover:text-brand-purple transition-colors">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-purple shrink-0" />
-                  INTEGRITY
-                </span>
-                <span className="text-gray-300 select-none">•</span>
-                <span className="flex items-center gap-1.5 sm:gap-2 hover:text-brand-purple transition-colors">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-purple shrink-0" />
-                  PERSPECTIVE
-                </span>
-                <span className="text-gray-300 select-none">•</span>
-                <span className="flex items-center gap-1.5 sm:gap-2 hover:text-brand-purple transition-colors">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-purple shrink-0" />
-                  TRUST
-                </span>
-              </div>
-            </motion.div>
-
-            {/* Right Side: Large Luxury Property Image with Framer Motion Reveal */}
-            <motion.div
-              initial={{ opacity: 0, x: 30, scale: 0.96 }}
-              whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-6 relative"
-            >
-              <div
-                onClick={() => onOpenConsultation('Luxury Living')}
-                className="img-zoom-container relative rounded-2xl shadow-xl group aspect-[4/3] sm:aspect-[16/11] cursor-pointer"
-              >
-                <img
-                  src={IMAGES.philosophy}
-                  alt="Modern luxury residential architecture along Golf Course Road Gurugram"
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
-
-                <div className="absolute bottom-5 left-6 right-6 text-white text-xs tracking-wider uppercase font-medium">
-                  Golf Course Road • Delhi NCR Landmark Architecture
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
 
       {/* =========================================================================
           SECTION 3 — DIFFERENT BY DESIGN

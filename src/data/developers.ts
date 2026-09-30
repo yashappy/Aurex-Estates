@@ -35,4 +35,8 @@ export const DEVELOPERS: Developer[] = [
   { id: '4s', name: '4S Developers', category: 'Uber Luxury Living' },
   { id: 'county', name: 'County Group', category: 'Masterplanned Living' },
   { id: 'suncity', name: 'Suncity Projects', category: 'Pinnacle of Luxury' },
+  { id: 'lodha', name: 'Lodha', category: 'Ultra Luxury & Masterpieces' },
+  { id: 'prestige', name: 'Prestige Group', category: 'Iconic Living' },
+  { id: 'ambience', name: 'Ambience Group', category: 'The New Standard' },
+  { id: 'tlc', name: 'The Land Company (TLC)', category: 'Plotted & Land Development' },
 ];
